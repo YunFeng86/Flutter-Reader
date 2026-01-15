@@ -9,6 +9,9 @@ class Article {
   @Index()
   late int feedId;
 
+  @Index()
+  int? categoryId;
+
   /// Best-effort remote identifier (guid/id/link). Not guaranteed to be present.
   @Index(composite: [CompositeIndex('feedId')])
   String? remoteId;

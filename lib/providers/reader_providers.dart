@@ -18,10 +18,13 @@ class FullTextController extends AutoDisposeAsyncNotifier<void> {
       }
       final extracted = await ref.read(articleExtractorProvider).extract(article.link);
       await repo.setFullContent(articleId, extracted.contentHtml);
+      await ref.read(articleCacheServiceProvider).prefetchImagesFromHtml(
+            extracted.contentHtml,
+            baseUrl: Uri.tryParse(article.link),
+          );
     });
   }
 }
 
 final fullTextControllerProvider =
     AutoDisposeAsyncNotifierProvider<FullTextController, void>(FullTextController.new);
-

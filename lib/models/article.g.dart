@@ -22,58 +22,63 @@ const ArticleSchema = CollectionSchema(
       name: r'author',
       type: IsarType.string,
     ),
-    r'contentHtml': PropertySchema(
+    r'categoryId': PropertySchema(
       id: 1,
+      name: r'categoryId',
+      type: IsarType.long,
+    ),
+    r'contentHtml': PropertySchema(
+      id: 2,
       name: r'contentHtml',
       type: IsarType.string,
     ),
     r'feedId': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'feedId',
       type: IsarType.long,
     ),
     r'fetchedAt': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'fetchedAt',
       type: IsarType.dateTime,
     ),
     r'fullContentHtml': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'fullContentHtml',
       type: IsarType.string,
     ),
     r'isRead': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'isRead',
       type: IsarType.bool,
     ),
     r'isStarred': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'isStarred',
       type: IsarType.bool,
     ),
     r'link': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'link',
       type: IsarType.string,
     ),
     r'publishedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'publishedAt',
       type: IsarType.dateTime,
     ),
     r'remoteId': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'remoteId',
       type: IsarType.string,
     ),
     r'title': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -92,6 +97,19 @@ const ArticleSchema = CollectionSchema(
       properties: [
         IndexPropertySchema(
           name: r'feedId',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
+    r'categoryId': IndexSchema(
+      id: -8798048739239305339,
+      name: r'categoryId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'categoryId',
           type: IndexType.value,
           caseSensitive: false,
         )
@@ -228,17 +246,18 @@ void _articleSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.author);
-  writer.writeString(offsets[1], object.contentHtml);
-  writer.writeLong(offsets[2], object.feedId);
-  writer.writeDateTime(offsets[3], object.fetchedAt);
-  writer.writeString(offsets[4], object.fullContentHtml);
-  writer.writeBool(offsets[5], object.isRead);
-  writer.writeBool(offsets[6], object.isStarred);
-  writer.writeString(offsets[7], object.link);
-  writer.writeDateTime(offsets[8], object.publishedAt);
-  writer.writeString(offsets[9], object.remoteId);
-  writer.writeString(offsets[10], object.title);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeLong(offsets[1], object.categoryId);
+  writer.writeString(offsets[2], object.contentHtml);
+  writer.writeLong(offsets[3], object.feedId);
+  writer.writeDateTime(offsets[4], object.fetchedAt);
+  writer.writeString(offsets[5], object.fullContentHtml);
+  writer.writeBool(offsets[6], object.isRead);
+  writer.writeBool(offsets[7], object.isStarred);
+  writer.writeString(offsets[8], object.link);
+  writer.writeDateTime(offsets[9], object.publishedAt);
+  writer.writeString(offsets[10], object.remoteId);
+  writer.writeString(offsets[11], object.title);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 Article _articleDeserialize(
@@ -249,18 +268,19 @@ Article _articleDeserialize(
 ) {
   final object = Article();
   object.author = reader.readStringOrNull(offsets[0]);
-  object.contentHtml = reader.readStringOrNull(offsets[1]);
-  object.feedId = reader.readLong(offsets[2]);
-  object.fetchedAt = reader.readDateTime(offsets[3]);
-  object.fullContentHtml = reader.readStringOrNull(offsets[4]);
+  object.categoryId = reader.readLongOrNull(offsets[1]);
+  object.contentHtml = reader.readStringOrNull(offsets[2]);
+  object.feedId = reader.readLong(offsets[3]);
+  object.fetchedAt = reader.readDateTime(offsets[4]);
+  object.fullContentHtml = reader.readStringOrNull(offsets[5]);
   object.id = id;
-  object.isRead = reader.readBool(offsets[5]);
-  object.isStarred = reader.readBool(offsets[6]);
-  object.link = reader.readString(offsets[7]);
-  object.publishedAt = reader.readDateTime(offsets[8]);
-  object.remoteId = reader.readStringOrNull(offsets[9]);
-  object.title = reader.readStringOrNull(offsets[10]);
-  object.updatedAt = reader.readDateTime(offsets[11]);
+  object.isRead = reader.readBool(offsets[6]);
+  object.isStarred = reader.readBool(offsets[7]);
+  object.link = reader.readString(offsets[8]);
+  object.publishedAt = reader.readDateTime(offsets[9]);
+  object.remoteId = reader.readStringOrNull(offsets[10]);
+  object.title = reader.readStringOrNull(offsets[11]);
+  object.updatedAt = reader.readDateTime(offsets[12]);
   return object;
 }
 
@@ -274,26 +294,28 @@ P _articleDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readLong(offset)) as P;
-    case 3:
-      return (reader.readDateTime(offset)) as P;
-    case 4:
       return (reader.readStringOrNull(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
     case 5:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
       return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 8:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 10:
       return (reader.readStringOrNull(offset)) as P;
     case 11:
+      return (reader.readStringOrNull(offset)) as P;
+    case 12:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -410,6 +432,14 @@ extension ArticleQueryWhereSort on QueryBuilder<Article, Article, QWhere> {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'feedId'),
+      );
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhere> anyCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'categoryId'),
       );
     });
   }
@@ -589,6 +619,116 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
         lower: [lowerFeedId],
         includeLower: includeLower,
         upper: [upperFeedId],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'categoryId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdEqualTo(
+      int? categoryId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'categoryId',
+        value: [categoryId],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdNotEqualTo(
+      int? categoryId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId',
+              lower: [],
+              upper: [categoryId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId',
+              lower: [categoryId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId',
+              lower: [categoryId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId',
+              lower: [],
+              upper: [categoryId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdGreaterThan(
+    int? categoryId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId',
+        lower: [categoryId],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdLessThan(
+    int? categoryId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId',
+        lower: [],
+        upper: [categoryId],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdBetween(
+    int? lowerCategoryId,
+    int? upperCategoryId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId',
+        lower: [lowerCategoryId],
+        includeLower: includeLower,
+        upper: [upperCategoryId],
         includeUpper: includeUpper,
       ));
     });
@@ -1219,6 +1359,75 @@ extension ArticleQueryFilter
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'author',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'categoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'categoryId',
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'categoryId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterFilterCondition> categoryIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'categoryId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -2248,6 +2457,18 @@ extension ArticleQuerySortBy on QueryBuilder<Article, Article, QSortBy> {
     });
   }
 
+  QueryBuilder<Article, Article, QAfterSortBy> sortByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterSortBy> sortByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
+    });
+  }
+
   QueryBuilder<Article, Article, QAfterSortBy> sortByContentHtml() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'contentHtml', Sort.asc);
@@ -2392,6 +2613,18 @@ extension ArticleQuerySortThenBy
   QueryBuilder<Article, Article, QAfterSortBy> thenByAuthorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'author', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterSortBy> thenByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterSortBy> thenByCategoryIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'categoryId', Sort.desc);
     });
   }
 
@@ -2549,6 +2782,12 @@ extension ArticleQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Article, Article, QDistinct> distinctByCategoryId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'categoryId');
+    });
+  }
+
   QueryBuilder<Article, Article, QDistinct> distinctByContentHtml(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2633,6 +2872,12 @@ extension ArticleQueryProperty
   QueryBuilder<Article, String?, QQueryOperations> authorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'author');
+    });
+  }
+
+  QueryBuilder<Article, int?, QQueryOperations> categoryIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'categoryId');
     });
   }
 

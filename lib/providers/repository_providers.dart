@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../repositories/article_repository.dart';
+import '../repositories/category_repository.dart';
 import '../repositories/feed_repository.dart';
 import 'core_providers.dart';
 
@@ -12,3 +13,6 @@ final articleRepositoryProvider = Provider<ArticleRepository>((ref) {
   return ArticleRepository(ref.watch(isarProvider));
 });
 
+final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
+  return CategoryRepository(ref.watch(isarProvider));
+});

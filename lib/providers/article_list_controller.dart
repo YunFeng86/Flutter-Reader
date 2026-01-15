@@ -38,23 +38,33 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
 
   StreamSubscription<void>? _sub;
   int? _feedId;
+  int? _categoryId;
   bool _unreadOnly = false;
 
   @override
   Future<ArticleListState> build() async {
     _feedId = ref.watch(selectedFeedIdProvider);
+    _categoryId = ref.watch(selectedCategoryIdProvider);
     _unreadOnly = ref.watch(unreadOnlyProvider);
 
     // Refresh the list when the underlying query changes (new items from sync,
     // read/star toggles, etc.). For MVP we simply reload the first page.
     _sub?.cancel();
     final isar = ref.watch(isarProvider);
-    final qb = isar.articles
+    final watched = isar.articles
         .filter()
         .optional(_feedId != null, (q) => q.feedIdEqualTo(_feedId!))
+        .optional(
+          _categoryId != null && _categoryId! < 0,
+          (q) => q.categoryIdIsNull(),
+        )
+        .optional(
+          _categoryId != null && _categoryId! >= 0,
+          (q) => q.categoryIdEqualTo(_categoryId!),
+        )
         .optional(_unreadOnly, (q) => q.isReadEqualTo(false))
         .sortByPublishedAtDesc();
-    _sub = qb.watchLazy().listen((_) {
+    _sub = watched.watchLazy().listen((_) {
       unawaited(refresh());
     });
     ref.onDispose(() => _sub?.cancel());
@@ -64,6 +74,7 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       offset: 0,
       limit: _pageSize,
       feedId: _feedId,
+      categoryId: _categoryId,
       unreadOnly: _unreadOnly,
     );
     return ArticleListState(items: items, hasMore: items.length == _pageSize);
@@ -75,6 +86,7 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       offset: 0,
       limit: _pageSize,
       feedId: _feedId,
+      categoryId: _categoryId,
       unreadOnly: _unreadOnly,
     );
     final current = state.valueOrNull;
@@ -101,6 +113,7 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
         offset: current.items.length,
         limit: _pageSize,
         feedId: _feedId,
+        categoryId: _categoryId,
         unreadOnly: _unreadOnly,
       );
       state = AsyncValue.data(

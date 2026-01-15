@@ -21,3 +21,25 @@ final unreadCountProvider = StreamProvider.family<int, int?>((ref, feedId) async
     yield await qb.count();
   }
 });
+
+final unreadCountByCategoryProvider =
+    StreamProvider.family<int, int>((ref, categoryId) async* {
+  final isar = ref.watch(isarProvider);
+  final qb = isar.articles
+      .filter()
+      .categoryIdEqualTo(categoryId)
+      .isReadEqualTo(false);
+  yield await qb.count();
+  await for (final _ in qb.watchLazy()) {
+    yield await qb.count();
+  }
+});
+
+final unreadCountUncategorizedProvider = StreamProvider<int>((ref) async* {
+  final isar = ref.watch(isarProvider);
+  final qb = isar.articles.filter().categoryIdIsNull().isReadEqualTo(false);
+  yield await qb.count();
+  await for (final _ in qb.watchLazy()) {
+    yield await qb.count();
+  }
+});

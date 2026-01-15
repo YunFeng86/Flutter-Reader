@@ -37,6 +37,26 @@ class FeedRepository {
     return _isar.writeTxn(() async => _isar.feeds.put(feed));
   }
 
+  Future<void> setCategory({required int feedId, int? categoryId}) {
+    return _isar.writeTxn(() async {
+      final feed = await _isar.feeds.get(feedId);
+      if (feed == null) return;
+      feed.categoryId = categoryId;
+      feed.updatedAt = DateTime.now();
+      await _isar.feeds.put(feed);
+
+      // Keep articles denormalized categoryId in sync for fast filtering.
+      final articles = await _isar.articles.filter().feedIdEqualTo(feedId).findAll();
+      for (final a in articles) {
+        a.categoryId = categoryId;
+        a.updatedAt = DateTime.now();
+      }
+      if (articles.isNotEmpty) {
+        await _isar.articles.putAll(articles);
+      }
+    });
+  }
+
   Future<void> updateMeta({
     required int id,
     String? title,

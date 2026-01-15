@@ -31,16 +31,26 @@ class ArticleRepository {
     required int offset,
     required int limit,
     int? feedId,
+    int? categoryId,
     bool unreadOnly = false,
   }) {
-    final qb = _isar.articles
+    final cid = categoryId;
+    return _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
+        .optional(
+          cid != null && cid < 0,
+          (q) => q.categoryIdIsNull(),
+        )
+        .optional(
+          cid != null && cid >= 0,
+          (q) => q.categoryIdEqualTo(cid!),
+        )
         .optional(unreadOnly, (q) => q.isReadEqualTo(false))
         .sortByPublishedAtDesc()
         .offset(offset)
-        .limit(limit);
-    return qb.findAll();
+        .limit(limit)
+        .findAll();
   }
 
   Stream<Article?> watchById(int id) {
@@ -81,12 +91,22 @@ class ArticleRepository {
     });
   }
 
-  Future<int> markAllRead({int? feedId}) {
+  Future<int> markAllRead({int? feedId, int? categoryId}) {
     return _isar.writeTxn(() async {
+      final cid = categoryId;
       final qb = _isar.articles
           .filter()
           .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
+          .optional(
+            cid != null && cid < 0,
+            (q) => q.categoryIdIsNull(),
+          )
+          .optional(
+            cid != null && cid >= 0,
+            (q) => q.categoryIdEqualTo(cid!),
+          )
           .isReadEqualTo(false);
+
       final items = await qb.findAll();
       if (items.isEmpty) return 0;
       final now = DateTime.now();

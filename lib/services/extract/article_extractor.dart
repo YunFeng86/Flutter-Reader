@@ -49,8 +49,10 @@ class ArticleExtractor {
 
     _stripNoise(body);
 
-    final candidate = _pickBestCandidate(body) ?? body;
+    final candidate =
+            _pickRuleBasedCandidate(doc, body) ?? _pickBestCandidate(body) ?? body;
     _stripNoise(candidate);
+    _stripBoilerplateByClass(candidate);
     _absolutizeUrls(candidate, base);
 
     final contentHtml = '''
@@ -91,6 +93,78 @@ class ArticleExtractor {
     };
     for (final e in root.querySelectorAll(removeTags.join(','))) {
       e.remove();
+    }
+  }
+
+  dom.Element? _pickRuleBasedCandidate(dom.Document doc, dom.Element body) {
+    final detector = _detectCms(doc, body);
+    final selectors = switch (detector) {
+      _Cms.wordpress => const [
+          'article .entry-content',
+          'article .post-content',
+          '.entry-content',
+          '.post-content',
+          'article',
+        ],
+      _Cms.hexo => const [
+          '.post-content',
+          '.article-entry',
+          'article',
+        ],
+      _Cms.hugo => const [
+          '.post-content',
+          '.content',
+          'main article',
+          'article',
+        ],
+      _Cms.halo => const [
+          '.post-content',
+          '.post-body',
+          '.content',
+          'article',
+        ],
+      _Cms.unknown => const [
+          'article',
+          'main article',
+          'main',
+        ],
+    };
+
+    for (final sel in selectors) {
+      final el = body.querySelector(sel);
+      if (el == null) continue;
+      if (_textLen(el) >= 200) return el;
+    }
+    return null;
+  }
+
+  _Cms _detectCms(dom.Document doc, dom.Element body) {
+    final gen = (doc.querySelector('meta[name="generator"]')
+                ?.attributes['content'] ??
+            '')
+        .toLowerCase();
+    if (gen.contains('wordpress')) return _Cms.wordpress;
+    if (gen.contains('hexo')) return _Cms.hexo;
+    if (gen.contains('hugo')) return _Cms.hugo;
+    if (gen.contains('halo')) return _Cms.halo;
+
+    final cls = body.className.toLowerCase();
+    if (cls.contains('wordpress')) return _Cms.wordpress;
+    if (cls.contains('hexo')) return _Cms.hexo;
+    return _Cms.unknown;
+  }
+
+  void _stripBoilerplateByClass(dom.Element root) {
+    final re = RegExp(
+      r'(comment|comments|respond|share|social|related|breadcrumb|nav|footer|header|subscribe|newsletter|sidebar)',
+      caseSensitive: false,
+    );
+    for (final el in root.querySelectorAll('*')) {
+      final cls = el.className;
+      final id = el.id;
+      if ((cls.isNotEmpty && re.hasMatch(cls)) || (id.isNotEmpty && re.hasMatch(id))) {
+        el.remove();
+      }
     }
   }
 
@@ -162,3 +236,4 @@ class ArticleExtractor {
   }
 }
 
+enum _Cms { unknown, wordpress, hexo, hugo, halo }

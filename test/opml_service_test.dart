@@ -15,8 +15,9 @@ void main() {
   </body>
 </opml>
 ''';
-    final urls = OpmlService().parseFeedUrls(xml);
-    expect(urls, contains('https://example.com/feed.xml'));
+    final entries = OpmlService().parseEntries(xml);
+    expect(entries.map((e) => e.url), contains('https://example.com/feed.xml'));
+    expect(entries.first.category, 'Tech');
   });
 
   test('builds OPML', () {
@@ -24,11 +25,15 @@ void main() {
       Feed()
         ..url = 'https://example.com/feed.xml'
         ..title = 'Example'
+        ..categoryId = 1
         ..siteUrl = 'https://example.com',
     ];
-    final xml = OpmlService().buildOpml(feeds: feeds);
+    final xml = OpmlService().buildOpml(
+      feeds: feeds,
+      categoryNames: const {1: 'Tech'},
+    );
     expect(xml, contains('opml'));
     expect(xml, contains('xmlUrl="https://example.com/feed.xml"'));
+    expect(xml, contains('Tech'));
   });
 }
-

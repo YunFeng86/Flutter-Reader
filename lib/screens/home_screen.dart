@@ -25,6 +25,7 @@ class HomeScreen extends ConsumerWidget {
     if (!isWide) {
       final unreadOnly = ref.watch(unreadOnlyProvider);
       final selectedFeedId = ref.watch(selectedFeedIdProvider);
+      final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
       return Scaffold(
         appBar: AppBar(
           title: const Text('Flutter Reader'),
@@ -37,7 +38,10 @@ class HomeScreen extends ConsumerWidget {
             IconButton(
               tooltip: 'Mark all read',
               onPressed: () async {
-                await ref.read(articleRepositoryProvider).markAllRead(feedId: selectedFeedId);
+                await ref.read(articleRepositoryProvider).markAllRead(
+                      feedId: selectedFeedId,
+                      categoryId: selectedFeedId == null ? selectedCategoryId : null,
+                    );
               },
               icon: const Icon(Icons.done_all),
             ),
@@ -94,8 +98,17 @@ class HomeScreen extends ConsumerWidget {
           _RefreshIntent: CallbackAction<_RefreshIntent>(
             onInvoke: (intent) async {
               final feedId = ref.read(selectedFeedIdProvider);
+              final categoryId = ref.read(selectedCategoryIdProvider);
               if (feedId != null) {
                 await ref.read(syncServiceProvider).refreshFeed(feedId);
+              } else if (categoryId != null) {
+                final feeds = await ref.read(feedRepositoryProvider).getAll();
+                final filtered = categoryId < 0
+                    ? feeds.where((f) => f.categoryId == null)
+                    : feeds.where((f) => f.categoryId == categoryId);
+                for (final f in filtered) {
+                  await ref.read(syncServiceProvider).refreshFeed(f.id);
+                }
               } else {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
                 for (final f in feeds) {
@@ -170,12 +183,19 @@ class HomeScreen extends ConsumerWidget {
                                 builder: (context, ref, _) {
                                   final selectedFeedId =
                                       ref.watch(selectedFeedIdProvider);
+                                  final selectedCategoryId =
+                                      ref.watch(selectedCategoryIdProvider);
                                   return IconButton(
                                     tooltip: 'Mark all read',
                                     onPressed: () async {
                                       await ref
                                           .read(articleRepositoryProvider)
-                                          .markAllRead(feedId: selectedFeedId);
+                                          .markAllRead(
+                                            feedId: selectedFeedId,
+                                            categoryId: selectedFeedId == null
+                                                ? selectedCategoryId
+                                                : null,
+                                          );
                                     },
                                     icon: const Icon(Icons.done_all),
                                   );

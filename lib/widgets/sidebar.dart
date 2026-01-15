@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../models/category.dart';
 import '../models/feed.dart';
 import '../providers/query_providers.dart';
 import '../providers/opml_providers.dart';
@@ -12,15 +13,25 @@ import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 
-class Sidebar extends ConsumerWidget {
+class Sidebar extends ConsumerStatefulWidget {
   const Sidebar({super.key, required this.onSelectFeed});
 
   final void Function(int? feedId) onSelectFeed;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<Sidebar> createState() => _SidebarState();
+}
+
+class _SidebarState extends ConsumerState<Sidebar> {
+  int? _expandedCategoryId;
+  bool _expandedUncategorized = false;
+
+  @override
+  Widget build(BuildContext context) {
     final feeds = ref.watch(feedsProvider);
+    final categories = ref.watch(categoriesProvider);
     final selectedFeedId = ref.watch(selectedFeedIdProvider);
+    final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final allUnread = ref.watch(unreadCountProvider(null));
 
     return Material(
@@ -62,6 +73,11 @@ class Sidebar extends ConsumerWidget {
                   icon: const Icon(Icons.add),
                 ),
                 IconButton(
+                  tooltip: 'New category',
+                  onPressed: () => _showAddCategoryDialog(context, ref),
+                  icon: const Icon(Icons.create_new_folder_outlined),
+                ),
+                IconButton(
                   tooltip: 'Refresh selected',
                   onPressed: selectedFeedId == null
                       ? null
@@ -82,52 +98,212 @@ class Sidebar extends ConsumerWidget {
           const Divider(height: 1),
           Expanded(
             child: feeds.when(
-              data: (items) {
-                return ListView(
-                  children: [
-                    allUnread.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => Center(child: Text('Error: $e')),
+              data: (feedItems) {
+                return categories.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (cats) {
+                    final byCat = <int?, List<Feed>>{};
+                    for (final f in feedItems) {
+                      byCat.putIfAbsent(f.categoryId, () => []).add(f);
+                    }
+
+                    Widget allTile = allUnread.when(
                       loading: () => ListTile(
-                        selected: selectedFeedId == null,
+                        selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
                         title: const Text('All'),
-                        onTap: () => _select(ref, null),
+                        onTap: () => _selectAll(ref),
                       ),
                       error: (e, _) => ListTile(
-                        selected: selectedFeedId == null,
+                        selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
                         title: const Text('All'),
                         subtitle: Text('Unread count error: $e'),
-                        onTap: () => _select(ref, null),
+                        onTap: () => _selectAll(ref),
                       ),
                       data: (count) => ListTile(
-                        selected: selectedFeedId == null,
+                        selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
                         title: const Text('All'),
                         trailing: _UnreadBadge(count),
-                        onTap: () => _select(ref, null),
+                        onTap: () => _selectAll(ref),
                       ),
-                    ),
-                    for (final f in items)
-                      Consumer(
-                        builder: (context, ref, _) {
-                          final unread = ref.watch(unreadCountProvider(f.id));
-                          return unread.when(
-                            loading: () => _feedTile(context, ref, f, selectedFeedId, null),
-                            error: (e, _) => _feedTile(context, ref, f, selectedFeedId, null),
-                            data: (count) =>
-                                _feedTile(context, ref, f, selectedFeedId, count),
-                          );
-                        },
-                      ),
-                  ],
+                    );
+
+                    final children = <Widget>[allTile, const Divider(height: 1)];
+
+                    for (final c in cats) {
+                      children.add(_categoryTile(
+                        context: context,
+                        ref: ref,
+                        category: c,
+                        feeds: byCat[c.id] ?? const <Feed>[],
+                        selectedFeedId: selectedFeedId,
+                        selectedCategoryId: selectedCategoryId,
+                      ));
+                    }
+
+                    // Uncategorized group.
+                    children.add(_uncategorizedTile(
+                      context: context,
+                      ref: ref,
+                      feeds: byCat[null] ?? const <Feed>[],
+                      selectedFeedId: selectedFeedId,
+                      selectedCategoryId: selectedCategoryId,
+                    ));
+
+                    return ListView(children: children);
+                  },
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _categoryTile({
+    required BuildContext context,
+    required WidgetRef ref,
+    required Category category,
+    required List<Feed> feeds,
+    required int? selectedFeedId,
+    required int? selectedCategoryId,
+  }) {
+    final unread = ref.watch(unreadCountByCategoryProvider(category.id));
+    final selected = selectedFeedId == null && selectedCategoryId == category.id;
+    final expanded = _expandedCategoryId == category.id;
+
+    return Column(
+      children: [
+        ListTile(
+          selected: selected,
+          leading: const Icon(Icons.folder_outlined),
+          title: Text(category.name),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              unread.when(
+                data: (c) => _UnreadBadge(c),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+              IconButton(
+                tooltip: expanded ? 'Collapse' : 'Expand',
+                onPressed: () {
+                  setState(() {
+                    _expandedCategoryId = expanded ? null : category.id;
+                  });
+                },
+                icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+              ),
+            ],
+          ),
+          onTap: () => _selectCategory(ref, category.id),
+          onLongPress: () => _showCategoryMenu(context, ref, category),
+        ),
+        if (expanded)
+          ...feeds.map((f) {
+            final unread = ref.watch(unreadCountProvider(f.id));
+            return unread.when(
+              data: (count) => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                count,
+                indent: 16,
+              ),
+              loading: () => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                null,
+                indent: 16,
+              ),
+              error: (_, _) => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                null,
+                indent: 16,
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _uncategorizedTile({
+    required BuildContext context,
+    required WidgetRef ref,
+    required List<Feed> feeds,
+    required int? selectedFeedId,
+    required int? selectedCategoryId,
+  }) {
+    final expanded = _expandedUncategorized;
+    final selected = selectedFeedId == null && selectedCategoryId == -1;
+    final unread = ref.watch(unreadCountUncategorizedProvider);
+    return Column(
+      children: [
+        ListTile(
+          selected: selected,
+          leading: const Icon(Icons.folder_open_outlined),
+          title: const Text('Uncategorized'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              unread.when(
+                data: (c) => _UnreadBadge(c),
+                loading: () => const SizedBox.shrink(),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+              IconButton(
+                tooltip: expanded ? 'Collapse' : 'Expand',
+                onPressed: () => setState(() => _expandedUncategorized = !expanded),
+                icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
+              ),
+            ],
+          ),
+          onTap: () => _selectUncategorized(ref),
+        ),
+        if (expanded)
+          ...feeds.map((f) {
+            final unread = ref.watch(unreadCountProvider(f.id));
+            return unread.when(
+              data: (count) => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                count,
+                indent: 16,
+              ),
+              loading: () => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                null,
+                indent: 16,
+              ),
+              error: (_, _) => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                null,
+                indent: 16,
+              ),
+            );
+          }),
+      ],
     );
   }
 
@@ -137,10 +313,12 @@ class Sidebar extends ConsumerWidget {
     Feed f,
     int? selectedFeedId,
     int? unreadCount,
+    {double indent = 0}
   ) {
     final title = f.title?.trim().isNotEmpty == true ? f.title! : f.url;
     return ListTile(
       selected: selectedFeedId == f.id,
+      contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
       leading: const Icon(Icons.rss_feed),
       title: Text(title),
       subtitle: f.title?.trim().isNotEmpty == true
@@ -148,13 +326,34 @@ class Sidebar extends ConsumerWidget {
           : null,
       trailing: unreadCount == null ? null : _UnreadBadge(unreadCount),
       onTap: () => _select(ref, f.id),
-      onLongPress: () => _confirmDelete(context, ref, f.id),
+      onLongPress: () => _showFeedMenu(context, ref, f),
     );
   }
 
   void _select(WidgetRef ref, int? id) {
     ref.read(selectedFeedIdProvider.notifier).state = id;
-    onSelectFeed(id);
+    ref.read(selectedCategoryIdProvider.notifier).state = null;
+    widget.onSelectFeed(id);
+  }
+
+  void _selectAll(WidgetRef ref) {
+    ref.read(selectedFeedIdProvider.notifier).state = null;
+    ref.read(selectedCategoryIdProvider.notifier).state = null;
+    widget.onSelectFeed(null);
+  }
+
+  void _selectCategory(WidgetRef ref, int categoryId) {
+    ref.read(selectedFeedIdProvider.notifier).state = null;
+    ref.read(selectedCategoryIdProvider.notifier).state = categoryId;
+    widget.onSelectFeed(null);
+  }
+
+  void _selectUncategorized(WidgetRef ref) {
+    // We use -1 sentinel in UI; the Article list filters by `categoryId == null`
+    // by selecting no category and no feed. This keeps MVP simple.
+    ref.read(selectedFeedIdProvider.notifier).state = null;
+    ref.read(selectedCategoryIdProvider.notifier).state = -1;
+    widget.onSelectFeed(null);
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, int feedId) async {
@@ -219,11 +418,150 @@ class Sidebar extends ConsumerWidget {
     final id = await ref.read(feedRepositoryProvider).upsertUrl(url);
     await ref.read(syncServiceProvider).refreshFeed(id);
     ref.read(selectedFeedIdProvider.notifier).state = id;
-    onSelectFeed(id);
+    ref.read(selectedCategoryIdProvider.notifier).state = null;
+    widget.onSelectFeed(id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Added & synced')),
     );
+  }
+
+  Future<void> _showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('New category'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(labelText: 'Name'),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: const Text('Create'),
+            ),
+          ],
+        );
+      },
+    );
+    if (name == null || name.trim().isEmpty) return;
+    final id = await ref.read(categoryRepositoryProvider).upsertByName(name);
+    setState(() => _expandedCategoryId = id);
+  }
+
+  Future<void> _showCategoryMenu(BuildContext context, WidgetRef ref, Category c) async {
+    final v = await showModalBottomSheet<_CategoryAction>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Delete category'),
+                onTap: () => Navigator.of(context).pop(_CategoryAction.delete),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (v != _CategoryAction.delete) return;
+    await ref.read(categoryRepositoryProvider).delete(c.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Category deleted')),
+    );
+  }
+
+  Future<void> _showFeedMenu(BuildContext context, WidgetRef ref, Feed f) async {
+    final action = await showModalBottomSheet<_FeedAction>(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.refresh),
+                title: const Text('Refresh'),
+                onTap: () => Navigator.of(context).pop(_FeedAction.refresh),
+              ),
+              ListTile(
+                leading: const Icon(Icons.drive_file_move_outline),
+                title: const Text('Move to category'),
+                onTap: () => Navigator.of(context).pop(_FeedAction.move),
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: const Text('Delete subscription'),
+                onTap: () => Navigator.of(context).pop(_FeedAction.delete),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (!context.mounted) return;
+
+    switch (action) {
+      case _FeedAction.refresh:
+        await ref.read(syncServiceProvider).refreshFeed(f.id);
+        return;
+      case _FeedAction.move:
+        await _moveFeedToCategory(context, ref, f);
+        return;
+      case _FeedAction.delete:
+        await _confirmDelete(context, ref, f.id);
+        return;
+      case null:
+        return;
+    }
+  }
+
+  Future<void> _moveFeedToCategory(BuildContext context, WidgetRef ref, Feed f) async {
+    final cats = await ref.read(categoryRepositoryProvider).getAll();
+    if (!context.mounted) return;
+    final selected = await showDialog<int?>(
+      context: context,
+      builder: (context) {
+        final picked = f.categoryId;
+        return SimpleDialog(
+          title: const Text('Move to category'),
+          children: [
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Row(
+                children: [
+                  Icon(picked == null ? Icons.check : Icons.clear),
+                  const SizedBox(width: 8),
+                  const Text('Uncategorized'),
+                ],
+              ),
+            ),
+            for (final c in cats)
+              SimpleDialogOption(
+                onPressed: () => Navigator.of(context).pop(c.id),
+                child: Row(
+                  children: [
+                    Icon(picked == c.id ? Icons.check : Icons.clear),
+                    const SizedBox(width: 8),
+                    Text(c.name),
+                  ],
+                ),
+              ),
+          ],
+        );
+      },
+    );
+    if (selected == f.categoryId) return;
+    await ref.read(feedRepositoryProvider).setCategory(feedId: f.id, categoryId: selected);
   }
 
   Future<void> _onMenu(BuildContext context, WidgetRef ref, _SidebarMenu v) async {
@@ -256,8 +594,8 @@ class Sidebar extends ConsumerWidget {
     final file = await openFile(acceptedTypeGroups: [group]);
     if (file == null) return;
     final xml = await file.readAsString();
-    final urls = ref.read(opmlServiceProvider).parseFeedUrls(xml);
-    if (urls.isEmpty) {
+    final entries = ref.read(opmlServiceProvider).parseEntries(xml);
+    if (entries.isEmpty) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No feeds found in OPML')),
@@ -266,9 +604,13 @@ class Sidebar extends ConsumerWidget {
     }
 
     var added = 0;
-    for (final u in urls) {
-      await ref.read(feedRepositoryProvider).upsertUrl(u);
-      added++;
+    for (final e in entries) {
+      final feedId = await ref.read(feedRepositoryProvider).upsertUrl(e.url);
+      if (e.category != null && e.category!.trim().isNotEmpty) {
+        final catId = await ref.read(categoryRepositoryProvider).upsertByName(e.category!);
+        await ref.read(feedRepositoryProvider).setCategory(feedId: feedId, categoryId: catId);
+      }
+      added += 1;
     }
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -280,7 +622,9 @@ class Sidebar extends ConsumerWidget {
     final loc = await getSaveLocation(suggestedName: 'subscriptions.opml');
     if (loc == null) return;
     final feeds = await ref.read(feedRepositoryProvider).getAll();
-    final xml = ref.read(opmlServiceProvider).buildOpml(feeds: feeds);
+    final cats = await ref.read(categoryRepositoryProvider).getAll();
+    final names = {for (final c in cats) c.id: c.name};
+    final xml = ref.read(opmlServiceProvider).buildOpml(feeds: feeds, categoryNames: names);
     final xfile = XFile.fromData(
       Uint8List.fromList(utf8.encode(xml)),
       mimeType: 'text/xml',
@@ -295,6 +639,8 @@ class Sidebar extends ConsumerWidget {
 }
 
 enum _SidebarMenu { refreshAll, importOpml, exportOpml }
+enum _FeedAction { refresh, move, delete }
+enum _CategoryAction { delete }
 
 class _UnreadBadge extends StatelessWidget {
   const _UnreadBadge(this.count);
