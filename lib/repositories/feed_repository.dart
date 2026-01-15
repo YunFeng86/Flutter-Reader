@@ -12,6 +12,10 @@ class FeedRepository {
     return _isar.feeds.where().watch(fireImmediately: true);
   }
 
+  Future<List<Feed>> getAll() {
+    return _isar.feeds.where().findAll();
+  }
+
   Future<Feed?> getById(int id) {
     return _isar.feeds.get(id);
   }

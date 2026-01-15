@@ -7,6 +7,8 @@ class ArticleRepository {
 
   final Isar _isar;
 
+  static const int defaultPageSize = 50;
+
   Stream<List<Article>> watchLatest({int? feedId, bool unreadOnly = false}) {
     var q = _isar.articles
         .where()
@@ -23,6 +25,22 @@ class ArticleRepository {
         .optional(unreadOnly, (q) => q.isReadEqualTo(false))
         .sortByPublishedAtDesc();
     return filtered.watch(fireImmediately: true);
+  }
+
+  Future<List<Article>> fetchPage({
+    required int offset,
+    required int limit,
+    int? feedId,
+    bool unreadOnly = false,
+  }) {
+    final qb = _isar.articles
+        .filter()
+        .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
+        .optional(unreadOnly, (q) => q.isReadEqualTo(false))
+        .sortByPublishedAtDesc()
+        .offset(offset)
+        .limit(limit);
+    return qb.findAll();
   }
 
   Stream<Article?> watchById(int id) {
@@ -60,6 +78,24 @@ class ArticleRepository {
       a.fullContentHtml = html;
       a.updatedAt = DateTime.now();
       await _isar.articles.put(a);
+    });
+  }
+
+  Future<int> markAllRead({int? feedId}) {
+    return _isar.writeTxn(() async {
+      final qb = _isar.articles
+          .filter()
+          .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
+          .isReadEqualTo(false);
+      final items = await qb.findAll();
+      if (items.isEmpty) return 0;
+      final now = DateTime.now();
+      for (final a in items) {
+        a.isRead = true;
+        a.updatedAt = now;
+      }
+      await _isar.articles.putAll(items);
+      return items.length;
     });
   }
 

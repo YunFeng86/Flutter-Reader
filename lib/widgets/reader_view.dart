@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
@@ -19,6 +20,13 @@ class ReaderView extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Full text failed: ${next.error}')),
         );
+      }
+    });
+
+    ref.listen(articleProvider(articleId), (prev, next) {
+      final a = next.valueOrNull;
+      if (a != null && !a.isRead) {
+        ref.read(articleRepositoryProvider).markRead(articleId, true);
       }
     });
 
@@ -70,7 +78,42 @@ class ReaderView extends ConsumerWidget {
             ? Center(child: Text(article.link))
             : SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 48),
-                child: HtmlWidget(html),
+                child: HtmlWidget(
+                  html,
+                  baseUrl: Uri.tryParse(article.link),
+                  onTapUrl: (url) async {
+                    final uri = Uri.tryParse(url);
+                    if (uri == null) return false;
+                    return launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                  onTapImage: (meta) {
+                    final src = meta.sources.isNotEmpty ? meta.sources.first.url : null;
+                    if (src == null || src.trim().isEmpty) return;
+                    showDialog<void>(
+                      context: context,
+                      builder: (context) {
+                        return Dialog(
+                          insetPadding: EdgeInsets.zero,
+                          child: Stack(
+                            children: [
+                              InteractiveViewer(
+                                child: Image.network(src, fit: BoxFit.contain),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: IconButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  icon: const Icon(Icons.close),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
               );
 
         if (!embedded) {

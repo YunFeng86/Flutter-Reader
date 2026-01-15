@@ -1,0 +1,122 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
+
+import '../models/article.dart';
+import 'core_providers.dart';
+import 'repository_providers.dart';
+import 'query_providers.dart';
+import 'unread_providers.dart';
+
+class ArticleListState {
+  const ArticleListState({
+    required this.items,
+    required this.hasMore,
+    this.isLoadingMore = false,
+  });
+
+  final List<Article> items;
+  final bool hasMore;
+  final bool isLoadingMore;
+
+  ArticleListState copyWith({
+    List<Article>? items,
+    bool? hasMore,
+    bool? isLoadingMore,
+  }) {
+    return ArticleListState(
+      items: items ?? this.items,
+      hasMore: hasMore ?? this.hasMore,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    );
+  }
+}
+
+class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
+  static const _pageSize = 50;
+
+  StreamSubscription<void>? _sub;
+  int? _feedId;
+  bool _unreadOnly = false;
+
+  @override
+  Future<ArticleListState> build() async {
+    _feedId = ref.watch(selectedFeedIdProvider);
+    _unreadOnly = ref.watch(unreadOnlyProvider);
+
+    // Refresh the list when the underlying query changes (new items from sync,
+    // read/star toggles, etc.). For MVP we simply reload the first page.
+    _sub?.cancel();
+    final isar = ref.watch(isarProvider);
+    final qb = isar.articles
+        .filter()
+        .optional(_feedId != null, (q) => q.feedIdEqualTo(_feedId!))
+        .optional(_unreadOnly, (q) => q.isReadEqualTo(false))
+        .sortByPublishedAtDesc();
+    _sub = qb.watchLazy().listen((_) {
+      unawaited(refresh());
+    });
+    ref.onDispose(() => _sub?.cancel());
+
+    final repo = ref.watch(articleRepositoryProvider);
+    final items = await repo.fetchPage(
+      offset: 0,
+      limit: _pageSize,
+      feedId: _feedId,
+      unreadOnly: _unreadOnly,
+    );
+    return ArticleListState(items: items, hasMore: items.length == _pageSize);
+  }
+
+  Future<void> refresh() async {
+    final repo = ref.read(articleRepositoryProvider);
+    final items = await repo.fetchPage(
+      offset: 0,
+      limit: _pageSize,
+      feedId: _feedId,
+      unreadOnly: _unreadOnly,
+    );
+    final current = state.valueOrNull;
+    if (current == null) {
+      state = AsyncValue.data(ArticleListState(
+        items: items,
+        hasMore: items.length == _pageSize,
+      ));
+      return;
+    }
+    state = AsyncValue.data(
+      current.copyWith(items: items, hasMore: items.length == _pageSize),
+    );
+  }
+
+  Future<void> loadMore() async {
+    final current = state.valueOrNull;
+    if (current == null || current.isLoadingMore || !current.hasMore) return;
+
+    state = AsyncValue.data(current.copyWith(isLoadingMore: true));
+    try {
+      final repo = ref.read(articleRepositoryProvider);
+      final more = await repo.fetchPage(
+        offset: current.items.length,
+        limit: _pageSize,
+        feedId: _feedId,
+        unreadOnly: _unreadOnly,
+      );
+      state = AsyncValue.data(
+        current.copyWith(
+          items: [...current.items, ...more],
+          hasMore: more.length == _pageSize,
+          isLoadingMore: false,
+        ),
+      );
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+}
+
+final articleListControllerProvider =
+    AutoDisposeAsyncNotifierProvider<ArticleListController, ArticleListState>(
+  ArticleListController.new,
+);
