@@ -26,15 +26,20 @@ class HomeScreen extends ConsumerWidget {
       final unreadOnly = ref.watch(unreadOnlyProvider);
       final selectedFeedId = ref.watch(selectedFeedIdProvider);
       final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter Reader'),
-          actions: [
-            IconButton(
-              tooltip: unreadOnly ? 'Show all' : 'Unread only',
-              onPressed: () => ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
-              icon: Icon(unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
-            ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Flutter Reader'),
+            actions: [
+              IconButton(
+                tooltip: 'Settings',
+                onPressed: () => context.push('/settings'),
+                icon: const Icon(Icons.settings),
+              ),
+              IconButton(
+                tooltip: unreadOnly ? 'Show all' : 'Unread only',
+                onPressed: () => ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
+                icon: Icon(unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
+              ),
             IconButton(
               tooltip: 'Mark all read',
               onPressed: () async {

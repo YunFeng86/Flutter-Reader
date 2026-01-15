@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/reader_screen.dart';
+import '../screens/settings_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -32,6 +33,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           return ReaderScreen(articleId: id);
         },
       ),
+      GoRoute(
+        path: '/settings',
+        name: 'settings',
+        builder: (context, state) => const SettingsScreen(),
+      ),
     ],
   );
 });
@@ -46,4 +52,3 @@ class _NotFoundScreen extends StatelessWidget {
     );
   }
 }
-

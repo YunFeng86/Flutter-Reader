@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../models/category.dart';
 import '../models/feed.dart';
@@ -52,6 +53,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
                   tooltip: 'More',
                   onSelected: (v) => _onMenu(context, ref, v),
                   itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: _SidebarMenu.settings,
+                      child: Text('Settings'),
+                    ),
+                    PopupMenuDivider(),
                     PopupMenuItem(
                       value: _SidebarMenu.refreshAll,
                       child: Text('Refresh all'),
@@ -566,6 +572,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
   Future<void> _onMenu(BuildContext context, WidgetRef ref, _SidebarMenu v) async {
     switch (v) {
+      case _SidebarMenu.settings:
+        context.push('/settings');
+        return;
       case _SidebarMenu.refreshAll:
         final feeds = await ref.read(feedRepositoryProvider).getAll();
         for (final f in feeds) {
@@ -638,7 +647,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 }
 
-enum _SidebarMenu { refreshAll, importOpml, exportOpml }
+enum _SidebarMenu { settings, refreshAll, importOpml, exportOpml }
 enum _FeedAction { refresh, move, delete }
 enum _CategoryAction { delete }
 

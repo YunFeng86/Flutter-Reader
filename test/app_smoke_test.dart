@@ -16,6 +16,10 @@ void main() {
           path: '/',
           builder: (context, state) => const SizedBox.shrink(),
         ),
+        GoRoute(
+          path: '/settings',
+          builder: (context, state) => const SizedBox.shrink(),
+        ),
       ],
     );
 
