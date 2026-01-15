@@ -23,10 +23,14 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(themeMode: mode));
   }
+
+  Future<void> setLocaleTag(String? localeTag) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(localeTag: localeTag));
+  }
 }
 
 final appSettingsProvider =
     AsyncNotifierProvider<AppSettingsController, AppSettings>(
   AppSettingsController.new,
 );
-

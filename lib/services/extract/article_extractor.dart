@@ -70,7 +70,8 @@ class ArticleExtractor {
     if (og != null && og.trim().isNotEmpty) return og.trim();
     final t = doc.querySelector('title')?.text;
     if (t != null && t.trim().isNotEmpty) return t.trim();
-    return 'Untitled';
+    // Keep extracted content locale-agnostic; UI can decide how to display missing titles.
+    return '';
   }
 
   void _stripNoise(dom.Element root) {

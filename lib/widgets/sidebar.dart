@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../models/category.dart';
 import '../models/feed.dart';
@@ -29,6 +30,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final feeds = ref.watch(feedsProvider);
     final categories = ref.watch(categoriesProvider);
     final selectedFeedId = ref.watch(selectedFeedIdProvider);
@@ -43,48 +45,48 @@ class _SidebarState extends ConsumerState<Sidebar> {
             padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
             child: Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    'Subscriptions',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                    l10n.subscriptions,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
                 PopupMenuButton<_SidebarMenu>(
-                  tooltip: 'More',
+                  tooltip: l10n.more,
                   onSelected: (v) => _onMenu(context, ref, v),
-                  itemBuilder: (context) => const [
+                  itemBuilder: (context) => [
                     PopupMenuItem(
                       value: _SidebarMenu.settings,
-                      child: Text('Settings'),
+                      child: Text(l10n.settings),
                     ),
-                    PopupMenuDivider(),
+                    const PopupMenuDivider(),
                     PopupMenuItem(
                       value: _SidebarMenu.refreshAll,
-                      child: Text('Refresh all'),
+                      child: Text(l10n.refreshAll),
                     ),
-                    PopupMenuDivider(),
+                    const PopupMenuDivider(),
                     PopupMenuItem(
                       value: _SidebarMenu.importOpml,
-                      child: Text('Import OPML'),
+                      child: Text(l10n.importOpml),
                     ),
                     PopupMenuItem(
                       value: _SidebarMenu.exportOpml,
-                      child: Text('Export OPML'),
+                      child: Text(l10n.exportOpml),
                     ),
                   ],
                 ),
                 IconButton(
-                  tooltip: 'Add',
+                  tooltip: l10n.addSubscription,
                   onPressed: () => _showAddFeedDialog(context, ref),
                   icon: const Icon(Icons.add),
                 ),
                 IconButton(
-                  tooltip: 'New category',
+                  tooltip: l10n.newCategory,
                   onPressed: () => _showAddCategoryDialog(context, ref),
                   icon: const Icon(Icons.create_new_folder_outlined),
                 ),
                 IconButton(
-                  tooltip: 'Refresh selected',
+                  tooltip: l10n.refreshSelected,
                   onPressed: selectedFeedId == null
                       ? null
                       : () async {
@@ -93,7 +95,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                               .refreshFeed(selectedFeedId);
                           if (!context.mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Refreshed')),
+                            SnackBar(content: Text(l10n.refreshed)),
                           );
                         },
                   icon: const Icon(Icons.refresh),
@@ -105,11 +107,12 @@ class _SidebarState extends ConsumerState<Sidebar> {
           Expanded(
             child: feeds.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(l10n.errorMessage(e.toString()))),
               data: (feedItems) {
                 return categories.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) =>
+                      Center(child: Text(l10n.errorMessage(e.toString()))),
                   data: (cats) {
                     final byCat = <int?, List<Feed>>{};
                     for (final f in feedItems) {
@@ -120,20 +123,20 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       loading: () => ListTile(
                         selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
-                        title: const Text('All'),
+                        title: Text(l10n.all),
                         onTap: () => _selectAll(ref),
                       ),
                       error: (e, _) => ListTile(
                         selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
-                        title: const Text('All'),
-                        subtitle: Text('Unread count error: $e'),
+                        title: Text(l10n.all),
+                        subtitle: Text(l10n.unreadCountError(e.toString())),
                         onTap: () => _selectAll(ref),
                       ),
                       data: (count) => ListTile(
                         selected: selectedFeedId == null && selectedCategoryId == null,
                         leading: const Icon(Icons.all_inbox),
-                        title: const Text('All'),
+                        title: Text(l10n.all),
                         trailing: _UnreadBadge(count),
                         onTap: () => _selectAll(ref),
                       ),
@@ -180,6 +183,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     required int? selectedFeedId,
     required int? selectedCategoryId,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final unread = ref.watch(unreadCountByCategoryProvider(category.id));
     final selected = selectedFeedId == null && selectedCategoryId == category.id;
     final expanded = _expandedCategoryId == category.id;
@@ -199,7 +203,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 error: (_, _) => const SizedBox.shrink(),
               ),
               IconButton(
-                tooltip: expanded ? 'Collapse' : 'Expand',
+                tooltip: expanded ? l10n.collapse : l10n.expand,
                 onPressed: () {
                   setState(() {
                     _expandedCategoryId = expanded ? null : category.id;
@@ -253,6 +257,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     required int? selectedFeedId,
     required int? selectedCategoryId,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final expanded = _expandedUncategorized;
     final selected = selectedFeedId == null && selectedCategoryId == -1;
     final unread = ref.watch(unreadCountUncategorizedProvider);
@@ -261,7 +266,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
         ListTile(
           selected: selected,
           leading: const Icon(Icons.folder_open_outlined),
-          title: const Text('Uncategorized'),
+          title: Text(l10n.uncategorized),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -271,7 +276,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 error: (_, _) => const SizedBox.shrink(),
               ),
               IconButton(
-                tooltip: expanded ? 'Collapse' : 'Expand',
+                tooltip: expanded ? l10n.collapse : l10n.expand,
                 onPressed: () => setState(() => _expandedUncategorized = !expanded),
                 icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
               ),
@@ -363,20 +368,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, int feedId) async {
+    final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete subscription?'),
-          content: const Text('This will delete its cached articles too.'),
+          title: Text(l10n.deleteSubscriptionConfirmTitle),
+          content: Text(l10n.deleteSubscriptionConfirmContent),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Delete'),
+              child: Text(l10n.delete),
             ),
           ],
         );
@@ -386,21 +392,22 @@ class _SidebarState extends ConsumerState<Sidebar> {
     await ref.read(feedRepositoryProvider).delete(feedId);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Deleted')),
+      SnackBar(content: Text(l10n.deleted)),
     );
   }
 
   Future<void> _showAddFeedDialog(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final url = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add subscription'),
+          title: Text(l10n.addSubscription),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'RSS/Atom URL',
+            decoration: InputDecoration(
+              labelText: l10n.rssAtomUrl,
               hintText: 'https://example.com/feed.xml',
             ),
             autofocus: true,
@@ -409,11 +416,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Add'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -428,30 +435,31 @@ class _SidebarState extends ConsumerState<Sidebar> {
     widget.onSelectFeed(id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Added & synced')),
+      SnackBar(content: Text(l10n.addedAndSynced)),
     );
   }
 
   Future<void> _showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('New category'),
+          title: Text(l10n.newCategory),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(labelText: 'Name'),
+            decoration: InputDecoration(labelText: l10n.name),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              child: const Text('Create'),
+              child: Text(l10n.create),
             ),
           ],
         );
@@ -463,6 +471,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _showCategoryMenu(BuildContext context, WidgetRef ref, Category c) async {
+    final l10n = AppLocalizations.of(context)!;
     final v = await showModalBottomSheet<_CategoryAction>(
       context: context,
       builder: (context) {
@@ -471,7 +480,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
             children: [
               ListTile(
                 leading: const Icon(Icons.delete_outline),
-                title: const Text('Delete category'),
+                title: Text(l10n.deleteCategory),
                 onTap: () => Navigator.of(context).pop(_CategoryAction.delete),
               ),
             ],
@@ -483,11 +492,12 @@ class _SidebarState extends ConsumerState<Sidebar> {
     await ref.read(categoryRepositoryProvider).delete(c.id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Category deleted')),
+      SnackBar(content: Text(l10n.categoryDeleted)),
     );
   }
 
   Future<void> _showFeedMenu(BuildContext context, WidgetRef ref, Feed f) async {
+    final l10n = AppLocalizations.of(context)!;
     final action = await showModalBottomSheet<_FeedAction>(
       context: context,
       builder: (context) {
@@ -496,17 +506,17 @@ class _SidebarState extends ConsumerState<Sidebar> {
             children: [
               ListTile(
                 leading: const Icon(Icons.refresh),
-                title: const Text('Refresh'),
+                title: Text(l10n.refresh),
                 onTap: () => Navigator.of(context).pop(_FeedAction.refresh),
               ),
               ListTile(
                 leading: const Icon(Icons.drive_file_move_outline),
-                title: const Text('Move to category'),
+                title: Text(l10n.moveToCategory),
                 onTap: () => Navigator.of(context).pop(_FeedAction.move),
               ),
               ListTile(
                 leading: const Icon(Icons.delete_outline),
-                title: const Text('Delete subscription'),
+                title: Text(l10n.deleteSubscription),
                 onTap: () => Navigator.of(context).pop(_FeedAction.delete),
               ),
             ],
@@ -537,9 +547,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final selected = await showDialog<int?>(
       context: context,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final picked = f.categoryId;
         return SimpleDialog(
-          title: const Text('Move to category'),
+          title: Text(l10n.moveToCategory),
           children: [
             SimpleDialogOption(
               onPressed: () => Navigator.of(context).pop(null),
@@ -547,7 +558,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 children: [
                   Icon(picked == null ? Icons.check : Icons.clear),
                   const SizedBox(width: 8),
-                  const Text('Uncategorized'),
+                  Text(l10n.uncategorized),
                 ],
               ),
             ),
@@ -576,13 +587,14 @@ class _SidebarState extends ConsumerState<Sidebar> {
         context.push('/settings');
         return;
       case _SidebarMenu.refreshAll:
+        final l10n = AppLocalizations.of(context)!;
         final feeds = await ref.read(feedRepositoryProvider).getAll();
         for (final f in feeds) {
           await ref.read(syncServiceProvider).refreshFeed(f.id);
         }
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Refreshed all')),
+          SnackBar(content: Text(l10n.refreshedAll)),
         );
         return;
       case _SidebarMenu.importOpml:
@@ -606,8 +618,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final entries = ref.read(opmlServiceProvider).parseEntries(xml);
     if (entries.isEmpty) {
       if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No feeds found in OPML')),
+        SnackBar(content: Text(l10n.noFeedsFoundInOpml)),
       );
       return;
     }
@@ -622,8 +635,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
       added += 1;
     }
     if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Imported $added feeds')),
+      SnackBar(content: Text(l10n.importedFeeds(added))),
     );
   }
 
@@ -641,8 +655,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     );
     await xfile.saveTo(loc.path);
     if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Exported OPML')),
+      SnackBar(content: Text(l10n.exportedOpml)),
     );
   }
 }

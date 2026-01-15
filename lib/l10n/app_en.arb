@@ -1,0 +1,121 @@
+{
+  "@@locale": "en",
+  "appTitle": "Flutter Reader",
+  "notFound": "Not found",
+
+  "settings": "Settings",
+  "appearance": "Appearance",
+  "theme": "Theme",
+  "system": "System",
+  "light": "Light",
+  "dark": "Dark",
+
+  "language": "Language",
+  "systemLanguage": "System language",
+  "english": "English",
+  "chineseSimplified": "简体中文",
+  "chineseTraditional": "繁體中文",
+
+  "reader": "Reader",
+  "fontSize": "Font size",
+  "lineHeight": "Line height",
+  "horizontalPadding": "Horizontal padding",
+
+  "storage": "Storage",
+  "clearImageCache": "Clear image cache",
+  "clearImageCacheSubtitle": "Remove cached images used for offline reading",
+  "cacheCleared": "Cache cleared",
+
+  "subscriptions": "Subscriptions",
+  "all": "All",
+  "uncategorized": "Uncategorized",
+  "refreshAll": "Refresh all",
+  "refreshSelected": "Refresh selected",
+  "importOpml": "Import OPML",
+  "exportOpml": "Export OPML",
+  "addSubscription": "Add subscription",
+  "newCategory": "New category",
+
+  "articles": "Articles",
+  "unread": "Unread",
+  "markAllRead": "Mark all read",
+
+  "fullText": "Full text",
+  "readerSettings": "Reader settings",
+  "done": "Done",
+
+  "more": "More",
+  "showAll": "Show all",
+  "unreadOnly": "Unread only",
+  "selectAnArticle": "Select an article",
+
+  "errorMessage": "Error: {error}",
+  "@errorMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "unreadCountError": "Unread count error: {error}",
+  "@unreadCountError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "refreshed": "Refreshed",
+  "refreshedAll": "Refreshed all",
+
+  "add": "Add",
+  "cancel": "Cancel",
+  "create": "Create",
+  "delete": "Delete",
+  "deleted": "Deleted",
+
+  "rssAtomUrl": "RSS/Atom URL",
+  "name": "Name",
+  "addedAndSynced": "Added & synced",
+
+  "deleteSubscription": "Delete subscription",
+  "deleteSubscriptionConfirmTitle": "Delete subscription?",
+  "deleteSubscriptionConfirmContent": "This will delete its cached articles too.",
+
+  "deleteCategory": "Delete category",
+  "categoryDeleted": "Category deleted",
+  "refresh": "Refresh",
+  "moveToCategory": "Move to category",
+
+  "noFeedsFoundInOpml": "No feeds found in OPML",
+  "importedFeeds": "Imported {count} feeds",
+  "@importedFeeds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportedOpml": "Exported OPML",
+
+  "fullTextFailed": "Full text failed: {error}",
+  "@fullTextFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "scrollToLoadMore": "Scroll to load more",
+  "noArticles": "No articles",
+  "noUnreadArticles": "No unread articles",
+
+  "star": "Star",
+  "unstar": "Unstar",
+  "markRead": "Mark read",
+  "markUnread": "Mark unread",
+  "collapse": "Collapse",
+  "expand": "Expand"
+}

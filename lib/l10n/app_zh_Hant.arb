@@ -1,0 +1,121 @@
+{
+  "@@locale": "zh_Hant",
+  "appTitle": "Flutter Reader",
+  "notFound": "未找到",
+
+  "settings": "設定",
+  "appearance": "外觀",
+  "theme": "主題",
+  "system": "跟隨系統",
+  "light": "淺色",
+  "dark": "深色",
+
+  "language": "語言",
+  "systemLanguage": "系統語言",
+  "english": "English",
+  "chineseSimplified": "简体中文",
+  "chineseTraditional": "繁體中文",
+
+  "reader": "閱讀",
+  "fontSize": "字號",
+  "lineHeight": "行高",
+  "horizontalPadding": "左右邊距",
+
+  "storage": "儲存",
+  "clearImageCache": "清理圖片快取",
+  "clearImageCacheSubtitle": "移除離線閱讀預取的圖片快取",
+  "cacheCleared": "快取已清理",
+
+  "subscriptions": "訂閱",
+  "all": "全部",
+  "uncategorized": "未分類",
+  "refreshAll": "重新整理全部",
+  "refreshSelected": "重新整理當前",
+  "importOpml": "匯入 OPML",
+  "exportOpml": "匯出 OPML",
+  "addSubscription": "新增訂閱",
+  "newCategory": "新增分類",
+
+  "articles": "文章",
+  "unread": "未讀",
+  "markAllRead": "全部已讀",
+
+  "fullText": "閱讀全文",
+  "readerSettings": "閱讀設定",
+  "done": "完成",
+
+  "more": "更多",
+  "showAll": "顯示全部",
+  "unreadOnly": "只看未讀",
+  "selectAnArticle": "請選擇一篇文章",
+
+  "errorMessage": "錯誤：{error}",
+  "@errorMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "unreadCountError": "未讀數取得失敗：{error}",
+  "@unreadCountError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "refreshed": "已重新整理",
+  "refreshedAll": "全部已重新整理",
+
+  "add": "新增",
+  "cancel": "取消",
+  "create": "建立",
+  "delete": "刪除",
+  "deleted": "已刪除",
+
+  "rssAtomUrl": "RSS/Atom 位址",
+  "name": "名稱",
+  "addedAndSynced": "已新增並同步",
+
+  "deleteSubscription": "刪除訂閱",
+  "deleteSubscriptionConfirmTitle": "刪除訂閱？",
+  "deleteSubscriptionConfirmContent": "這也會刪除其快取的文章。",
+
+  "deleteCategory": "刪除分類",
+  "categoryDeleted": "分類已刪除",
+  "refresh": "重新整理",
+  "moveToCategory": "移動到分類",
+
+  "noFeedsFoundInOpml": "OPML 中未找到訂閱",
+  "importedFeeds": "已匯入 {count} 個訂閱",
+  "@importedFeeds": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportedOpml": "已匯出 OPML",
+
+  "fullTextFailed": "取得全文失敗：{error}",
+  "@fullTextFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+
+  "scrollToLoadMore": "捲動以載入更多",
+  "noArticles": "暫無文章",
+  "noUnreadArticles": "暫無未讀文章",
+
+  "star": "收藏",
+  "unstar": "取消收藏",
+  "markRead": "標記為已讀",
+  "markUnread": "標記為未讀",
+  "collapse": "收起",
+  "expand": "展開"
+}

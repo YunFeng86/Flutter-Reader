@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
 
 class AppSettings {
-  const AppSettings({this.themeMode = ThemeMode.system});
+  const AppSettings({
+    this.themeMode = ThemeMode.system,
+    this.localeTag,
+  });
 
   final ThemeMode themeMode;
+  // null => follow system language.
+  final String? localeTag;
 
-  AppSettings copyWith({ThemeMode? themeMode}) {
-    return AppSettings(themeMode: themeMode ?? this.themeMode);
+  AppSettings copyWith({ThemeMode? themeMode, String? localeTag}) {
+    return AppSettings(
+      themeMode: themeMode ?? this.themeMode,
+      localeTag: localeTag,
+    );
   }
 
   Map<String, Object?> toJson() => {
         'themeMode': themeMode.name,
+        'localeTag': localeTag,
       };
 
   static AppSettings fromJson(Map<String, Object?> json) {
@@ -20,7 +29,10 @@ class AppSettings {
       'dark' => ThemeMode.dark,
       _ => ThemeMode.system,
     };
-    return AppSettings(themeMode: mode);
+    final localeTag = json['localeTag'];
+    return AppSettings(
+      themeMode: mode,
+      localeTag: localeTag is String && localeTag.trim().isNotEmpty ? localeTag : null,
+    );
   }
 }
-

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:flutter_reader/l10n/app_localizations.dart';
+
 import '../providers/article_list_controller.dart';
 import '../providers/repository_providers.dart';
 import '../providers/unread_providers.dart';
@@ -40,16 +42,19 @@ class _ArticleListState extends ConsumerState<ArticleList> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final unreadOnly = ref.watch(unreadOnlyProvider);
     final state = ref.watch(articleListControllerProvider);
 
     return state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(l10n.errorMessage(e.toString()))),
       data: (data) {
         final items = data.items;
         if (items.isEmpty) {
-          return Center(child: Text(unreadOnly ? 'No unread articles' : 'No articles'));
+          return Center(
+            child: Text(unreadOnly ? l10n.noUnreadArticles : l10n.noArticles),
+          );
         }
 
         final narrow = MediaQuery.sizeOf(context).width < 600;
@@ -65,7 +70,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                 child: Center(
                   child: data.isLoadingMore
                       ? const CircularProgressIndicator()
-                      : const Text('Scroll to load more'),
+                      : Text(l10n.scrollToLoadMore),
                 ),
               );
             }
@@ -122,4 +127,3 @@ class _ArticleListState extends ConsumerState<ArticleList> {
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../providers/app_settings_providers.dart';
 import '../providers/service_providers.dart';
@@ -12,26 +13,41 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final appSettings = ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 
+    String themeLabel(ThemeMode mode) => switch (mode) {
+          ThemeMode.system => l10n.system,
+          ThemeMode.light => l10n.light,
+          ThemeMode.dark => l10n.dark,
+        };
+
+    String languageLabel(String? tag) => switch (tag) {
+          null => l10n.systemLanguage,
+          'en' => l10n.english,
+          'zh' => l10n.chineseSimplified,
+          'zh-Hant' || 'zh_Hant' => l10n.chineseTraditional,
+          _ => tag,
+        };
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.settings)),
       body: ListView(
         children: [
           const SizedBox(height: 8),
           _Section(
-            title: 'Appearance',
+            title: l10n.appearance,
             children: [
               ListTile(
-                title: const Text('Theme'),
-                subtitle: Text(appSettings.themeMode.name),
+                title: Text(l10n.theme),
+                subtitle: Text(themeLabel(appSettings.themeMode)),
                 trailing: SegmentedButton<ThemeMode>(
-                  segments: const [
-                    ButtonSegment(value: ThemeMode.system, label: Text('System')),
-                    ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-                    ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                  segments: [
+                    ButtonSegment(value: ThemeMode.system, label: Text(l10n.system)),
+                    ButtonSegment(value: ThemeMode.light, label: Text(l10n.light)),
+                    ButtonSegment(value: ThemeMode.dark, label: Text(l10n.dark)),
                   ],
                   selected: {appSettings.themeMode},
                   onSelectionChanged: (s) => ref
@@ -39,13 +55,40 @@ class SettingsScreen extends ConsumerWidget {
                       .setThemeMode(s.first),
                 ),
               ),
+              ListTile(
+                title: Text(l10n.language),
+                subtitle: Text(languageLabel(appSettings.localeTag)),
+                trailing: DropdownButton<String?>(
+                  value: appSettings.localeTag,
+                  items: [
+                    DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text(l10n.systemLanguage),
+                    ),
+                    DropdownMenuItem<String?>(
+                      value: 'en',
+                      child: Text(l10n.english),
+                    ),
+                    DropdownMenuItem<String?>(
+                      value: 'zh',
+                      child: Text(l10n.chineseSimplified),
+                    ),
+                    DropdownMenuItem<String?>(
+                      value: 'zh-Hant',
+                      child: Text(l10n.chineseTraditional),
+                    ),
+                  ],
+                  onChanged: (v) =>
+                      ref.read(appSettingsProvider.notifier).setLocaleTag(v),
+                ),
+              ),
             ],
           ),
           _Section(
-            title: 'Reader',
+            title: l10n.reader,
             children: [
               _SliderTile(
-                title: 'Font size',
+                title: l10n.fontSize,
                 value: readerSettings.fontSize,
                 min: 12,
                 max: 28,
@@ -55,7 +98,7 @@ class SettingsScreen extends ConsumerWidget {
                     .save(readerSettings.copyWith(fontSize: v)),
               ),
               _SliderTile(
-                title: 'Line height',
+                title: l10n.lineHeight,
                 value: readerSettings.lineHeight,
                 min: 1.1,
                 max: 2.2,
@@ -65,7 +108,7 @@ class SettingsScreen extends ConsumerWidget {
                     .save(readerSettings.copyWith(lineHeight: v)),
               ),
               _SliderTile(
-                title: 'Horizontal padding',
+                title: l10n.horizontalPadding,
                 value: readerSettings.horizontalPadding,
                 min: 8,
                 max: 32,
@@ -77,17 +120,17 @@ class SettingsScreen extends ConsumerWidget {
             ],
           ),
           _Section(
-            title: 'Storage',
+            title: l10n.storage,
             children: [
               ListTile(
-                title: const Text('Clear image cache'),
-                subtitle: const Text('Remove cached images used for offline reading'),
+                title: Text(l10n.clearImageCache),
+                subtitle: Text(l10n.clearImageCacheSubtitle),
                 trailing: const Icon(Icons.delete_outline),
                 onTap: () async {
                   await ref.read(cacheManagerProvider).emptyCache();
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Cache cleared')),
+                    SnackBar(content: Text(l10n.cacheCleared)),
                   );
                 },
               ),
@@ -152,4 +195,3 @@ class _SliderTile extends StatelessWidget {
     );
   }
 }
-

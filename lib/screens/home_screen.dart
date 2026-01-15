@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_reader/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
     final isWide = width >= 900;
 
@@ -26,22 +28,22 @@ class HomeScreen extends ConsumerWidget {
       final unreadOnly = ref.watch(unreadOnlyProvider);
       final selectedFeedId = ref.watch(selectedFeedIdProvider);
       final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Flutter Reader'),
-            actions: [
-              IconButton(
-                tooltip: 'Settings',
-                onPressed: () => context.push('/settings'),
-                icon: const Icon(Icons.settings),
-              ),
-              IconButton(
-                tooltip: unreadOnly ? 'Show all' : 'Unread only',
-                onPressed: () => ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
-                icon: Icon(unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
-              ),
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.appTitle),
+          actions: [
             IconButton(
-              tooltip: 'Mark all read',
+              tooltip: l10n.settings,
+              onPressed: () => context.push('/settings'),
+              icon: const Icon(Icons.settings),
+            ),
+            IconButton(
+              tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
+              onPressed: () => ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
+              icon: Icon(unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
+            ),
+            IconButton(
+              tooltip: l10n.markAllRead,
               onPressed: () async {
                 await ref.read(articleRepositoryProvider).markAllRead(
                       feedId: selectedFeedId,
@@ -173,10 +175,11 @@ class HomeScreen extends ConsumerWidget {
                             children: [
                               Consumer(
                                 builder: (context, ref, _) {
+                                  final l10n = AppLocalizations.of(context)!;
                                   final unreadOnly = ref.watch(unreadOnlyProvider);
                                   return FilterChip(
                                     selected: unreadOnly,
-                                    label: const Text('Unread'),
+                                    label: Text(l10n.unread),
                                     onSelected: (v) => ref
                                         .read(unreadOnlyProvider.notifier)
                                         .state = v,
@@ -186,12 +189,13 @@ class HomeScreen extends ConsumerWidget {
                               const Spacer(),
                               Consumer(
                                 builder: (context, ref, _) {
+                                  final l10n = AppLocalizations.of(context)!;
                                   final selectedFeedId =
                                       ref.watch(selectedFeedIdProvider);
                                   final selectedCategoryId =
                                       ref.watch(selectedCategoryIdProvider);
                                   return IconButton(
-                                    tooltip: 'Mark all read',
+                                    tooltip: l10n.markAllRead,
                                     onPressed: () async {
                                       await ref
                                           .read(articleRepositoryProvider)
@@ -220,7 +224,7 @@ class HomeScreen extends ConsumerWidget {
                 const VerticalDivider(width: 1),
                 Expanded(
                   child: selectedArticleId == null
-                      ? const Center(child: Text('Select an article'))
+                      ? Center(child: Text(l10n.selectAnArticle))
                       : ReaderView(articleId: selectedArticleId!, embedded: true),
                 ),
               ],

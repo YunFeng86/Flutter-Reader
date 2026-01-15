@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
@@ -22,8 +23,9 @@ class ReaderView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(fullTextControllerProvider, (prev, next) {
       if (next.hasError) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Full text failed: ${next.error}')),
+          SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
         );
       }
     });
@@ -52,18 +54,20 @@ class ReaderView extends ConsumerWidget {
     final settingsAsync = ref.watch(readerSettingsProvider);
     return a.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(AppLocalizations.of(context)!.errorMessage(e.toString()))),
       data: (article) {
-        if (article == null) return const Center(child: Text('Not found'));
+        final l10n = AppLocalizations.of(context)!;
+        if (article == null) return Center(child: Text(l10n.notFound));
 
         final settings = settingsAsync.valueOrNull ?? const ReaderSettings();
         final html = (article.fullContentHtml ?? article.contentHtml ?? '').trim();
-        final title = article.title?.trim().isNotEmpty == true ? article.title! : 'Reader';
+        final title =
+            article.title?.trim().isNotEmpty == true ? article.title! : l10n.reader;
 
         final hasFull = (article.fullContentHtml ?? '').trim().isNotEmpty;
         final actions = <Widget>[
           IconButton(
-            tooltip: 'Full text',
+            tooltip: l10n.fullText,
             onPressed: (hasFull || fullText.isLoading)
                 ? null
                 : () => ref
@@ -78,18 +82,18 @@ class ReaderView extends ConsumerWidget {
                 : const Icon(Icons.chrome_reader_mode),
           ),
           IconButton(
-            tooltip: 'Reader settings',
+            tooltip: l10n.readerSettings,
             onPressed: () => _showReaderSettings(context, ref, settings),
             icon: const Icon(Icons.text_fields),
           ),
           IconButton(
-            tooltip: article.isStarred ? 'Unstar' : 'Star',
+            tooltip: article.isStarred ? l10n.unstar : l10n.star,
             onPressed: () =>
                 ref.read(articleRepositoryProvider).toggleStar(articleId),
             icon: Icon(article.isStarred ? Icons.star : Icons.star_border),
           ),
           IconButton(
-            tooltip: article.isRead ? 'Mark unread' : 'Mark read',
+            tooltip: article.isRead ? l10n.markUnread : l10n.markRead,
             onPressed: () =>
                 ref.read(articleRepositoryProvider).markRead(articleId, !article.isRead),
             icon: Icon(
@@ -188,6 +192,7 @@ class ReaderView extends ConsumerWidget {
     WidgetRef ref,
     ReaderSettings settings,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     await showModalBottomSheet<void>(
       context: context,
       builder: (context) {
@@ -202,10 +207,10 @@ class ReaderView extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Reader settings',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                            l10n.readerSettings,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
                         TextButton(
@@ -216,20 +221,20 @@ class ReaderView extends ConsumerWidget {
                             if (!context.mounted) return;
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Done'),
+                          child: Text(l10n.done),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     _slider(
-                      label: 'Font size',
+                      label: l10n.fontSize,
                       value: cur.fontSize,
                       min: 12,
                       max: 28,
                       onChanged: (v) => setState(() => cur = cur.copyWith(fontSize: v)),
                     ),
                     _slider(
-                      label: 'Line height',
+                      label: l10n.lineHeight,
                       value: cur.lineHeight,
                       min: 1.1,
                       max: 2.2,
@@ -237,7 +242,7 @@ class ReaderView extends ConsumerWidget {
                           setState(() => cur = cur.copyWith(lineHeight: v)),
                     ),
                     _slider(
-                      label: 'Horizontal padding',
+                      label: l10n.horizontalPadding,
                       value: cur.horizontalPadding,
                       min: 8,
                       max: 32,

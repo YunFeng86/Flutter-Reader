@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../screens/home_screen.dart';
 import '../screens/reader_screen.dart';
@@ -47,8 +48,9 @@ class _NotFoundScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: Text('Not found')),
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      body: Center(child: Text(l10n.notFound)),
     );
   }
 }
