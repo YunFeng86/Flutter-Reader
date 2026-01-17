@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 
+import 'reader_bottom_bar.dart';
 import '../models/article.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/reader_providers.dart';
@@ -109,7 +110,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   @override
   Widget build(BuildContext context) {
     final a = ref.watch(articleProvider(widget.articleId));
-    final fullTextRequest = ref.watch(fullTextControllerProvider);
+    // final fullTextRequest = ref.watch(fullTextControllerProvider); // Unused
     final useFullText = ref.watch(fullTextViewEnabledProvider(widget.articleId));
     final settingsAsync = ref.watch(readerSettingsProvider);
     return a.when(
@@ -132,68 +133,37 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final title = article.title?.trim().isNotEmpty == true
             ? article.title!
             : l10n.reader;
+        
+        // Format date: e.g. "2026/1/14 08:00:00"
+        final dateStr = DateFormat('yyyy/MM/dd HH:mm:ss').format(article.publishedAt.toLocal());
 
-        final actions = <Widget>[
-          IconButton(
-            tooltip: hasFull && showFull ? l10n.collapse : l10n.fullText,
-            onPressed: fullTextRequest.isLoading
-                ? null
-                : hasFull
-                ? () {
-                    final notifier = ref.read(
-                      fullTextViewEnabledProvider(widget.articleId).notifier,
-                    );
-                    notifier.state = !notifier.state;
-                  }
-                : () {
-                    // One click: start fetch and automatically show full text
-                    // once it becomes available.
-                    ref
-                        .read(fullTextViewEnabledProvider(widget.articleId).notifier)
-                        .state = true;
-                    ref
-                        .read(fullTextControllerProvider.notifier)
-                        .fetch(widget.articleId);
-                  },
-            icon: fullTextRequest.isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Icon(
-                    Icons.chrome_reader_mode,
-                    color: hasFull && showFull
-                        ? Theme.of(context).colorScheme.primary
-                        : null,
+        // New Inline Header
+        final inlineHeader = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
-          ),
-          IconButton(
-            tooltip: l10n.readerSettings,
-            onPressed: () => _showReaderSettings(context, ref, settings),
-            icon: const Icon(Icons.text_fields),
-          ),
-          IconButton(
-            tooltip: article.isStarred ? l10n.unstar : l10n.star,
-            onPressed: () =>
-                ref.read(articleRepositoryProvider).toggleStar(widget.articleId),
-            icon: Icon(article.isStarred ? Icons.star : Icons.star_border),
-          ),
-          IconButton(
-            tooltip: article.isRead ? l10n.markUnread : l10n.markRead,
-            onPressed: () => ref
-                .read(articleRepositoryProvider)
-                .markRead(widget.articleId, !article.isRead),
-            icon: Icon(
-              article.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
             ),
-          ),
-        ];
+            const SizedBox(height: 8),
+            Text(
+              dateStr,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            const Divider(height: 1),
+            const SizedBox(height: 24),
+          ],
+        );
 
-        final content = html.isEmpty
+        final contentWidget = html.isEmpty
             ? Center(child: Text(article.link))
             : SingleChildScrollView(
-                // Keep line-length readable even when the reader pane is wide.
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
@@ -203,64 +173,86 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         settings.horizontalPadding,
-                        12,
+                        24, // Top padding
                         settings.horizontalPadding,
-                        48,
+                        100, // Bottom padding for floating bar
                       ),
-                      child: HtmlWidget(
-                        html,
-                        baseUrl: Uri.tryParse(article.link),
-                        textStyle: TextStyle(
-                          fontSize: settings.fontSize,
-                          height: settings.lineHeight,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        onTapUrl: (url) async {
-                          final uri = Uri.tryParse(url);
-                          if (uri == null) return false;
-                          return launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        },
-                        onTapImage: (meta) {
-                          final src =
-                              meta.sources.isNotEmpty ? meta.sources.first.url : null;
-                          if (src == null || src.trim().isEmpty) return;
-                          showDialog<void>(
-                            context: context,
-                            builder: (context) {
-                              return Dialog(
-                                insetPadding: EdgeInsets.zero,
-                                child: Stack(
-                                  children: [
-                                    InteractiveViewer(
-                                      child: Image.network(
-                                        src,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: IconButton(
-                                        onPressed: () => Navigator.of(context).pop(),
-                                        icon: const Icon(Icons.close),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          inlineHeader,
+                          HtmlWidget(
+                            html,
+                            baseUrl: Uri.tryParse(article.link),
+                            textStyle: TextStyle(
+                              fontSize: settings.fontSize,
+                              height: settings.lineHeight,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            onTapUrl: (url) async {
+                              final uri = Uri.tryParse(url);
+                              if (uri == null) return false;
+                              return launchUrl(
+                                uri,
+                                mode: LaunchMode.externalApplication,
                               );
                             },
-                          );
-                        },
+                            onTapImage: (meta) {
+                              final src =
+                                  meta.sources.isNotEmpty ? meta.sources.first.url : null;
+                              if (src == null || src.trim().isEmpty) return;
+                              showDialog<void>(
+                                context: context,
+                                builder: (context) {
+                                  return Dialog(
+                                    insetPadding: EdgeInsets.zero,
+                                    child: Stack(
+                                      children: [
+                                        InteractiveViewer(
+                                          child: Image.network(
+                                            src,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                        Positioned(
+                                          top: 8,
+                                          right: 8,
+                                          child: IconButton(
+                                            onPressed: () => Navigator.of(context).pop(),
+                                            icon: const Icon(Icons.close),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
               );
 
+        final bottomBar = Positioned(
+          left: 0,
+          right: 0, // Stretch full width
+          bottom: 0,
+          child: Center(
+             child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: ReaderView.maxReadingWidth),
+              child: ReaderBottomBar(
+                article: article,
+                onShowSettings: () => _showReaderSettings(context, ref, settings),
+              ),
+            ),
+          ),
+        );
+
         Widget header() {
+          // Minimal header for Desktop/Embedded
           return Material(
             color: Theme.of(context).colorScheme.surface,
             child: SizedBox(
@@ -270,8 +262,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                   if (widget.showBack) ...[
                     const SizedBox(width: 4),
                     IconButton(
-                      tooltip: MaterialLocalizations.of(context)
-                          .backButtonTooltip,
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       onPressed: () {
                         final router = GoRouter.of(context);
                         if (router.canPop()) {
@@ -283,16 +274,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                       icon: const Icon(Icons.arrow_back),
                     ),
                   ] else
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ),
-                  ...actions,
+                    const SizedBox(width: 12),
+                  // Title is now inline, so we just keep the back button area clean
+                  // or show feed title? Let's keep it clean.
                 ],
               ),
             ),
@@ -301,29 +285,32 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
         if (!widget.embedded && !isDesktop) {
           return Scaffold(
-            appBar: AppBar(title: Text(title), actions: actions),
-            body: content,
+            appBar: AppBar(
+              title: null, // Title is inline
+              automaticallyImplyLeading: true,
+              actions: const [], // Actions moved to bottom bar
+            ),
+            body: Stack(
+              children: [
+                contentWidget,
+                bottomBar,
+              ],
+            ),
           );
         }
 
-        // Desktop always uses an in-content header so the window's top bar can
-        // stay global and stable.
-        if (!widget.embedded && isDesktop) {
-          return Column(
-            children: [
-              header(),
-              const Divider(height: 1),
-              Expanded(child: content),
-            ],
-          );
-        }
-
-        // Embedded (2/3-column) reader.
         return Column(
           children: [
             header(),
             const Divider(height: 1),
-            Expanded(child: content),
+            Expanded(
+              child: Stack(
+                children: [
+                  contentWidget,
+                  bottomBar,
+                ],
+              ),
+            ),
           ],
         );
       },
