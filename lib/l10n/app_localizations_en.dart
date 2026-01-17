@@ -233,4 +233,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expand => 'Expand';
+
+  @override
+  String get search => 'Search';
+
+  @override
+  String get groupingAndSorting => 'Grouping & Sorting';
+
+  @override
+  String get rules => 'Rules';
+
+  @override
+  String get services => 'Services';
+
+  @override
+  String get appPreferences => 'App Preferences';
+
+  @override
+  String get about => 'About';
 }

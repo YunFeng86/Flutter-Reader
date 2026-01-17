@@ -117,5 +117,11 @@
   "markRead": "标记为已读",
   "markUnread": "标记为未读",
   "collapse": "收起",
-  "expand": "展开"
+  "expand": "展开",
+  "search": "搜索",
+  "groupingAndSorting": "分组与排序",
+  "rules": "规则",
+  "services": "服务",
+  "appPreferences": "应用偏好",
+  "about": "关于"
 }

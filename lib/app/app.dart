@@ -5,6 +5,15 @@ import 'package:flutter_reader/l10n/app_localizations.dart';
 import 'router.dart';
 import '../theme/app_theme.dart';
 import '../providers/app_settings_providers.dart';
+import '../utils/platform.dart';
+import '../widgets/desktop_title_bar.dart';
+import 'package:go_router/go_router.dart';
+import '../widgets/sidebar.dart';
+import '../providers/query_providers.dart';
+import '../providers/repository_providers.dart';
+import '../providers/service_providers.dart';
+import '../providers/unread_providers.dart';
+import '../ui/layout.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -55,6 +64,139 @@ class App extends ConsumerWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+      builder: (context, child) {
+        final content = child ?? const SizedBox.shrink();
+        if (!isDesktop) return content;
+
+        final l10n = AppLocalizations.of(context)!;
+        final width = MediaQuery.sizeOf(context).width;
+        final uri = router.routerDelegate.currentConfiguration.uri;
+        final isArticleRoute =
+            uri.pathSegments.isNotEmpty && uri.pathSegments.first == 'article';
+        final mode = desktopModeForWidth(width);
+        final isArticleSeparatePage = isArticleRoute && !desktopReaderEmbedded(mode);
+        final drawerEnabled = desktopSidebarInDrawer(mode) && !isArticleSeparatePage;
+
+        Future<void> refreshAll() async {
+          final feedId = ref.read(selectedFeedIdProvider);
+          final categoryId = ref.read(selectedCategoryIdProvider);
+          if (feedId != null) {
+            await ref.read(syncServiceProvider).refreshFeed(feedId);
+            return;
+          }
+
+          final feeds = await ref.read(feedRepositoryProvider).getAll();
+          final filtered = (categoryId == null)
+              ? feeds
+              : (categoryId < 0
+                  ? feeds.where((f) => f.categoryId == null)
+                  : feeds.where((f) => f.categoryId == categoryId));
+          for (final f in filtered) {
+            await ref.read(syncServiceProvider).refreshFeed(f.id);
+          }
+        }
+
+        Future<void> markAllRead() async {
+          final selectedFeedId = ref.read(selectedFeedIdProvider);
+          final selectedCategoryId = ref.read(selectedCategoryIdProvider);
+          await ref.read(articleRepositoryProvider).markAllRead(
+                feedId: selectedFeedId,
+                categoryId: selectedFeedId == null ? selectedCategoryId : null,
+              );
+        }
+
+        // Tooltips need an Overlay ancestor; since the title bar sits above the
+        // Router/Navigator, we provide a top-level Overlay for desktop.
+        return Overlay(
+          initialEntries: [
+            OverlayEntry(
+              opaque: true,
+              builder: (overlayContext) {
+                final leading = switch (mode) {
+                  _ when drawerEnabled => Builder(
+                      builder: (context) {
+                        return IconButton(
+                          tooltip: MaterialLocalizations.of(context)
+                              .openAppDrawerTooltip,
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                          icon: const Icon(Icons.menu),
+                        );
+                      },
+                    ),
+                  _ => null,
+                };
+
+                return Scaffold(
+                  drawer: drawerEnabled
+                      ? Drawer(
+                          child: Sidebar(
+                            onSelectFeed: (_) =>
+                                Navigator.of(overlayContext).maybePop(),
+                          ),
+                        )
+                      : null,
+                  body: Column(
+                    children: [
+                      DesktopTitleBar(
+                        title: l10n.appTitle,
+                        leading: leading,
+                        actions: [
+                          IconButton(
+                            tooltip: l10n.refreshAll,
+                            onPressed: () async {
+                              await refreshAll();
+                              if (!overlayContext.mounted) return;
+                              ScaffoldMessenger.of(overlayContext).showSnackBar(
+                                SnackBar(content: Text(l10n.refreshedAll)),
+                              );
+                            },
+                            icon: const Icon(Icons.refresh),
+                          ),
+                          Consumer(
+                            builder: (context, ref, _) {
+                              final unreadOnly = ref.watch(unreadOnlyProvider);
+                              return IconButton(
+                                tooltip:
+                                    unreadOnly ? l10n.showAll : l10n.unreadOnly,
+                                onPressed: () => ref
+                                        .read(unreadOnlyProvider.notifier)
+                                        .state =
+                                    !unreadOnly,
+                                icon: Icon(
+                                  unreadOnly
+                                      ? Icons.filter_alt
+                                      : Icons.filter_alt_outlined,
+                                ),
+                              );
+                            },
+                          ),
+                          IconButton(
+                            tooltip: l10n.markAllRead,
+                            onPressed: () async {
+                              await markAllRead();
+                              if (!overlayContext.mounted) return;
+                              ScaffoldMessenger.of(overlayContext).showSnackBar(
+                                SnackBar(content: Text(l10n.done)),
+                              );
+                            },
+                            icon: const Icon(Icons.done_all),
+                          ),
+                          IconButton(
+                            tooltip: l10n.settings,
+                            onPressed: () => context.push('/settings'),
+                            icon: const Icon(Icons.settings_outlined),
+                          ),
+                        ],
+                      ),
+                      Expanded(child: content),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        );
+      },
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
       themeMode: appSettings?.themeMode ?? ThemeMode.system,

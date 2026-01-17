@@ -23,3 +23,8 @@ final articlesProvider = StreamProvider.family<List<Article>, int?>((ref, feedId
 final articleProvider = StreamProvider.family<Article?, int>((ref, id) {
   return ref.watch(articleRepositoryProvider).watchById(id);
 });
+
+final feedMapProvider = Provider<Map<int, Feed>>((ref) {
+  final feeds = ref.watch(feedsProvider).valueOrNull ?? [];
+  return {for (final feed in feeds) feed.id: feed};
+});

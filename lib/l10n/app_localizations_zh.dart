@@ -231,6 +231,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expand => '展开';
+
+  @override
+  String get search => '搜索';
+
+  @override
+  String get groupingAndSorting => '分组与排序';
+
+  @override
+  String get rules => '规则';
+
+  @override
+  String get services => '服务';
+
+  @override
+  String get appPreferences => '应用偏好';
+
+  @override
+  String get about => '关于';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

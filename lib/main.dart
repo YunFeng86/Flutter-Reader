@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'app/app.dart';
 import 'db/isar_db.dart';
 import 'providers/core_providers.dart';
+import 'utils/platform.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  if (isDesktop) {
+    await windowManager.ensureInitialized();
+    const options = WindowOptions(
+      size: Size(1200, 800),
+      center: true,
+      minimumSize: Size(620, 520),
+      titleBarStyle: TitleBarStyle.hidden,
+    );
+    windowManager.waitUntilReadyToShow(options, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   final isar = await openIsar();
   runApp(
@@ -16,4 +32,3 @@ Future<void> main() async {
     ),
   );
 }
-

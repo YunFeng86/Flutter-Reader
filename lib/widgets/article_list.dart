@@ -7,6 +7,8 @@ import 'package:flutter_reader/l10n/app_localizations.dart';
 import '../providers/article_list_controller.dart';
 import '../providers/repository_providers.dart';
 import '../providers/unread_providers.dart';
+import '../ui/layout.dart';
+import '../utils/platform.dart';
 import 'article_list_item.dart';
 
 class ArticleList extends ConsumerStatefulWidget {
@@ -82,7 +84,19 @@ class _ArticleListState extends ConsumerState<ArticleList> {
             );
 
             Widget child = InkWell(
-              onTap: () => context.go('/article/${a.id}'),
+              onTap: () {
+                final width = MediaQuery.sizeOf(context).width;
+
+                final openAsSecondaryPage = isDesktop
+                    ? !desktopReaderEmbedded(desktopModeForWidth(width))
+                    : width < 600;
+
+                if (openAsSecondaryPage) {
+                  context.push('/article/${a.id}');
+                } else {
+                  context.go('/article/${a.id}');
+                }
+              },
               child: tile,
             );
 

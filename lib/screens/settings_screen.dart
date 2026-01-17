@@ -14,52 +14,103 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final appSettings = ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+
+    return DefaultTabController(
+      length: 6,
+      initialIndex: 4, // Default to App Preferences as seen in image
+      child: Scaffold(
+        appBar: AppBar(
+          leading: const BackButton(),
+          title: null,
+          bottom: TabBar(
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            dividerColor: Colors.transparent,
+            tabs: [
+              Tab(
+                icon: const Icon(Icons.rss_feed_outlined),
+                text: l10n.subscriptions,
+              ),
+              Tab(
+                icon: const Icon(Icons.format_list_bulleted),
+                text: l10n.groupingAndSorting,
+              ),
+              Tab(
+                icon: const Icon(Icons.filter_alt_outlined),
+                text: l10n.rules,
+              ),
+              Tab(
+                icon: const Icon(Icons.cloud_outlined),
+                text: l10n.services,
+              ),
+              Tab(
+                icon: const Icon(Icons.settings_outlined),
+                text: l10n.appPreferences,
+              ),
+              Tab(
+                icon: const Icon(Icons.info_outline),
+                text: l10n.about,
+              ),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            _PlaceholderTab(l10n.subscriptions),
+            _PlaceholderTab(l10n.groupingAndSorting),
+            _PlaceholderTab(l10n.rules),
+            _PlaceholderTab(l10n.services),
+            const _AppPreferencesTab(),
+            _PlaceholderTab(l10n.about),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaceholderTab extends StatelessWidget {
+  const _PlaceholderTab(this.title);
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+    );
+  }
+}
+
+class _AppPreferencesTab extends ConsumerWidget {
+  const _AppPreferencesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final appSettings =
+        ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 
-    String themeLabel(ThemeMode mode) => switch (mode) {
-          ThemeMode.system => l10n.system,
-          ThemeMode.light => l10n.light,
-          ThemeMode.dark => l10n.dark,
-        };
-
-    String languageLabel(String? tag) => switch (tag) {
-          null => l10n.systemLanguage,
-          'en' => l10n.english,
-          'zh' => l10n.chineseSimplified,
-          'zh-Hant' || 'zh_Hant' => l10n.chineseTraditional,
-          _ => tag,
-        };
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.settings)),
-      body: ListView(
-        children: [
-          const SizedBox(height: 8),
-          _Section(
-            title: l10n.appearance,
-            children: [
-              ListTile(
-                title: Text(l10n.theme),
-                subtitle: Text(themeLabel(appSettings.themeMode)),
-                trailing: SegmentedButton<ThemeMode>(
-                  segments: [
-                    ButtonSegment(value: ThemeMode.system, label: Text(l10n.system)),
-                    ButtonSegment(value: ThemeMode.light, label: Text(l10n.light)),
-                    ButtonSegment(value: ThemeMode.dark, label: Text(l10n.dark)),
-                  ],
-                  selected: {appSettings.themeMode},
-                  onSelectionChanged: (s) => ref
-                      .read(appSettingsProvider.notifier)
-                      .setThemeMode(s.first),
-                ),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            // Language
+            _SectionHeader(title: l10n.language),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
               ),
-              ListTile(
-                title: Text(l10n.language),
-                subtitle: Text(languageLabel(appSettings.localeTag)),
-                trailing: DropdownButton<String?>(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String?>(
                   value: appSettings.localeTag,
+                  isExpanded: true,
                   items: [
                     DropdownMenuItem<String?>(
                       value: null,
@@ -82,84 +133,149 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(appSettingsProvider.notifier).setLocaleTag(v),
                 ),
               ),
-            ],
-          ),
-          _Section(
-            title: l10n.reader,
-            children: [
-              _SliderTile(
-                title: l10n.fontSize,
-                value: readerSettings.fontSize,
-                min: 12,
-                max: 28,
-                format: (v) => v.toStringAsFixed(0),
-                onChanged: (v) => ref
-                    .read(readerSettingsProvider.notifier)
-                    .save(readerSettings.copyWith(fontSize: v)),
+            ),
+            const SizedBox(height: 24),
+
+            // Theme
+            _SectionHeader(title: l10n.theme),
+            _ThemeRadioItem(
+              label: l10n.system,
+              value: ThemeMode.system,
+              groupValue: appSettings.themeMode,
+              onChanged: (v) =>
+                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
+            ),
+            _ThemeRadioItem(
+              label: l10n.light,
+              value: ThemeMode.light,
+              groupValue: appSettings.themeMode,
+              onChanged: (v) =>
+                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
+            ),
+            _ThemeRadioItem(
+              label: l10n.dark,
+              value: ThemeMode.dark,
+              groupValue: appSettings.themeMode,
+              onChanged: (v) =>
+                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
+            ),
+            const SizedBox(height: 24),
+
+            // Reader Settings (Font Size, etc.)
+            // Kept here to maintain functionality even though not strictly in reference image
+            _SectionHeader(title: l10n.readerSettings),
+            _SliderTile(
+              title: l10n.fontSize,
+              value: readerSettings.fontSize,
+              min: 12,
+              max: 28,
+              format: (v) => v.toStringAsFixed(0),
+              onChanged: (v) => ref
+                  .read(readerSettingsProvider.notifier)
+                  .save(readerSettings.copyWith(fontSize: v)),
+            ),
+            _SliderTile(
+              title: l10n.lineHeight,
+              value: readerSettings.lineHeight,
+              min: 1.1,
+              max: 2.2,
+              format: (v) => v.toStringAsFixed(1),
+              onChanged: (v) => ref
+                  .read(readerSettingsProvider.notifier)
+                  .save(readerSettings.copyWith(lineHeight: v)),
+            ),
+            _SliderTile(
+              title: l10n.horizontalPadding,
+              value: readerSettings.horizontalPadding,
+              min: 8,
+              max: 32,
+              format: (v) => v.toStringAsFixed(0),
+              onChanged: (v) => ref
+                  .read(readerSettingsProvider.notifier)
+                  .save(readerSettings.copyWith(horizontalPadding: v)),
+            ),
+            const SizedBox(height: 24),
+
+            // Cleanup
+            _SectionHeader(title: l10n.storage),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
               ),
-              _SliderTile(
-                title: l10n.lineHeight,
-                value: readerSettings.lineHeight,
-                min: 1.1,
-                max: 2.2,
-                format: (v) => v.toStringAsFixed(1),
-                onChanged: (v) => ref
-                    .read(readerSettingsProvider.notifier)
-                    .save(readerSettings.copyWith(lineHeight: v)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(l10n.clearImageCacheSubtitle),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  OutlinedButton(
+                    onPressed: () async {
+                      await ref.read(cacheManagerProvider).emptyCache();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.cacheCleared)),
+                      );
+                    },
+                    child: Text(l10n.clearImageCache),
+                  ),
+                ],
               ),
-              _SliderTile(
-                title: l10n.horizontalPadding,
-                value: readerSettings.horizontalPadding,
-                min: 8,
-                max: 32,
-                format: (v) => v.toStringAsFixed(0),
-                onChanged: (v) => ref
-                    .read(readerSettingsProvider.notifier)
-                    .save(readerSettings.copyWith(horizontalPadding: v)),
-              ),
-            ],
-          ),
-          _Section(
-            title: l10n.storage,
-            children: [
-              ListTile(
-                title: Text(l10n.clearImageCache),
-                subtitle: Text(l10n.clearImageCacheSubtitle),
-                trailing: const Icon(Icons.delete_outline),
-                onTap: () async {
-                  await ref.read(cacheManagerProvider).emptyCache();
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.cacheCleared)),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _Section extends StatelessWidget {
-  const _Section({required this.title, required this.children});
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
 
   final String title;
-  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Text(title, style: Theme.of(context).textTheme.titleSmall),
-        ),
-        ...children,
-        const Divider(height: 1),
-      ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+      ),
+    );
+  }
+}
+
+class _ThemeRadioItem extends StatelessWidget {
+  const _ThemeRadioItem({
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  final String label;
+  final ThemeMode value;
+  final ThemeMode groupValue;
+  final ValueChanged<ThemeMode?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return RadioListTile<ThemeMode>(
+      title: Text(label),
+      value: value,
+      groupValue: groupValue,
+      onChanged: onChanged,
+      contentPadding: EdgeInsets.zero,
+      dense: true,
     );
   }
 }
@@ -183,15 +299,23 @@ class _SliderTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(title),
-      subtitle: Slider(
-        value: value.clamp(min, max),
-        min: min,
-        max: max,
-        onChanged: onChanged,
-      ),
-      trailing: Text(format(value)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(title),
+            Text(format(value)),
+          ],
+        ),
+        Slider(
+          value: value.clamp(min, max),
+          min: min,
+          max: max,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 }

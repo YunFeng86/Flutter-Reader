@@ -117,5 +117,11 @@
   "markRead": "Mark read",
   "markUnread": "Mark unread",
   "collapse": "Collapse",
-  "expand": "Expand"
+  "expand": "Expand",
+  "search": "Search",
+  "groupingAndSorting": "Grouping & Sorting",
+  "rules": "Rules",
+  "services": "Services",
+  "appPreferences": "App Preferences",
+  "about": "About"
 }

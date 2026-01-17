@@ -9,6 +9,6 @@ class ReaderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ReaderView(articleId: articleId);
+    return ReaderView(articleId: articleId, showBack: true);
   }
 }

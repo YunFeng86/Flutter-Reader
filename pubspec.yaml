@@ -50,6 +50,8 @@ dependencies:
   rss_dart: ^1.0.14
   url_launcher: ^6.3.2
   xml: ^6.6.1
+  timeago: ^3.6.1
+  window_manager: ^0.5.1
 
 dev_dependencies:
   flutter_test:

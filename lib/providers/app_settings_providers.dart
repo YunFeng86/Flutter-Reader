@@ -28,9 +28,19 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(localeTag: localeTag));
   }
+
+  Future<void> setLayoutMode(AppLayoutMode layoutMode) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(layoutMode: layoutMode));
+  }
+
+  Future<void> setAutoMarkRead(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(autoMarkRead: value));
+  }
 }
 
 final appSettingsProvider =
     AsyncNotifierProvider<AppSettingsController, AppSettings>(
-  AppSettingsController.new,
-);
+      AppSettingsController.new,
+    );

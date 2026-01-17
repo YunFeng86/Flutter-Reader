@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter/services.dart';
 
+import '../providers/app_settings_providers.dart';
+import '../providers/article_list_controller.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
-import '../providers/article_list_controller.dart';
+import '../services/settings/app_settings.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar.dart';
+import '../utils/platform.dart';
+import '../ui/layout.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.selectedArticleId});
@@ -22,54 +26,76 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
-    final isWide = width >= 900;
 
-    if (!isWide) {
+    final appSettingsAsync = ref.watch(appSettingsProvider);
+    final appSettings = appSettingsAsync.valueOrNull ?? const AppSettings();
+    final columns = _effectiveColumns(appSettings.layoutMode, width);
+
+    if (isDesktop) {
+      final mode = desktopModeForWidth(width);
+      return _buildDesktop(context, ref, l10n, mode);
+    }
+
+    // 1-column: mobile-style list + drawer, dedicated reader route.
+    if (columns == 1) {
       final unreadOnly = ref.watch(unreadOnlyProvider);
       final selectedFeedId = ref.watch(selectedFeedIdProvider);
       final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
       return Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.appTitle),
-          actions: [
-            IconButton(
-              tooltip: l10n.settings,
-              onPressed: () => context.push('/settings'),
-              icon: const Icon(Icons.settings),
-            ),
-            IconButton(
-              tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
-              onPressed: () => ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
-              icon: Icon(unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined),
-            ),
-            IconButton(
-              tooltip: l10n.markAllRead,
-              onPressed: () async {
-                await ref.read(articleRepositoryProvider).markAllRead(
-                      feedId: selectedFeedId,
-                      categoryId: selectedFeedId == null ? selectedCategoryId : null,
-                    );
-              },
-              icon: const Icon(Icons.done_all),
-            ),
-          ],
-        ),
-        drawer: Drawer(
-          child: Sidebar(
-            onSelectFeed: (_) {
-              Navigator.of(context).maybePop(); // close drawer
-            },
-          ),
-        ),
+        appBar: isDesktop
+            ? null
+            : AppBar(
+                title: Text(l10n.appTitle),
+                actions: [
+                  IconButton(
+                    tooltip: l10n.settings,
+                    onPressed: () => context.push('/settings'),
+                    icon: const Icon(Icons.settings),
+                  ),
+                  IconButton(
+                    tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
+                    onPressed: () => ref
+                        .read(unreadOnlyProvider.notifier)
+                        .state = !unreadOnly,
+                    icon: Icon(
+                      unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: l10n.markAllRead,
+                    onPressed: () async {
+                      await ref.read(articleRepositoryProvider).markAllRead(
+                            feedId: selectedFeedId,
+                            categoryId:
+                                selectedFeedId == null ? selectedCategoryId : null,
+                          );
+                    },
+                    icon: const Icon(Icons.done_all),
+                  ),
+                ],
+              ),
+        drawer: isDesktop
+            ? null
+            : Drawer(
+                child: Sidebar(
+                  onSelectFeed: (_) {
+                    Navigator.of(context).maybePop(); // close drawer
+                  },
+                ),
+              ),
         body: ArticleList(selectedArticleId: selectedArticleId),
       );
     }
 
+    // 2/3-column: desktop / tablet style with keyboard shortcuts.
     final shortcuts = <ShortcutActivator, Intent>{
-      const SingleActivator(LogicalKeyboardKey.keyJ): const _NextArticleIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyK): const _PrevArticleIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyJ):
+          const _NextArticleIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyK):
+          const _PrevArticleIntent(),
       const SingleActivator(LogicalKeyboardKey.keyR): const _RefreshIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyU): const _ToggleUnreadIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyU):
+          const _ToggleUnreadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyM): const _ToggleReadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
     };
@@ -80,7 +106,9 @@ class HomeScreen extends ConsumerWidget {
         actions: {
           _NextArticleIntent: CallbackAction<_NextArticleIntent>(
             onInvoke: (intent) {
-              final list = ref.read(articleListControllerProvider).valueOrNull?.items ?? const [];
+              final list =
+                  ref.read(articleListControllerProvider).valueOrNull?.items ??
+                  const [];
               if (list.isEmpty) return null;
               final idx = selectedArticleId == null
                   ? -1
@@ -92,7 +120,9 @@ class HomeScreen extends ConsumerWidget {
           ),
           _PrevArticleIntent: CallbackAction<_PrevArticleIntent>(
             onInvoke: (intent) {
-              final list = ref.read(articleListControllerProvider).valueOrNull?.items ?? const [];
+              final list =
+                  ref.read(articleListControllerProvider).valueOrNull?.items ??
+                  const [];
               if (list.isEmpty) return null;
               final idx = selectedArticleId == null
                   ? 0
@@ -135,16 +165,22 @@ class HomeScreen extends ConsumerWidget {
           _ToggleReadIntent: CallbackAction<_ToggleReadIntent>(
             onInvoke: (intent) async {
               if (selectedArticleId == null) return null;
-              final a = await ref.read(articleRepositoryProvider).getById(selectedArticleId!);
+              final a = await ref
+                  .read(articleRepositoryProvider)
+                  .getById(selectedArticleId!);
               if (a == null) return null;
-              await ref.read(articleRepositoryProvider).markRead(selectedArticleId!, !a.isRead);
+              await ref
+                  .read(articleRepositoryProvider)
+                  .markRead(selectedArticleId!, !a.isRead);
               return null;
             },
           ),
           _ToggleStarIntent: CallbackAction<_ToggleStarIntent>(
             onInvoke: (intent) async {
               if (selectedArticleId == null) return null;
-              await ref.read(articleRepositoryProvider).toggleStar(selectedArticleId!);
+              await ref
+                  .read(articleRepositoryProvider)
+                  .toggleStar(selectedArticleId!);
               return null;
             },
           ),
@@ -152,17 +188,40 @@ class HomeScreen extends ConsumerWidget {
         child: Focus(
           autofocus: true,
           child: Scaffold(
+            appBar: (!isDesktop && columns == 2)
+                ? AppBar(
+                    title: Text(l10n.appTitle),
+                    actions: [
+                      IconButton(
+                        tooltip: l10n.settings,
+                        onPressed: () => context.push('/settings'),
+                        icon: const Icon(Icons.settings),
+                      ),
+                    ],
+                  )
+                : null,
+            drawer: (!isDesktop && columns == 2)
+                ? Drawer(
+                    child: Sidebar(
+                      onSelectFeed: (_) {
+                        Navigator.of(context).maybePop(); // close drawer
+                      },
+                    ),
+                  )
+                : null,
             body: Row(
               children: [
-                SizedBox(
-                  width: 280,
-                  child: Sidebar(
-                    onSelectFeed: (_) {
-                      if (selectedArticleId != null) context.go('/');
-                    },
+                if (columns == 3) ...[
+                  SizedBox(
+                    width: 280,
+                    child: Sidebar(
+                      onSelectFeed: (_) {
+                        if (selectedArticleId != null) context.go('/');
+                      },
+                    ),
                   ),
-                ),
-                const VerticalDivider(width: 1),
+                  const VerticalDivider(width: 1),
+                ],
                 SizedBox(
                   width: 420,
                   child: Column(
@@ -176,13 +235,19 @@ class HomeScreen extends ConsumerWidget {
                               Consumer(
                                 builder: (context, ref, _) {
                                   final l10n = AppLocalizations.of(context)!;
-                                  final unreadOnly = ref.watch(unreadOnlyProvider);
+                                  final unreadOnly = ref.watch(
+                                    unreadOnlyProvider,
+                                  );
                                   return FilterChip(
                                     selected: unreadOnly,
                                     label: Text(l10n.unread),
-                                    onSelected: (v) => ref
-                                        .read(unreadOnlyProvider.notifier)
-                                        .state = v,
+                                    onSelected: (v) =>
+                                        ref
+                                                .read(
+                                                  unreadOnlyProvider.notifier,
+                                                )
+                                                .state =
+                                            v,
                                   );
                                 },
                               ),
@@ -190,10 +255,12 @@ class HomeScreen extends ConsumerWidget {
                               Consumer(
                                 builder: (context, ref, _) {
                                   final l10n = AppLocalizations.of(context)!;
-                                  final selectedFeedId =
-                                      ref.watch(selectedFeedIdProvider);
-                                  final selectedCategoryId =
-                                      ref.watch(selectedCategoryIdProvider);
+                                  final selectedFeedId = ref.watch(
+                                    selectedFeedIdProvider,
+                                  );
+                                  final selectedCategoryId = ref.watch(
+                                    selectedCategoryIdProvider,
+                                  );
                                   return IconButton(
                                     tooltip: l10n.markAllRead,
                                     onPressed: () async {
@@ -216,7 +283,9 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       const Divider(height: 1),
                       Expanded(
-                        child: ArticleList(selectedArticleId: selectedArticleId),
+                        child: ArticleList(
+                          selectedArticleId: selectedArticleId,
+                        ),
                       ),
                     ],
                   ),
@@ -225,12 +294,225 @@ class HomeScreen extends ConsumerWidget {
                 Expanded(
                   child: selectedArticleId == null
                       ? Center(child: Text(l10n.selectAnArticle))
-                      : ReaderView(articleId: selectedArticleId!, embedded: true),
+                      : ReaderView(
+                          articleId: selectedArticleId!,
+                          embedded: true,
+                        ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDesktop(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+    DesktopPaneMode mode,
+  ) {
+    // Desktop keyboard shortcuts stay enabled across all layouts.
+    final shortcuts = <ShortcutActivator, Intent>{
+      const SingleActivator(LogicalKeyboardKey.keyJ):
+          const _NextArticleIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyK):
+          const _PrevArticleIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyR): const _RefreshIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyU):
+          const _ToggleUnreadIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyM): const _ToggleReadIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
+    };
+
+    Widget listPane({double? width}) {
+      final pane = Column(
+        children: [
+          SizedBox(
+            height: 56,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final unreadOnly = ref.watch(unreadOnlyProvider);
+                      return FilterChip(
+                        selected: unreadOnly,
+                        label: Text(l10n.unread),
+                        onSelected: (v) =>
+                            ref.read(unreadOnlyProvider.notifier).state = v,
+                      );
+                    },
+                  ),
+                  const Spacer(),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final selectedFeedId = ref.watch(selectedFeedIdProvider);
+                      final selectedCategoryId =
+                          ref.watch(selectedCategoryIdProvider);
+                      return IconButton(
+                        tooltip: l10n.markAllRead,
+                        onPressed: () async {
+                          await ref.read(articleRepositoryProvider).markAllRead(
+                                feedId: selectedFeedId,
+                                categoryId: selectedFeedId == null
+                                    ? selectedCategoryId
+                                    : null,
+                              );
+                        },
+                        icon: const Icon(Icons.done_all),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(child: ArticleList(selectedArticleId: selectedArticleId)),
+        ],
+      );
+
+      if (width == null) return pane;
+      return SizedBox(width: width, child: pane);
+    }
+
+    Widget readerPane({required bool embedded}) {
+      if (selectedArticleId == null) {
+        return Center(child: Text(l10n.selectAnArticle));
+      }
+      return ReaderView(articleId: selectedArticleId!, embedded: embedded);
+    }
+
+    final body = switch (mode) {
+      DesktopPaneMode.threePane => Row(
+          children: [
+            SizedBox(
+              width: kDesktopSidebarWidth,
+              child: Sidebar(
+                onSelectFeed: (_) {
+                  if (selectedArticleId != null) context.go('/');
+                },
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            listPane(width: kDesktopListWidth),
+            const VerticalDivider(width: 1),
+            Expanded(child: readerPane(embedded: true)),
+          ],
+        ),
+      DesktopPaneMode.splitListReader => Row(
+          children: [
+            listPane(width: kDesktopListWidth),
+            const VerticalDivider(width: 1),
+            Expanded(child: readerPane(embedded: true)),
+          ],
+        ),
+      DesktopPaneMode.splitSidebarList => Row(
+          children: [
+            SizedBox(
+              width: kDesktopSidebarWidth,
+              child: Sidebar(
+                onSelectFeed: (_) {
+                  if (selectedArticleId != null) context.go('/');
+                },
+              ),
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: listPane()),
+          ],
+        ),
+      DesktopPaneMode.listOnly => listPane(),
+    };
+
+    return Shortcuts(
+      shortcuts: shortcuts,
+      child: Actions(
+        actions: {
+          _NextArticleIntent: CallbackAction<_NextArticleIntent>(
+            onInvoke: (intent) {
+              final list =
+                  ref.read(articleListControllerProvider).valueOrNull?.items ??
+                      const [];
+              if (list.isEmpty) return null;
+              final idx = selectedArticleId == null
+                  ? -1
+                  : list.indexWhere((a) => a.id == selectedArticleId);
+              final next = list[(idx + 1).clamp(0, list.length - 1)];
+              context.go('/article/${next.id}');
+              return null;
+            },
+          ),
+          _PrevArticleIntent: CallbackAction<_PrevArticleIntent>(
+            onInvoke: (intent) {
+              final list =
+                  ref.read(articleListControllerProvider).valueOrNull?.items ??
+                      const [];
+              if (list.isEmpty) return null;
+              final idx = selectedArticleId == null
+                  ? 0
+                  : list.indexWhere((a) => a.id == selectedArticleId);
+              final prev = list[(idx - 1).clamp(0, list.length - 1)];
+              context.go('/article/${prev.id}');
+              return null;
+            },
+          ),
+          _RefreshIntent: CallbackAction<_RefreshIntent>(
+            onInvoke: (intent) async {
+              final feedId = ref.read(selectedFeedIdProvider);
+              final categoryId = ref.read(selectedCategoryIdProvider);
+              if (feedId != null) {
+                await ref.read(syncServiceProvider).refreshFeed(feedId);
+              } else if (categoryId != null) {
+                final feeds = await ref.read(feedRepositoryProvider).getAll();
+                final filtered = categoryId < 0
+                    ? feeds.where((f) => f.categoryId == null)
+                    : feeds.where((f) => f.categoryId == categoryId);
+                for (final f in filtered) {
+                  await ref.read(syncServiceProvider).refreshFeed(f.id);
+                }
+              } else {
+                final feeds = await ref.read(feedRepositoryProvider).getAll();
+                for (final f in feeds) {
+                  await ref.read(syncServiceProvider).refreshFeed(f.id);
+                }
+              }
+              return null;
+            },
+          ),
+          _ToggleUnreadIntent: CallbackAction<_ToggleUnreadIntent>(
+            onInvoke: (intent) {
+              final cur = ref.read(unreadOnlyProvider);
+              ref.read(unreadOnlyProvider.notifier).state = !cur;
+              return null;
+            },
+          ),
+          _ToggleReadIntent: CallbackAction<_ToggleReadIntent>(
+            onInvoke: (intent) async {
+              if (selectedArticleId == null) return null;
+              final a = await ref
+                  .read(articleRepositoryProvider)
+                  .getById(selectedArticleId!);
+              if (a == null) return null;
+              await ref
+                  .read(articleRepositoryProvider)
+                  .markRead(selectedArticleId!, !a.isRead);
+              return null;
+            },
+          ),
+          _ToggleStarIntent: CallbackAction<_ToggleStarIntent>(
+            onInvoke: (intent) async {
+              if (selectedArticleId == null) return null;
+              await ref
+                  .read(articleRepositoryProvider)
+                  .toggleStar(selectedArticleId!);
+              return null;
+            },
+          ),
+        },
+        child: Focus(autofocus: true, child: body),
       ),
     );
   }
@@ -258,4 +540,25 @@ class _ToggleReadIntent extends Intent {
 
 class _ToggleStarIntent extends Intent {
   const _ToggleStarIntent();
+}
+
+int _effectiveColumns(AppLayoutMode mode, double width) {
+  // Non-desktop: classic M3-ish breakpoints.
+  const mobileThreshold = 600.0;
+  const largeThreshold = 1200.0;
+
+  final autoColumns =
+      width < mobileThreshold ? 1 : (width < largeThreshold ? 2 : 3);
+
+  if (mode == AppLayoutMode.auto) return autoColumns;
+
+  final target = switch (mode) {
+    AppLayoutMode.oneColumn => 1,
+    AppLayoutMode.twoColumn => 2,
+    AppLayoutMode.threeColumn => 3,
+    AppLayoutMode.auto => autoColumns,
+  };
+
+  // Never exceed what the window can comfortably display.
+  return target <= autoColumns ? target : autoColumns;
 }

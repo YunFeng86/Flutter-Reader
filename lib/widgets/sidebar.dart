@@ -27,6 +27,24 @@ class Sidebar extends ConsumerStatefulWidget {
 class _SidebarState extends ConsumerState<Sidebar> {
   int? _expandedCategoryId;
   bool _expandedUncategorized = false;
+  final _searchController = TextEditingController();
+  String _searchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchText = _searchController.text.trim().toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,129 +60,168 @@ class _SidebarState extends ConsumerState<Sidebar> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    l10n.subscriptions,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: l10n.search,
+                prefixIcon: const Icon(Icons.search, size: 20),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide.none,
                 ),
-                PopupMenuButton<_SidebarMenu>(
-                  tooltip: l10n.more,
-                  onSelected: (v) => _onMenu(context, ref, v),
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: _SidebarMenu.settings,
-                      child: Text(l10n.settings),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: _SidebarMenu.refreshAll,
-                      child: Text(l10n.refreshAll),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: _SidebarMenu.importOpml,
-                      child: Text(l10n.importOpml),
-                    ),
-                    PopupMenuItem(
-                      value: _SidebarMenu.exportOpml,
-                      child: Text(l10n.exportOpml),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  tooltip: l10n.addSubscription,
-                  onPressed: () => _showAddFeedDialog(context, ref),
-                  icon: const Icon(Icons.add),
-                ),
-                IconButton(
-                  tooltip: l10n.newCategory,
-                  onPressed: () => _showAddCategoryDialog(context, ref),
-                  icon: const Icon(Icons.create_new_folder_outlined),
-                ),
-                IconButton(
-                  tooltip: l10n.refreshSelected,
-                  onPressed: selectedFeedId == null
-                      ? null
-                      : () async {
-                          await ref
-                              .read(syncServiceProvider)
-                              .refreshFeed(selectedFeedId);
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.refreshed)),
-                          );
-                        },
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+              ),
+              style: Theme.of(context).textTheme.bodyMedium,
             ),
           ),
-          const Divider(height: 1),
           Expanded(
             child: feeds.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text(l10n.errorMessage(e.toString()))),
               data: (feedItems) {
+                // Filter feeds by search text
+                final filteredFeeds = _searchText.isEmpty
+                    ? feedItems
+                    : feedItems.where((f) {
+                        final title = f.title?.toLowerCase() ?? '';
+                        final url = f.url.toLowerCase();
+                        return title.contains(_searchText) || url.contains(_searchText);
+                      }).toList();
+
                 return categories.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (e, _) =>
                       Center(child: Text(l10n.errorMessage(e.toString()))),
                   data: (cats) {
                     final byCat = <int?, List<Feed>>{};
-                    for (final f in feedItems) {
+                    for (final f in filteredFeeds) {
                       byCat.putIfAbsent(f.categoryId, () => []).add(f);
                     }
 
+                    final children = <Widget>[];
+
+                    // All Articles Tile
                     Widget allTile = allUnread.when(
-                      loading: () => ListTile(
+                      loading: () => _SidebarItem(
                         selected: selectedFeedId == null && selectedCategoryId == null,
-                        leading: const Icon(Icons.all_inbox),
-                        title: Text(l10n.all),
+                        icon: Icons.all_inbox,
+                        title: l10n.all,
                         onTap: () => _selectAll(ref),
                       ),
-                      error: (e, _) => ListTile(
+                      error: (e, _) => _SidebarItem(
                         selected: selectedFeedId == null && selectedCategoryId == null,
-                        leading: const Icon(Icons.all_inbox),
-                        title: Text(l10n.all),
-                        subtitle: Text(l10n.unreadCountError(e.toString())),
+                        icon: Icons.all_inbox,
+                        title: l10n.all,
                         onTap: () => _selectAll(ref),
                       ),
-                      data: (count) => ListTile(
+                      data: (count) => _SidebarItem(
                         selected: selectedFeedId == null && selectedCategoryId == null,
-                        leading: const Icon(Icons.all_inbox),
-                        title: Text(l10n.all),
-                        trailing: _UnreadBadge(count),
+                        icon: Icons.description_outlined,
+                        title: l10n.articles, // Changed to "Articles" to match ref slightly or keep "All"
+                        count: count,
                         onTap: () => _selectAll(ref),
                       ),
                     );
+                    children.add(allTile);
 
-                    final children = <Widget>[allTile, const Divider(height: 1)];
+                    // Subscriptions Header with Actions
+                    children.add(
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                l10n.subscriptions,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                             PopupMenuButton<_SidebarMenu>(
+                              icon: const Icon(Icons.more_horiz, size: 20),
+                              tooltip: l10n.more,
+                              padding: EdgeInsets.zero,
+                              onSelected: (v) => _onMenu(context, ref, v),
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  value: _SidebarMenu.settings,
+                                  child: Text(l10n.settings),
+                                ),
+                                const PopupMenuDivider(),
+                                PopupMenuItem(
+                                  value: _SidebarMenu.refreshAll,
+                                  child: Text(l10n.refreshAll),
+                                ),
+                                const PopupMenuDivider(),
+                                PopupMenuItem(
+                                  value: _SidebarMenu.importOpml,
+                                  child: Text(l10n.importOpml),
+                                ),
+                                PopupMenuItem(
+                                  value: _SidebarMenu.exportOpml,
+                                  child: Text(l10n.exportOpml),
+                                ),
+                              ],
+                            ),
+                            IconButton(
+                              iconSize: 20,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: l10n.addSubscription,
+                              onPressed: () => _showAddFeedDialog(context, ref),
+                              icon: const Icon(Icons.add),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              iconSize: 20,
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              tooltip: l10n.newCategory,
+                              onPressed: () => _showAddCategoryDialog(context, ref),
+                              icon: const Icon(Icons.create_new_folder_outlined),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
 
                     for (final c in cats) {
+                      // Only show category if it has feeds matching search (or if no search)
+                      final catFeeds = byCat[c.id] ?? const <Feed>[];
+                      if (_searchText.isNotEmpty && catFeeds.isEmpty) continue;
+
                       children.add(_categoryTile(
                         context: context,
                         ref: ref,
                         category: c,
-                        feeds: byCat[c.id] ?? const <Feed>[],
+                        feeds: catFeeds,
                         selectedFeedId: selectedFeedId,
                         selectedCategoryId: selectedCategoryId,
                       ));
                     }
 
                     // Uncategorized group.
-                    children.add(_uncategorizedTile(
-                      context: context,
-                      ref: ref,
-                      feeds: byCat[null] ?? const <Feed>[],
-                      selectedFeedId: selectedFeedId,
-                      selectedCategoryId: selectedCategoryId,
-                    ));
+                    final uncategorizedFeeds = byCat[null] ?? const <Feed>[];
+                    if (_searchText.isEmpty || uncategorizedFeeds.isNotEmpty) {
+                       children.add(_uncategorizedTile(
+                        context: context,
+                        ref: ref,
+                        feeds: uncategorizedFeeds,
+                        selectedFeedId: selectedFeedId,
+                        selectedCategoryId: selectedCategoryId,
+                      ));
+                    }
 
-                    return ListView(children: children);
+                    return ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      children: children
+                    );
                   },
                 );
               },
@@ -678,6 +735,46 @@ class _UnreadBadge extends StatelessWidget {
       label: Text('$count'),
       backgroundColor: Theme.of(context).colorScheme.primary,
       textColor: Theme.of(context).colorScheme.onPrimary,
+    );
+  }
+}
+
+class _SidebarItem extends StatelessWidget {
+  const _SidebarItem({
+    required this.selected,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.count,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final int? count;
+
+  @override
+  Widget build(BuildContext context) {
+    // Mimic the dense, rounded style from the reference
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      child: ListTile(
+        selected: selected,
+        leading: Icon(icon, size: 20),
+        title: Text(title),
+        trailing: count != null && count! > 0
+            ? _UnreadBadge(count!)
+            : null,
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        // Visual adjustments to match "denser" look
+        visualDensity: VisualDensity.compact,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
     );
   }
 }
