@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 
+import '../models/article.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
@@ -18,7 +19,7 @@ import '../services/settings/reader_settings.dart';
 import '../utils/platform.dart';
 import '../ui/layout.dart';
 
-class ReaderView extends ConsumerWidget {
+class ReaderView extends ConsumerStatefulWidget {
   const ReaderView({
     super.key,
     required this.articleId,
@@ -33,46 +34,82 @@ class ReaderView extends ConsumerWidget {
   static const double maxReadingWidth = kMaxReadingWidth;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(fullTextControllerProvider, (prev, next) {
-      if (next.hasError) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
+  ConsumerState<ReaderView> createState() => _ReaderViewState();
+}
+
+class _ReaderViewState extends ConsumerState<ReaderView> {
+  ProviderSubscription<AsyncValue<Article?>>? _articleSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Show extraction errors from the one-shot full text fetch.
+    ref.listenManual<AsyncValue<void>>(
+      fullTextControllerProvider,
+      (prev, next) {
+        if (!mounted) return;
+        if (next.hasError) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
+          );
+        }
+      },
+      fireImmediately: false,
+    );
+
+    _listenArticle(widget.articleId);
+  }
+
+  @override
+  void didUpdateWidget(covariant ReaderView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.articleId != widget.articleId) {
+      _listenArticle(widget.articleId);
+    }
+  }
+
+  void _listenArticle(int articleId) {
+    _articleSub?.close();
+    _articleSub = ref.listenManual<AsyncValue<Article?>>(
+      articleProvider(articleId),
+      (prev, next) {
+        final a = next.valueOrNull;
+
+        // Auto-mark as read when entering/opening the reader for this article.
+        // If the user explicitly toggles the article back to unread while
+        // staying on this reader view, we do not immediately flip it back.
+        if (prev == null) {
+          final appSettings =
+              ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
+          if (appSettings.autoMarkRead && a != null && !a.isRead) {
+            ref.read(articleRepositoryProvider).markRead(articleId, true);
+          }
+        }
+
+        // Prefetch images when content changes.
+        final prevA = prev?.valueOrNull;
+        final prevHtml = (prevA?.fullContentHtml ?? prevA?.contentHtml ?? '')
+            .trim();
+        final html = (a?.fullContentHtml ?? a?.contentHtml ?? '').trim();
+        if (a == null || html.isEmpty) return;
+        if (prevA != null && prevA.id == a.id && prevHtml == html) return;
+        unawaited(
+          ref
+              .read(articleCacheServiceProvider)
+              .prefetchImagesFromHtml(html, baseUrl: Uri.tryParse(a.link)),
         );
-      }
-    });
+      },
+      fireImmediately: true,
+    );
+  }
 
-    ref.listen(articleProvider(articleId), (prev, next) {
-      final a = next.valueOrNull;
-      final prevA = prev?.valueOrNull;
-
-      // Auto mark as read only when this article is opened for the first time
-      // in the reader (and the user has not disabled the behavior).
-      final appSettings =
-          ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
-      if (appSettings.autoMarkRead &&
-          a != null &&
-          !a.isRead &&
-          (prevA == null || prevA.id != a.id)) {
-        ref.read(articleRepositoryProvider).markRead(articleId, true);
-      }
-
-      final prevHtml = (prevA?.fullContentHtml ?? prevA?.contentHtml ?? '')
-          .trim();
-      final html = (a?.fullContentHtml ?? a?.contentHtml ?? '').trim();
-      if (a == null || html.isEmpty) return;
-      if (prevA != null && prevA.id == a.id && prevHtml == html) return;
-      unawaited(
-        ref
-            .read(articleCacheServiceProvider)
-            .prefetchImagesFromHtml(html, baseUrl: Uri.tryParse(a.link)),
-      );
-    });
-
-    final a = ref.watch(articleProvider(articleId));
+  @override
+  Widget build(BuildContext context) {
+    final a = ref.watch(articleProvider(widget.articleId));
     final fullTextRequest = ref.watch(fullTextControllerProvider);
-    final useFullText = ref.watch(fullTextViewEnabledProvider(articleId));
+    final useFullText = ref.watch(fullTextViewEnabledProvider(widget.articleId));
     final settingsAsync = ref.watch(readerSettingsProvider);
     return a.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -103,7 +140,7 @@ class ReaderView extends ConsumerWidget {
                 : hasFull
                 ? () {
                     final notifier = ref.read(
-                      fullTextViewEnabledProvider(articleId).notifier,
+                      fullTextViewEnabledProvider(widget.articleId).notifier,
                     );
                     notifier.state = !notifier.state;
                   }
@@ -111,11 +148,11 @@ class ReaderView extends ConsumerWidget {
                     // One click: start fetch and automatically show full text
                     // once it becomes available.
                     ref
-                        .read(fullTextViewEnabledProvider(articleId).notifier)
+                        .read(fullTextViewEnabledProvider(widget.articleId).notifier)
                         .state = true;
                     ref
                         .read(fullTextControllerProvider.notifier)
-                        .fetch(articleId);
+                        .fetch(widget.articleId);
                   },
             icon: fullTextRequest.isLoading
                 ? const SizedBox(
@@ -138,14 +175,14 @@ class ReaderView extends ConsumerWidget {
           IconButton(
             tooltip: article.isStarred ? l10n.unstar : l10n.star,
             onPressed: () =>
-                ref.read(articleRepositoryProvider).toggleStar(articleId),
+                ref.read(articleRepositoryProvider).toggleStar(widget.articleId),
             icon: Icon(article.isStarred ? Icons.star : Icons.star_border),
           ),
           IconButton(
             tooltip: article.isRead ? l10n.markUnread : l10n.markRead,
             onPressed: () => ref
                 .read(articleRepositoryProvider)
-                .markRead(articleId, !article.isRead),
+                .markRead(widget.articleId, !article.isRead),
             icon: Icon(
               article.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
             ),
@@ -159,7 +196,9 @@ class ReaderView extends ConsumerWidget {
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: maxReadingWidth),
+                    constraints: const BoxConstraints(
+                      maxWidth: ReaderView.maxReadingWidth,
+                    ),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         settings.horizontalPadding,
@@ -226,7 +265,7 @@ class ReaderView extends ConsumerWidget {
               height: 56,
               child: Row(
                 children: [
-                  if (showBack) ...[
+                  if (widget.showBack) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       tooltip: MaterialLocalizations.of(context)
@@ -258,7 +297,7 @@ class ReaderView extends ConsumerWidget {
           );
         }
 
-        if (!embedded && !isDesktop) {
+        if (!widget.embedded && !isDesktop) {
           return Scaffold(
             appBar: AppBar(title: Text(title), actions: actions),
             body: content,
@@ -267,7 +306,7 @@ class ReaderView extends ConsumerWidget {
 
         // Desktop always uses an in-content header so the window's top bar can
         // stay global and stable.
-        if (!embedded && isDesktop) {
+        if (!widget.embedded && isDesktop) {
           return Column(
             children: [
               header(),

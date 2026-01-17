@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
 
 import '../models/article.dart';
 import 'core_providers.dart';
@@ -51,20 +50,9 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     // read/star toggles, etc.). For MVP we simply reload the first page.
     _sub?.cancel();
     final isar = ref.watch(isarProvider);
-    final watched = isar.articles
-        .filter()
-        .optional(_feedId != null, (q) => q.feedIdEqualTo(_feedId!))
-        .optional(
-          _categoryId != null && _categoryId! < 0,
-          (q) => q.categoryIdIsNull(),
-        )
-        .optional(
-          _categoryId != null && _categoryId! >= 0,
-          (q) => q.categoryIdEqualTo(_categoryId!),
-        )
-        .optional(_unreadOnly, (q) => q.isReadEqualTo(false))
-        .sortByPublishedAtDesc();
-    _sub = watched.watchLazy().listen((_) {
+    // Watch the whole collection so we refresh even when toggling read/star on
+    // a query that doesn't filter/sort by those fields (e.g. "All articles").
+    _sub = isar.articles.watchLazy().listen((_) {
       unawaited(refresh());
     });
     ref.onDispose(() => _sub?.cancel());
