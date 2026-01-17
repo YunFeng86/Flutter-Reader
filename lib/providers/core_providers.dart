@@ -6,3 +6,4 @@ final isarProvider = Provider<Isar>((ref) {
   throw UnimplementedError('isarProvider must be overridden in main()');
 });
 
+final sidebarVisibleProvider = StateProvider<bool>((ref) => true);

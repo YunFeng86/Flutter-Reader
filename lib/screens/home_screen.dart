@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/app_settings_providers.dart';
 import '../providers/article_list_controller.dart';
+import '../providers/core_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
@@ -326,6 +327,8 @@ class HomeScreen extends ConsumerWidget {
       const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
     };
 
+    final sidebarVisible = ref.watch(sidebarVisibleProvider);
+
     Widget listPane({double? width}) {
       final pane = Column(
         children: [
@@ -389,15 +392,17 @@ class HomeScreen extends ConsumerWidget {
     final body = switch (mode) {
       DesktopPaneMode.threePane => Row(
           children: [
-            SizedBox(
-              width: kDesktopSidebarWidth,
-              child: Sidebar(
-                onSelectFeed: (_) {
-                  if (selectedArticleId != null) context.go('/');
-                },
+            if (sidebarVisible) ...[
+              SizedBox(
+                width: kDesktopSidebarWidth,
+                child: Sidebar(
+                  onSelectFeed: (_) {
+                    if (selectedArticleId != null) context.go('/');
+                  },
+                ),
               ),
-            ),
-            const VerticalDivider(width: 1),
+              const VerticalDivider(width: 1),
+            ],
             listPane(width: kDesktopListWidth),
             const VerticalDivider(width: 1),
             Expanded(child: readerPane(embedded: true)),
@@ -412,15 +417,17 @@ class HomeScreen extends ConsumerWidget {
         ),
       DesktopPaneMode.splitSidebarList => Row(
           children: [
-            SizedBox(
-              width: kDesktopSidebarWidth,
-              child: Sidebar(
-                onSelectFeed: (_) {
-                  if (selectedArticleId != null) context.go('/');
-                },
+            if (sidebarVisible) ...[
+              SizedBox(
+                width: kDesktopSidebarWidth,
+                child: Sidebar(
+                  onSelectFeed: (_) {
+                    if (selectedArticleId != null) context.go('/');
+                  },
+                ),
               ),
-            ),
-            const VerticalDivider(width: 1),
+              const VerticalDivider(width: 1),
+            ],
             Expanded(child: listPane()),
           ],
         ),
