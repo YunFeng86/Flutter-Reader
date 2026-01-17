@@ -16,9 +16,14 @@ import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
-  const Sidebar({super.key, required this.onSelectFeed});
+  const Sidebar({
+    super.key,
+    required this.onSelectFeed,
+    this.router,
+  });
 
   final void Function(int? feedId) onSelectFeed;
+  final GoRouter? router;
 
   @override
   ConsumerState<Sidebar> createState() => _SidebarState();
@@ -69,11 +74,14 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
                 isDense: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest
+                    .withValues(alpha: 0.5),
               ),
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -120,8 +128,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       ),
                       data: (count) => _SidebarItem(
                         selected: selectedFeedId == null && selectedCategoryId == null,
-                        icon: Icons.description_outlined,
-                        title: l10n.articles, // Changed to "Articles" to match ref slightly or keep "All"
+                        icon: Icons.all_inbox,
+                        title: l10n.all,
                         count: count,
                         onTap: () => _selectAll(ref),
                       ),
@@ -641,7 +649,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
   Future<void> _onMenu(BuildContext context, WidgetRef ref, _SidebarMenu v) async {
     switch (v) {
       case _SidebarMenu.settings:
-        context.push('/settings');
+        final router = widget.router ?? GoRouter.maybeOf(context);
+        if (router != null) {
+          await router.push('/settings');
+        }
         return;
       case _SidebarMenu.refreshAll:
         final l10n = AppLocalizations.of(context)!;

@@ -107,9 +107,16 @@ class ReaderView extends ConsumerWidget {
                     );
                     notifier.state = !notifier.state;
                   }
-                : () => ref
-                      .read(fullTextControllerProvider.notifier)
-                      .fetch(articleId),
+                : () {
+                    // One click: start fetch and automatically show full text
+                    // once it becomes available.
+                    ref
+                        .read(fullTextViewEnabledProvider(articleId).notifier)
+                        .state = true;
+                    ref
+                        .read(fullTextControllerProvider.notifier)
+                        .fetch(articleId);
+                  },
             icon: fullTextRequest.isLoading
                 ? const SizedBox(
                     width: 20,

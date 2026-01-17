@@ -23,12 +23,15 @@ class ArticleListItem extends ConsumerWidget {
     final feed = feedMap[article.feedId];
 
     final title = (article.title ?? '').trim();
-    final timeStr = timeago.format(article.publishedAt);
+    final timeStr = timeago.format(
+      article.publishedAt.toLocal(),
+      locale: _timeagoLocale(context),
+    );
 
     return Container(
       decoration: BoxDecoration(
         color: selected
-            ? theme.colorScheme.primaryContainer.withOpacity(0.12)
+            ? theme.colorScheme.primaryContainer.withValues(alpha: 0.12)
             : null,
         border: Border(
           left: BorderSide(
@@ -36,7 +39,7 @@ class ArticleListItem extends ConsumerWidget {
             width: 4,
           ),
           bottom: BorderSide(
-            color: theme.dividerColor.withOpacity(0.1),
+            color: theme.dividerColor.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -89,7 +92,7 @@ class ArticleListItem extends ConsumerWidget {
               fontWeight: isUnread ? FontWeight.bold : FontWeight.normal,
               color: isUnread
                   ? theme.colorScheme.onSurface
-                  : theme.colorScheme.onSurface.withOpacity(0.8),
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.8),
               height: 1.3,
             ),
             maxLines: 2,
@@ -105,4 +108,15 @@ class ArticleListItem extends ConsumerWidget {
       ),
     );
   }
+}
+
+String _timeagoLocale(BuildContext context) {
+  final locale = Localizations.localeOf(context);
+  if (locale.languageCode == 'zh') {
+    // Our app supports 'zh' (Simplified) and 'zh-Hant' (Traditional).
+    final script = locale.scriptCode?.toLowerCase();
+    if (script == 'hant') return 'zh';
+    return 'zh_CN';
+  }
+  return 'en';
 }

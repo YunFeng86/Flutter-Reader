@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -5,6 +6,65 @@ class AppTheme {
 
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
+
+  static List<String> _fontFallback() {
+    if (kIsWeb) {
+      // Web: rely on browser/system, but keep a sane CJK preference order.
+      return const [
+        'PingFang SC',
+        'PingFang TC',
+        'Microsoft YaHei UI',
+        'Microsoft YaHei',
+        'Noto Sans CJK SC',
+        'Noto Sans SC',
+        'Source Han Sans SC',
+        'WenQuanYi Micro Hei',
+        'Noto Sans',
+        'system-ui',
+        'Arial',
+        'sans-serif',
+      ];
+    }
+
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.macOS || TargetPlatform.iOS => const [
+          'PingFang SC',
+          'PingFang TC',
+          'Heiti SC',
+          'Heiti TC',
+          'Songti SC',
+          'Hiragino Sans GB',
+          '.SF Pro Text',
+          '.SF UI Text',
+        ],
+      TargetPlatform.windows => const [
+          'Microsoft YaHei UI',
+          'Microsoft YaHei',
+          'SimHei',
+          'SimSun',
+          'Segoe UI',
+          'Noto Sans SC',
+          'Noto Sans CJK SC',
+          'Arial',
+        ],
+      TargetPlatform.linux => const [
+          'Noto Sans CJK SC',
+          'Noto Sans SC',
+          'Source Han Sans SC',
+          'WenQuanYi Micro Hei',
+          'Noto Sans',
+          'DejaVu Sans',
+        ],
+      _ => const [
+          // Android/Fuchsia: keep Roboto as primary; provide CJK fallbacks.
+          'Roboto',
+          'Noto Sans CJK SC',
+          'Noto Sans SC',
+          'Noto Sans',
+          'Droid Sans Fallback',
+        ],
+    };
+  }
 
   static ThemeData _build(Brightness brightness) {
     final cs = ColorScheme.fromSeed(
@@ -17,6 +77,8 @@ class AppTheme {
       brightness: brightness,
       colorScheme: cs,
       visualDensity: VisualDensity.compact, // desktop-first information density
+      // Prefer sane CJK fallbacks (notably improves Windows Chinese rendering).
+      fontFamilyFallback: _fontFallback(),
     );
 
     return base.copyWith(

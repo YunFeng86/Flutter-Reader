@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 import '../providers/app_settings_providers.dart';
 import '../utils/platform.dart';
 import '../widgets/desktop_title_bar.dart';
-import 'package:go_router/go_router.dart';
 import '../widgets/sidebar.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
@@ -68,15 +67,6 @@ class App extends ConsumerWidget {
         final content = child ?? const SizedBox.shrink();
         if (!isDesktop) return content;
 
-        final l10n = AppLocalizations.of(context)!;
-        final width = MediaQuery.sizeOf(context).width;
-        final uri = router.routerDelegate.currentConfiguration.uri;
-        final isArticleRoute =
-            uri.pathSegments.isNotEmpty && uri.pathSegments.first == 'article';
-        final mode = desktopModeForWidth(width);
-        final isArticleSeparatePage = isArticleRoute && !desktopReaderEmbedded(mode);
-        final drawerEnabled = desktopSidebarInDrawer(mode) && !isArticleSeparatePage;
-
         Future<void> refreshAll() async {
           final feedId = ref.read(selectedFeedIdProvider);
           final categoryId = ref.read(selectedCategoryIdProvider);
@@ -112,85 +102,107 @@ class App extends ConsumerWidget {
             OverlayEntry(
               opaque: true,
               builder: (overlayContext) {
-                final leading = switch (mode) {
-                  _ when drawerEnabled => Builder(
-                      builder: (context) {
-                        return IconButton(
-                          tooltip: MaterialLocalizations.of(context)
-                              .openAppDrawerTooltip,
-                          onPressed: () => Scaffold.of(context).openDrawer(),
-                          icon: const Icon(Icons.menu),
-                        );
-                      },
-                    ),
-                  _ => null,
-                };
+                // Keep overlay chrome in sync with navigation and resize.
+                return ListenableBuilder(
+                  listenable: router.routerDelegate,
+                  builder: (context, _) {
+                    final l10n = AppLocalizations.of(context)!;
+                    final width = MediaQuery.sizeOf(context).width;
+                    final uri = router.routerDelegate.currentConfiguration.uri;
+                    final isArticleRoute = uri.pathSegments.isNotEmpty &&
+                        uri.pathSegments.first == 'article';
+                    final mode = desktopModeForWidth(width);
+                    final isArticleSeparatePage =
+                        isArticleRoute && !desktopReaderEmbedded(mode);
+                    final drawerEnabled =
+                        desktopSidebarInDrawer(mode) && !isArticleSeparatePage;
 
-                return Scaffold(
-                  drawer: drawerEnabled
-                      ? Drawer(
-                          child: Sidebar(
-                            onSelectFeed: (_) =>
-                                Navigator.of(overlayContext).maybePop(),
+                    final leading = switch (mode) {
+                      _ when drawerEnabled => Builder(
+                          builder: (context) {
+                            return IconButton(
+                              tooltip: MaterialLocalizations.of(context)
+                                  .openAppDrawerTooltip,
+                              onPressed: () => Scaffold.of(context).openDrawer(),
+                              icon: const Icon(Icons.menu),
+                            );
+                          },
+                        ),
+                      _ => null,
+                    };
+
+                    return Scaffold(
+                      drawer: drawerEnabled
+                          ? Drawer(
+                              child: Sidebar(
+                                onSelectFeed: (_) =>
+                                    Navigator.of(overlayContext).maybePop(),
+                                router: router,
+                              ),
+                            )
+                          : null,
+                      body: Column(
+                        children: [
+                          DesktopTitleBar(
+                            title: l10n.appTitle,
+                            leading: leading,
+                            actions: [
+                              IconButton(
+                                tooltip: l10n.refreshAll,
+                                onPressed: () async {
+                                  await refreshAll();
+                                  if (!overlayContext.mounted) return;
+                                  ScaffoldMessenger.of(overlayContext)
+                                      .showSnackBar(
+                                    SnackBar(content: Text(l10n.refreshedAll)),
+                                  );
+                                },
+                                icon: const Icon(Icons.refresh),
+                              ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final unreadOnly =
+                                      ref.watch(unreadOnlyProvider);
+                                  return IconButton(
+                                    tooltip: unreadOnly
+                                        ? l10n.showAll
+                                        : l10n.unreadOnly,
+                                    onPressed: () => ref
+                                            .read(unreadOnlyProvider.notifier)
+                                            .state =
+                                        !unreadOnly,
+                                    icon: Icon(
+                                      unreadOnly
+                                          ? Icons.filter_alt
+                                          : Icons.filter_alt_outlined,
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                tooltip: l10n.markAllRead,
+                                onPressed: () async {
+                                  await markAllRead();
+                                  if (!overlayContext.mounted) return;
+                                  ScaffoldMessenger.of(overlayContext)
+                                      .showSnackBar(
+                                    SnackBar(content: Text(l10n.done)),
+                                  );
+                                },
+                                icon: const Icon(Icons.done_all),
+                              ),
+                              IconButton(
+                                tooltip: l10n.settings,
+                                onPressed: () => router.push('/settings'),
+                                icon: const Icon(Icons.settings_outlined),
+                              ),
+                            ],
                           ),
-                        )
-                      : null,
-                  body: Column(
-                    children: [
-                      DesktopTitleBar(
-                        title: l10n.appTitle,
-                        leading: leading,
-                        actions: [
-                          IconButton(
-                            tooltip: l10n.refreshAll,
-                            onPressed: () async {
-                              await refreshAll();
-                              if (!overlayContext.mounted) return;
-                              ScaffoldMessenger.of(overlayContext).showSnackBar(
-                                SnackBar(content: Text(l10n.refreshedAll)),
-                              );
-                            },
-                            icon: const Icon(Icons.refresh),
-                          ),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final unreadOnly = ref.watch(unreadOnlyProvider);
-                              return IconButton(
-                                tooltip:
-                                    unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                                onPressed: () => ref
-                                        .read(unreadOnlyProvider.notifier)
-                                        .state =
-                                    !unreadOnly,
-                                icon: Icon(
-                                  unreadOnly
-                                      ? Icons.filter_alt
-                                      : Icons.filter_alt_outlined,
-                                ),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            tooltip: l10n.markAllRead,
-                            onPressed: () async {
-                              await markAllRead();
-                              if (!overlayContext.mounted) return;
-                              ScaffoldMessenger.of(overlayContext).showSnackBar(
-                                SnackBar(content: Text(l10n.done)),
-                              );
-                            },
-                            icon: const Icon(Icons.done_all),
-                          ),
-                          IconButton(
-                            tooltip: l10n.settings,
-                            onPressed: () => context.push('/settings'),
-                            icon: const Icon(Icons.settings_outlined),
-                          ),
+                          Expanded(child: content),
                         ],
                       ),
-                      Expanded(child: content),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
             ),

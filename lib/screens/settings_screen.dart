@@ -17,7 +17,6 @@ class SettingsScreen extends ConsumerWidget {
 
     return DefaultTabController(
       length: 6,
-      initialIndex: 4, // Default to App Preferences as seen in image
       child: Scaffold(
         appBar: AppBar(
           leading: const BackButton(),
@@ -27,6 +26,10 @@ class SettingsScreen extends ConsumerWidget {
             tabAlignment: TabAlignment.start,
             dividerColor: Colors.transparent,
             tabs: [
+              Tab(
+                icon: const Icon(Icons.settings_outlined),
+                text: l10n.appPreferences,
+              ),
               Tab(
                 icon: const Icon(Icons.rss_feed_outlined),
                 text: l10n.subscriptions,
@@ -44,10 +47,6 @@ class SettingsScreen extends ConsumerWidget {
                 text: l10n.services,
               ),
               Tab(
-                icon: const Icon(Icons.settings_outlined),
-                text: l10n.appPreferences,
-              ),
-              Tab(
                 icon: const Icon(Icons.info_outline),
                 text: l10n.about,
               ),
@@ -56,11 +55,11 @@ class SettingsScreen extends ConsumerWidget {
         ),
         body: TabBarView(
           children: [
+            const _AppPreferencesTab(),
             _PlaceholderTab(l10n.subscriptions),
             _PlaceholderTab(l10n.groupingAndSorting),
             _PlaceholderTab(l10n.rules),
             _PlaceholderTab(l10n.services),
-            const _AppPreferencesTab(),
             _PlaceholderTab(l10n.about),
           ],
         ),
@@ -138,26 +137,28 @@ class _AppPreferencesTab extends ConsumerWidget {
 
             // Theme
             _SectionHeader(title: l10n.theme),
-            _ThemeRadioItem(
-              label: l10n.system,
-              value: ThemeMode.system,
+            RadioGroup<ThemeMode>(
               groupValue: appSettings.themeMode,
-              onChanged: (v) =>
-                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
-            ),
-            _ThemeRadioItem(
-              label: l10n.light,
-              value: ThemeMode.light,
-              groupValue: appSettings.themeMode,
-              onChanged: (v) =>
-                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
-            ),
-            _ThemeRadioItem(
-              label: l10n.dark,
-              value: ThemeMode.dark,
-              groupValue: appSettings.themeMode,
-              onChanged: (v) =>
-                  ref.read(appSettingsProvider.notifier).setThemeMode(v!),
+              onChanged: (v) {
+                if (v == null) return;
+                ref.read(appSettingsProvider.notifier).setThemeMode(v);
+              },
+              child: Column(
+                children: [
+                  _ThemeRadioItem(
+                    label: l10n.system,
+                    value: ThemeMode.system,
+                  ),
+                  _ThemeRadioItem(
+                    label: l10n.light,
+                    value: ThemeMode.light,
+                  ),
+                  _ThemeRadioItem(
+                    label: l10n.dark,
+                    value: ThemeMode.dark,
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -258,22 +259,16 @@ class _ThemeRadioItem extends StatelessWidget {
   const _ThemeRadioItem({
     required this.label,
     required this.value,
-    required this.groupValue,
-    required this.onChanged,
   });
 
   final String label;
   final ThemeMode value;
-  final ThemeMode groupValue;
-  final ValueChanged<ThemeMode?> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return RadioListTile<ThemeMode>(
       title: Text(label),
       value: value,
-      groupValue: groupValue,
-      onChanged: onChanged,
       contentPadding: EdgeInsets.zero,
       dense: true,
     );
