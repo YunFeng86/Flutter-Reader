@@ -109,6 +109,13 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if we are in 3-pane mode.
+    final width = MediaQuery.sizeOf(context).width;
+    final isThreePane = isDesktop &&
+        desktopModeForWidth(width) == DesktopPaneMode.threePane;
+    // If in 3-pane mode, never show back button.
+    final effectiveShowBack = widget.showBack && !isThreePane;
+
     final a = ref.watch(articleProvider(widget.articleId));
     // final fullTextRequest = ref.watch(fullTextControllerProvider); // Unused
     final useFullText = ref.watch(fullTextViewEnabledProvider(widget.articleId));
@@ -259,7 +266,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
               height: 56,
               child: Row(
                 children: [
-                  if (widget.showBack) ...[
+                  if (effectiveShowBack) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       tooltip: MaterialLocalizations.of(context).backButtonTooltip,

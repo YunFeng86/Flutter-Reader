@@ -136,13 +136,12 @@ class App extends ConsumerWidget {
                                 );
                               },
                             ),
+                          _ when mode == DesktopPaneMode.threePane => null,
                           _ when desktopSidebarInline(mode) => SizedBox(
                               width: 40,
                               height: 40,
                               child: IconButton(
-                                tooltip: sidebarVisible ? l10n.collapse : l10n.expand, // Add l10n keys or hardcode for now/fallback
-                                // Note: l10n might not have keys yet. Use basic strings or existing keys.
-                                // l10n.collapse exists? user used it in Sidebar.
+                                tooltip: sidebarVisible ? l10n.collapse : l10n.expand,
                                 onPressed: () => ref
                                     .read(sidebarVisibleProvider.notifier)
                                     .state = !sidebarVisible,
@@ -150,19 +149,7 @@ class App extends ConsumerWidget {
                                   sidebarVisible
                                       ? Icons.keyboard_double_arrow_left
                                       : Icons.keyboard_double_arrow_right,
-                                      // User asked for "Back button" when collapsed.
-                                      // Maybe "Menu" icon is safer?
-                                      // "Original expand button" - Sidebar usually has arrow or menu.
-                                      // Let's use menu_open / menu or arrow_back / menu.
-                                      // User said "Back button".
-                                      // Let's use ViewSidebar / ViewSidebarOutlined ?
-                                      // Let's use generic Menu Open/Close or Arrows.
-                                      // MD3 standard: Menu for drawer, maybe different for toggle.
-                                      // Let's try `Icons.format_indent_decrease` (collapse) / `Icons.format_indent_increase` (expand) or similar.
-                                      // Or `view_sidebar`.
-                                      // Let's go with `Icons.vertical_split` vs `Icons.vertical_split_outlined`?
-                                      // Simpler: `Icons.menu_open` (points left) when visible. `Icons.menu` when invisible.
-                                ), 
+                                ),
                                 padding: EdgeInsets.zero,
                               ),
                             ),
