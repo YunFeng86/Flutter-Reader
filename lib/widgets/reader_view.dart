@@ -259,7 +259,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
           ),
         );
 
-        if (!widget.embedded && !isDesktop) {
+        // Show AppBar if we are not embedded (i.e. strictly full screen) OR if
+        // we explicitly want a back button (e.g. secondary page on desktop).
+        // On mobile (!isDesktop), we almost always want the scaffold if not embedded.
+        final showAppBar = (!isDesktop && !widget.embedded) || widget.showBack;
+
+        if (showAppBar) {
           return Scaffold(
             appBar: AppBar(
               title: null, // Title is inline

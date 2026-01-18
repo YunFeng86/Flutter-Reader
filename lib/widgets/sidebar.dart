@@ -58,6 +58,47 @@ class _SidebarState extends ConsumerState<Sidebar> {
     super.dispose();
   }
 
+  NavigatorState get _navigator {
+    if (widget.router != null) {
+      final key = widget.router!.routerDelegate.navigatorKey;
+      if (key.currentState != null) {
+        return key.currentState!;
+      }
+    }
+    return Navigator.of(context);
+  }
+
+  Future<T?> _showDialog<T>({required WidgetBuilder builder}) {
+    // Manually push a DialogRoute on the correct navigator.
+    // We pass `context` (Sidebar's context) to DialogRoute so it inherits correct
+    // Theme and Localizations, but we push it to `_navigator` (which might be
+    // the root navigator from GoRouter) to ensure it has an Overlay.
+    return _navigator.push<T>(
+      DialogRoute<T>(
+        context: context,
+        builder: builder,
+        barrierDismissible: true,
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
+        useSafeArea: true,
+      ),
+    );
+  }
+
+  Future<T?> _showModalBottomSheet<T>({required WidgetBuilder builder}) {
+    return _navigator.push<T>(
+      ModalBottomSheetRoute<T>(
+        builder: builder,
+        isScrollControlled: false,
+        useSafeArea: true,
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -127,7 +168,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 final filteredFeeds = _searchText.isEmpty
                     ? feedItems
                     : feedItems.where((f) {
-                        final title = (f.userTitle ?? f.title ?? '').toLowerCase();
+                        final title = (f.userTitle ?? f.title ?? '')
+                            .toLowerCase();
                         final url = f.url.toLowerCase();
                         return title.contains(_searchText) ||
                             url.contains(_searchText);
@@ -158,6 +200,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                         onTap: () => _selectAll(ref),
                       ),
                       error: (e, _) => _SidebarItem(
+                        key: const ValueKey('all_inbox'),
                         selected:
                             !starredOnly &&
                             selectedFeedId == null &&
@@ -180,6 +223,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     children.add(allTile);
                     children.add(
                       _SidebarItem(
+                        key: const ValueKey('starred'),
                         selected: starredOnly,
                         icon: starredOnly ? Icons.star : Icons.star_border,
                         title: l10n.starred,
@@ -369,8 +413,15 @@ class _SidebarState extends ConsumerState<Sidebar> {
           ...feeds.map((f) {
             final unread = ref.watch(unreadCountProvider(f.id));
             return unread.when(
-              data: (count) =>
-                  _feedTile(context, ref, f, selectedFeedId, count, indent: 16),
+              data: (count) => _feedTile(
+                context,
+                ref,
+                f,
+                selectedFeedId,
+                count,
+                indent: 16,
+                key: ValueKey('feed_${f.id}'),
+              ),
               loading: () =>
                   _feedTile(context, ref, f, selectedFeedId, null, indent: 16),
               error: (_, _) =>
@@ -388,16 +439,19 @@ class _SidebarState extends ConsumerState<Sidebar> {
     int? selectedFeedId,
     int? unreadCount, {
     double indent = 0,
+    Key? key,
   }) {
     final displayTitle = f.userTitle?.trim().isNotEmpty == true
         ? f.userTitle!
         : (f.title?.trim().isNotEmpty == true ? f.title! : f.url);
     return ListTile(
+      key: key,
       selected: selectedFeedId == f.id,
       contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
       leading: const Icon(Icons.rss_feed),
       title: Text(displayTitle),
-      subtitle: (f.userTitle?.trim().isNotEmpty == true ||
+      subtitle:
+          (f.userTitle?.trim().isNotEmpty == true ||
               f.title?.trim().isNotEmpty == true)
           ? Text(f.url, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
@@ -445,8 +499,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     int feedId,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final ok = await showDialog<bool>(
-      context: context,
+    final ok = await _showDialog<bool>(
       builder: (context) {
         return AlertDialog(
           title: Text(l10n.deleteSubscriptionConfirmTitle),
@@ -475,8 +528,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   Future<void> _showAddFeedDialog(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
-    final url = await showDialog<String>(
-      context: context,
+    final url = await _showDialog<String>(
       builder: (context) {
         return AlertDialog(
           title: Text(l10n.addSubscription),
@@ -525,8 +577,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
-    final name = await showDialog<String>(
-      context: context,
+    final name = await _showDialog<String>(
       builder: (context) {
         return AlertDialog(
           title: Text(l10n.newCategory),
@@ -559,8 +610,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     Category c,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final v = await showModalBottomSheet<_CategoryAction>(
-      context: context,
+    final v = await _showModalBottomSheet<_CategoryAction>(
       builder: (context) {
         return SafeArea(
           child: Wrap(
@@ -603,8 +653,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     Feed f,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final action = await showModalBottomSheet<_FeedAction>(
-      context: context,
+    final action = await _showModalBottomSheet<_FeedAction>(
       builder: (context) {
         return SafeArea(
           child: Wrap(
@@ -669,8 +718,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: c.name);
-    final next = await showDialog<String?>(
-      context: context,
+    final next = await _showDialog<String?>(
       builder: (context) {
         return AlertDialog(
           title: Text(l10n.rename),
@@ -700,9 +748,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
       final msg = e.toString().contains('already exists')
           ? l10n.nameAlreadyExists
           : e.toString();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.errorMessage(msg))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(msg))));
     }
   }
 
@@ -713,8 +761,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: f.userTitle ?? '');
-    final next = await showDialog<String?>(
-      context: context,
+    final next = await _showDialog<String?>(
       builder: (context) {
         return AlertDialog(
           title: Text(l10n.edit),
@@ -753,8 +800,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final cats = await ref.read(categoryRepositoryProvider).getAll();
     if (!context.mounted) return;
-    final selected = await showDialog<int?>(
-      context: context,
+    final selected = await _showDialog<int?>(
       builder: (context) {
         final l10n = AppLocalizations.of(context)!;
         final picked = f.categoryId;
@@ -917,6 +963,7 @@ class _UnreadBadge extends StatelessWidget {
 
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
+    super.key,
     required this.selected,
     required this.icon,
     required this.title,
