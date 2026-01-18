@@ -1,61 +1,173 @@
 {
   "@@locale": "en",
   "appTitle": "Flutter Reader",
+  "@appTitle": {
+    "description": "appTitle"
+  },
   "notFound": "Not found",
-
+  "@notFound": {
+    "description": "notFound"
+  },
   "settings": "Settings",
+  "@settings": {
+    "description": "settings"
+  },
   "appearance": "Appearance",
+  "@appearance": {
+    "description": "appearance"
+  },
   "theme": "Theme",
+  "@theme": {
+    "description": "theme"
+  },
   "system": "System",
+  "@system": {
+    "description": "system"
+  },
   "light": "Light",
+  "@light": {
+    "description": "light"
+  },
   "dark": "Dark",
-
+  "@dark": {
+    "description": "dark"
+  },
   "language": "Language",
+  "@language": {
+    "description": "language"
+  },
   "systemLanguage": "System language",
+  "@systemLanguage": {
+    "description": "systemLanguage"
+  },
   "english": "English",
+  "@english": {
+    "description": "english"
+  },
   "chineseSimplified": "简体中文",
+  "@chineseSimplified": {
+    "description": "chineseSimplified"
+  },
   "chineseTraditional": "繁體中文",
-
+  "@chineseTraditional": {
+    "description": "chineseTraditional"
+  },
   "reader": "Reader",
+  "@reader": {
+    "description": "reader"
+  },
   "fontSize": "Font size",
+  "@fontSize": {
+    "description": "fontSize"
+  },
   "lineHeight": "Line height",
+  "@lineHeight": {
+    "description": "lineHeight"
+  },
   "horizontalPadding": "Horizontal padding",
-
+  "@horizontalPadding": {
+    "description": "horizontalPadding"
+  },
   "storage": "Storage",
+  "@storage": {
+    "description": "storage"
+  },
   "clearImageCache": "Clear image cache",
+  "@clearImageCache": {
+    "description": "clearImageCache"
+  },
   "clearImageCacheSubtitle": "Remove cached images used for offline reading",
+  "@clearImageCacheSubtitle": {
+    "description": "clearImageCacheSubtitle"
+  },
   "cacheCleared": "Cache cleared",
-
+  "@cacheCleared": {
+    "description": "cacheCleared"
+  },
   "subscriptions": "Subscriptions",
+  "@subscriptions": {
+    "description": "subscriptions"
+  },
   "all": "All",
+  "@all": {
+    "description": "all"
+  },
   "uncategorized": "Uncategorized",
+  "@uncategorized": {
+    "description": "uncategorized"
+  },
   "refreshAll": "Refresh all",
+  "@refreshAll": {
+    "description": "refreshAll"
+  },
   "refreshSelected": "Refresh selected",
+  "@refreshSelected": {
+    "description": "refreshSelected"
+  },
   "importOpml": "Import OPML",
+  "@importOpml": {
+    "description": "importOpml"
+  },
   "exportOpml": "Export OPML",
+  "@exportOpml": {
+    "description": "exportOpml"
+  },
   "addSubscription": "Add subscription",
+  "@addSubscription": {
+    "description": "addSubscription"
+  },
   "newCategory": "New category",
-
+  "@newCategory": {
+    "description": "newCategory"
+  },
   "articles": "Articles",
+  "@articles": {
+    "description": "articles"
+  },
   "unread": "Unread",
+  "@unread": {
+    "description": "unread"
+  },
   "markAllRead": "Mark all read",
-
+  "@markAllRead": {
+    "description": "markAllRead"
+  },
   "fullText": "Full text",
+  "@fullText": {
+    "description": "fullText"
+  },
   "readerSettings": "Reader settings",
+  "@readerSettings": {
+    "description": "readerSettings"
+  },
   "done": "Done",
-
+  "@done": {
+    "description": "done"
+  },
   "more": "More",
+  "@more": {
+    "description": "more"
+  },
   "showAll": "Show all",
+  "@showAll": {
+    "description": "showAll"
+  },
   "unreadOnly": "Unread only",
+  "@unreadOnly": {
+    "description": "unreadOnly"
+  },
   "selectAnArticle": "Select an article",
-
+  "@selectAnArticle": {
+    "description": "selectAnArticle"
+  },
   "errorMessage": "Error: {error}",
   "@errorMessage": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "errorMessage"
   },
   "unreadCountError": "Unread count error: {error}",
   "@unreadCountError": {
@@ -63,82 +175,206 @@
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "unreadCountError"
   },
-
   "refreshed": "Refreshed",
+  "@refreshed": {
+    "description": "refreshed"
+  },
   "refreshedAll": "Refreshed all",
-
+  "@refreshedAll": {
+    "description": "refreshedAll"
+  },
   "add": "Add",
+  "@add": {
+    "description": "add"
+  },
   "cancel": "Cancel",
+  "@cancel": {
+    "description": "cancel"
+  },
   "create": "Create",
+  "@create": {
+    "description": "create"
+  },
   "delete": "Delete",
+  "@delete": {
+    "description": "delete"
+  },
   "deleted": "Deleted",
-
+  "@deleted": {
+    "description": "deleted"
+  },
   "rssAtomUrl": "RSS/Atom URL",
+  "@rssAtomUrl": {
+    "description": "rssAtomUrl"
+  },
   "name": "Name",
+  "@name": {
+    "description": "name"
+  },
   "addedAndSynced": "Added & synced",
-
+  "@addedAndSynced": {
+    "description": "addedAndSynced"
+  },
   "deleteSubscription": "Delete subscription",
+  "@deleteSubscription": {
+    "description": "deleteSubscription"
+  },
   "deleteSubscriptionConfirmTitle": "Delete subscription?",
+  "@deleteSubscriptionConfirmTitle": {
+    "description": "deleteSubscriptionConfirmTitle"
+  },
   "deleteSubscriptionConfirmContent": "This will delete its cached articles too.",
-
+  "@deleteSubscriptionConfirmContent": {
+    "description": "deleteSubscriptionConfirmContent"
+  },
   "deleteCategory": "Delete category",
+  "@deleteCategory": {
+    "description": "deleteCategory"
+  },
   "categoryDeleted": "Category deleted",
+  "@categoryDeleted": {
+    "description": "categoryDeleted"
+  },
   "refresh": "Refresh",
+  "@refresh": {
+    "description": "refresh"
+  },
   "moveToCategory": "Move to category",
-
+  "@moveToCategory": {
+    "description": "moveToCategory"
+  },
   "noFeedsFoundInOpml": "No feeds found in OPML",
+  "@noFeedsFoundInOpml": {
+    "description": "noFeedsFoundInOpml"
+  },
   "importedFeeds": "Imported {count} feeds",
   "@importedFeeds": {
     "placeholders": {
       "count": {
         "type": "int"
       }
-    }
+    },
+    "description": "importedFeeds"
   },
   "exportedOpml": "Exported OPML",
-
+  "@exportedOpml": {
+    "description": "exportedOpml"
+  },
   "fullTextFailed": "Full text failed: {error}",
   "@fullTextFailed": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "fullTextFailed"
   },
-
   "scrollToLoadMore": "Scroll to load more",
+  "@scrollToLoadMore": {
+    "description": "scrollToLoadMore"
+  },
   "noArticles": "No articles",
+  "@noArticles": {
+    "description": "noArticles"
+  },
   "noUnreadArticles": "No unread articles",
-
+  "@noUnreadArticles": {
+    "description": "noUnreadArticles"
+  },
   "star": "Star",
+  "@star": {
+    "description": "star"
+  },
   "unstar": "Unstar",
+  "@unstar": {
+    "description": "unstar"
+  },
   "starred": "Starred",
+  "@starred": {
+    "description": "starred"
+  },
   "markRead": "Mark read",
+  "@markRead": {
+    "description": "markRead"
+  },
   "markUnread": "Mark unread",
+  "@markUnread": {
+    "description": "markUnread"
+  },
   "collapse": "Collapse",
+  "@collapse": {
+    "description": "collapse"
+  },
   "expand": "Expand",
+  "@expand": {
+    "description": "expand"
+  },
   "openInBrowser": "Open in browser",
+  "@openInBrowser": {
+    "description": "openInBrowser"
+  },
   "autoMarkRead": "Auto-mark as read when opened",
+  "@autoMarkRead": {
+    "description": "autoMarkRead"
+  },
   "search": "Search",
+  "@search": {
+    "description": "search"
+  },
   "groupingAndSorting": "Grouping & Sorting",
+  "@groupingAndSorting": {
+    "description": "groupingAndSorting"
+  },
   "rules": "Rules",
+  "@rules": {
+    "description": "rules"
+  },
   "services": "Services",
+  "@services": {
+    "description": "services"
+  },
   "autoRefresh": "Auto refresh",
+  "@autoRefresh": {
+    "description": "autoRefresh"
+  },
   "off": "Off",
+  "@off": {
+    "description": "off"
+  },
   "everyMinutes": "Every {minutes} min",
   "@everyMinutes": {
     "placeholders": {
       "minutes": {
         "type": "int"
       }
-    }
+    },
+    "description": "everyMinutes"
   },
   "appPreferences": "App Preferences",
+  "@appPreferences": {
+    "description": "appPreferences"
+  },
   "about": "About",
+  "@about": {
+    "description": "about"
+  },
   "dataDirectory": "Data directory",
+  "@dataDirectory": {
+    "description": "dataDirectory"
+  },
   "copyPath": "Copy path",
+  "@copyPath": {
+    "description": "copyPath"
+  },
   "openFolder": "Open folder",
-  "keyboardShortcuts": "Keyboard shortcuts"
+  "@openFolder": {
+    "description": "openFolder"
+  },
+  "keyboardShortcuts": "Keyboard shortcuts",
+  "@keyboardShortcuts": {
+    "description": "keyboardShortcuts"
+  }
 }

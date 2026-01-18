@@ -1,61 +1,173 @@
 {
   "@@locale": "zh",
   "appTitle": "Flutter Reader",
+  "@appTitle": {
+    "description": "appTitle"
+  },
   "notFound": "未找到",
-
+  "@notFound": {
+    "description": "notFound"
+  },
   "settings": "设置",
+  "@settings": {
+    "description": "settings"
+  },
   "appearance": "外观",
+  "@appearance": {
+    "description": "appearance"
+  },
   "theme": "主题",
+  "@theme": {
+    "description": "theme"
+  },
   "system": "跟随系统",
+  "@system": {
+    "description": "system"
+  },
   "light": "浅色",
+  "@light": {
+    "description": "light"
+  },
   "dark": "深色",
-
+  "@dark": {
+    "description": "dark"
+  },
   "language": "语言",
+  "@language": {
+    "description": "language"
+  },
   "systemLanguage": "系统语言",
+  "@systemLanguage": {
+    "description": "systemLanguage"
+  },
   "english": "English",
+  "@english": {
+    "description": "english"
+  },
   "chineseSimplified": "简体中文",
+  "@chineseSimplified": {
+    "description": "chineseSimplified"
+  },
   "chineseTraditional": "繁體中文",
-
+  "@chineseTraditional": {
+    "description": "chineseTraditional"
+  },
   "reader": "阅读",
+  "@reader": {
+    "description": "reader"
+  },
   "fontSize": "字号",
+  "@fontSize": {
+    "description": "fontSize"
+  },
   "lineHeight": "行高",
+  "@lineHeight": {
+    "description": "lineHeight"
+  },
   "horizontalPadding": "左右边距",
-
+  "@horizontalPadding": {
+    "description": "horizontalPadding"
+  },
   "storage": "存储",
+  "@storage": {
+    "description": "storage"
+  },
   "clearImageCache": "清理图片缓存",
+  "@clearImageCache": {
+    "description": "clearImageCache"
+  },
   "clearImageCacheSubtitle": "移除离线阅读预取的图片缓存",
+  "@clearImageCacheSubtitle": {
+    "description": "clearImageCacheSubtitle"
+  },
   "cacheCleared": "缓存已清理",
-
+  "@cacheCleared": {
+    "description": "cacheCleared"
+  },
   "subscriptions": "订阅",
+  "@subscriptions": {
+    "description": "subscriptions"
+  },
   "all": "全部",
+  "@all": {
+    "description": "all"
+  },
   "uncategorized": "未分类",
+  "@uncategorized": {
+    "description": "uncategorized"
+  },
   "refreshAll": "刷新全部",
+  "@refreshAll": {
+    "description": "refreshAll"
+  },
   "refreshSelected": "刷新当前",
+  "@refreshSelected": {
+    "description": "refreshSelected"
+  },
   "importOpml": "导入 OPML",
+  "@importOpml": {
+    "description": "importOpml"
+  },
   "exportOpml": "导出 OPML",
+  "@exportOpml": {
+    "description": "exportOpml"
+  },
   "addSubscription": "添加订阅",
+  "@addSubscription": {
+    "description": "addSubscription"
+  },
   "newCategory": "新建分类",
-
+  "@newCategory": {
+    "description": "newCategory"
+  },
   "articles": "文章",
+  "@articles": {
+    "description": "articles"
+  },
   "unread": "未读",
+  "@unread": {
+    "description": "unread"
+  },
   "markAllRead": "全部已读",
-
+  "@markAllRead": {
+    "description": "markAllRead"
+  },
   "fullText": "阅读全文",
+  "@fullText": {
+    "description": "fullText"
+  },
   "readerSettings": "阅读设置",
+  "@readerSettings": {
+    "description": "readerSettings"
+  },
   "done": "完成",
-
+  "@done": {
+    "description": "done"
+  },
   "more": "更多",
+  "@more": {
+    "description": "more"
+  },
   "showAll": "显示全部",
+  "@showAll": {
+    "description": "showAll"
+  },
   "unreadOnly": "只看未读",
+  "@unreadOnly": {
+    "description": "unreadOnly"
+  },
   "selectAnArticle": "请选择一篇文章",
-
+  "@selectAnArticle": {
+    "description": "selectAnArticle"
+  },
   "errorMessage": "错误：{error}",
   "@errorMessage": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "errorMessage"
   },
   "unreadCountError": "未读数获取失败：{error}",
   "@unreadCountError": {
@@ -63,82 +175,206 @@
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "unreadCountError"
   },
-
   "refreshed": "已刷新",
+  "@refreshed": {
+    "description": "refreshed"
+  },
   "refreshedAll": "全部已刷新",
-
+  "@refreshedAll": {
+    "description": "refreshedAll"
+  },
   "add": "添加",
+  "@add": {
+    "description": "add"
+  },
   "cancel": "取消",
+  "@cancel": {
+    "description": "cancel"
+  },
   "create": "创建",
+  "@create": {
+    "description": "create"
+  },
   "delete": "删除",
+  "@delete": {
+    "description": "delete"
+  },
   "deleted": "已删除",
-
+  "@deleted": {
+    "description": "deleted"
+  },
   "rssAtomUrl": "RSS/Atom 地址",
+  "@rssAtomUrl": {
+    "description": "rssAtomUrl"
+  },
   "name": "名称",
+  "@name": {
+    "description": "name"
+  },
   "addedAndSynced": "已添加并同步",
-
+  "@addedAndSynced": {
+    "description": "addedAndSynced"
+  },
   "deleteSubscription": "删除订阅",
+  "@deleteSubscription": {
+    "description": "deleteSubscription"
+  },
   "deleteSubscriptionConfirmTitle": "删除订阅？",
+  "@deleteSubscriptionConfirmTitle": {
+    "description": "deleteSubscriptionConfirmTitle"
+  },
   "deleteSubscriptionConfirmContent": "这也会删除其缓存的文章。",
-
+  "@deleteSubscriptionConfirmContent": {
+    "description": "deleteSubscriptionConfirmContent"
+  },
   "deleteCategory": "删除分类",
+  "@deleteCategory": {
+    "description": "deleteCategory"
+  },
   "categoryDeleted": "分类已删除",
+  "@categoryDeleted": {
+    "description": "categoryDeleted"
+  },
   "refresh": "刷新",
+  "@refresh": {
+    "description": "refresh"
+  },
   "moveToCategory": "移动到分类",
-
+  "@moveToCategory": {
+    "description": "moveToCategory"
+  },
   "noFeedsFoundInOpml": "OPML 中未找到订阅",
+  "@noFeedsFoundInOpml": {
+    "description": "noFeedsFoundInOpml"
+  },
   "importedFeeds": "已导入 {count} 个订阅",
   "@importedFeeds": {
     "placeholders": {
       "count": {
         "type": "int"
       }
-    }
+    },
+    "description": "importedFeeds"
   },
   "exportedOpml": "已导出 OPML",
-
+  "@exportedOpml": {
+    "description": "exportedOpml"
+  },
   "fullTextFailed": "获取全文失败：{error}",
   "@fullTextFailed": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "fullTextFailed"
   },
-
   "scrollToLoadMore": "滚动以加载更多",
+  "@scrollToLoadMore": {
+    "description": "scrollToLoadMore"
+  },
   "noArticles": "暂无文章",
+  "@noArticles": {
+    "description": "noArticles"
+  },
   "noUnreadArticles": "暂无未读文章",
-
+  "@noUnreadArticles": {
+    "description": "noUnreadArticles"
+  },
   "star": "收藏",
+  "@star": {
+    "description": "star"
+  },
   "unstar": "取消收藏",
+  "@unstar": {
+    "description": "unstar"
+  },
   "starred": "已收藏",
+  "@starred": {
+    "description": "starred"
+  },
   "markRead": "标记为已读",
+  "@markRead": {
+    "description": "markRead"
+  },
   "markUnread": "标记为未读",
+  "@markUnread": {
+    "description": "markUnread"
+  },
   "collapse": "收起",
+  "@collapse": {
+    "description": "collapse"
+  },
   "expand": "展开",
+  "@expand": {
+    "description": "expand"
+  },
   "openInBrowser": "在浏览器打开",
+  "@openInBrowser": {
+    "description": "openInBrowser"
+  },
   "autoMarkRead": "打开时自动标记为已读",
+  "@autoMarkRead": {
+    "description": "autoMarkRead"
+  },
   "search": "搜索",
+  "@search": {
+    "description": "search"
+  },
   "groupingAndSorting": "分组与排序",
+  "@groupingAndSorting": {
+    "description": "groupingAndSorting"
+  },
   "rules": "规则",
+  "@rules": {
+    "description": "rules"
+  },
   "services": "服务",
+  "@services": {
+    "description": "services"
+  },
   "autoRefresh": "自动刷新",
+  "@autoRefresh": {
+    "description": "autoRefresh"
+  },
   "off": "关闭",
+  "@off": {
+    "description": "off"
+  },
   "everyMinutes": "每 {minutes} 分钟",
   "@everyMinutes": {
     "placeholders": {
       "minutes": {
         "type": "int"
       }
-    }
+    },
+    "description": "everyMinutes"
   },
   "appPreferences": "应用偏好",
+  "@appPreferences": {
+    "description": "appPreferences"
+  },
   "about": "关于",
+  "@about": {
+    "description": "about"
+  },
   "dataDirectory": "数据目录",
+  "@dataDirectory": {
+    "description": "dataDirectory"
+  },
   "copyPath": "复制路径",
+  "@copyPath": {
+    "description": "copyPath"
+  },
   "openFolder": "打开文件夹",
-  "keyboardShortcuts": "快捷键"
+  "@openFolder": {
+    "description": "openFolder"
+  },
+  "keyboardShortcuts": "快捷键",
+  "@keyboardShortcuts": {
+    "description": "keyboardShortcuts"
+  }
 }

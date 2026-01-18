@@ -547,8 +547,9 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
                         final tiles = <Widget>[];
                         for (final c in cats) {
                           final catFeeds = byCat[c.id] ?? const <Feed>[];
-                          if (_searchText.isNotEmpty && catFeeds.isEmpty)
+                          if (_searchText.isNotEmpty && catFeeds.isEmpty) {
                             continue;
+                          }
                           tiles.add(
                             _CategorySection(
                               categoryName: c.name,

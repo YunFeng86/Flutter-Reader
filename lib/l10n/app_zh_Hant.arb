@@ -1,61 +1,173 @@
 {
   "@@locale": "zh_Hant",
   "appTitle": "Flutter Reader",
+  "@appTitle": {
+    "description": "appTitle"
+  },
   "notFound": "未找到",
-
+  "@notFound": {
+    "description": "notFound"
+  },
   "settings": "設定",
+  "@settings": {
+    "description": "settings"
+  },
   "appearance": "外觀",
+  "@appearance": {
+    "description": "appearance"
+  },
   "theme": "主題",
+  "@theme": {
+    "description": "theme"
+  },
   "system": "跟隨系統",
+  "@system": {
+    "description": "system"
+  },
   "light": "淺色",
+  "@light": {
+    "description": "light"
+  },
   "dark": "深色",
-
+  "@dark": {
+    "description": "dark"
+  },
   "language": "語言",
+  "@language": {
+    "description": "language"
+  },
   "systemLanguage": "系統語言",
+  "@systemLanguage": {
+    "description": "systemLanguage"
+  },
   "english": "English",
+  "@english": {
+    "description": "english"
+  },
   "chineseSimplified": "简体中文",
+  "@chineseSimplified": {
+    "description": "chineseSimplified"
+  },
   "chineseTraditional": "繁體中文",
-
+  "@chineseTraditional": {
+    "description": "chineseTraditional"
+  },
   "reader": "閱讀",
+  "@reader": {
+    "description": "reader"
+  },
   "fontSize": "字號",
+  "@fontSize": {
+    "description": "fontSize"
+  },
   "lineHeight": "行高",
+  "@lineHeight": {
+    "description": "lineHeight"
+  },
   "horizontalPadding": "左右邊距",
-
+  "@horizontalPadding": {
+    "description": "horizontalPadding"
+  },
   "storage": "儲存",
+  "@storage": {
+    "description": "storage"
+  },
   "clearImageCache": "清理圖片快取",
+  "@clearImageCache": {
+    "description": "clearImageCache"
+  },
   "clearImageCacheSubtitle": "移除離線閱讀預取的圖片快取",
+  "@clearImageCacheSubtitle": {
+    "description": "clearImageCacheSubtitle"
+  },
   "cacheCleared": "快取已清理",
-
+  "@cacheCleared": {
+    "description": "cacheCleared"
+  },
   "subscriptions": "訂閱",
+  "@subscriptions": {
+    "description": "subscriptions"
+  },
   "all": "全部",
+  "@all": {
+    "description": "all"
+  },
   "uncategorized": "未分類",
+  "@uncategorized": {
+    "description": "uncategorized"
+  },
   "refreshAll": "重新整理全部",
+  "@refreshAll": {
+    "description": "refreshAll"
+  },
   "refreshSelected": "重新整理當前",
+  "@refreshSelected": {
+    "description": "refreshSelected"
+  },
   "importOpml": "匯入 OPML",
+  "@importOpml": {
+    "description": "importOpml"
+  },
   "exportOpml": "匯出 OPML",
+  "@exportOpml": {
+    "description": "exportOpml"
+  },
   "addSubscription": "新增訂閱",
+  "@addSubscription": {
+    "description": "addSubscription"
+  },
   "newCategory": "新增分類",
-
+  "@newCategory": {
+    "description": "newCategory"
+  },
   "articles": "文章",
+  "@articles": {
+    "description": "articles"
+  },
   "unread": "未讀",
+  "@unread": {
+    "description": "unread"
+  },
   "markAllRead": "全部已讀",
-
+  "@markAllRead": {
+    "description": "markAllRead"
+  },
   "fullText": "閱讀全文",
+  "@fullText": {
+    "description": "fullText"
+  },
   "readerSettings": "閱讀設定",
+  "@readerSettings": {
+    "description": "readerSettings"
+  },
   "done": "完成",
-
+  "@done": {
+    "description": "done"
+  },
   "more": "更多",
+  "@more": {
+    "description": "more"
+  },
   "showAll": "顯示全部",
+  "@showAll": {
+    "description": "showAll"
+  },
   "unreadOnly": "只看未讀",
+  "@unreadOnly": {
+    "description": "unreadOnly"
+  },
   "selectAnArticle": "請選擇一篇文章",
-
+  "@selectAnArticle": {
+    "description": "selectAnArticle"
+  },
   "errorMessage": "錯誤：{error}",
   "@errorMessage": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "errorMessage"
   },
   "unreadCountError": "未讀數取得失敗：{error}",
   "@unreadCountError": {
@@ -63,82 +175,206 @@
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "unreadCountError"
   },
-
   "refreshed": "已重新整理",
+  "@refreshed": {
+    "description": "refreshed"
+  },
   "refreshedAll": "全部已重新整理",
-
+  "@refreshedAll": {
+    "description": "refreshedAll"
+  },
   "add": "新增",
+  "@add": {
+    "description": "add"
+  },
   "cancel": "取消",
+  "@cancel": {
+    "description": "cancel"
+  },
   "create": "建立",
+  "@create": {
+    "description": "create"
+  },
   "delete": "刪除",
+  "@delete": {
+    "description": "delete"
+  },
   "deleted": "已刪除",
-
+  "@deleted": {
+    "description": "deleted"
+  },
   "rssAtomUrl": "RSS/Atom 位址",
+  "@rssAtomUrl": {
+    "description": "rssAtomUrl"
+  },
   "name": "名稱",
+  "@name": {
+    "description": "name"
+  },
   "addedAndSynced": "已新增並同步",
-
+  "@addedAndSynced": {
+    "description": "addedAndSynced"
+  },
   "deleteSubscription": "刪除訂閱",
+  "@deleteSubscription": {
+    "description": "deleteSubscription"
+  },
   "deleteSubscriptionConfirmTitle": "刪除訂閱？",
+  "@deleteSubscriptionConfirmTitle": {
+    "description": "deleteSubscriptionConfirmTitle"
+  },
   "deleteSubscriptionConfirmContent": "這也會刪除其快取的文章。",
-
+  "@deleteSubscriptionConfirmContent": {
+    "description": "deleteSubscriptionConfirmContent"
+  },
   "deleteCategory": "刪除分類",
+  "@deleteCategory": {
+    "description": "deleteCategory"
+  },
   "categoryDeleted": "分類已刪除",
+  "@categoryDeleted": {
+    "description": "categoryDeleted"
+  },
   "refresh": "重新整理",
+  "@refresh": {
+    "description": "refresh"
+  },
   "moveToCategory": "移動到分類",
-
+  "@moveToCategory": {
+    "description": "moveToCategory"
+  },
   "noFeedsFoundInOpml": "OPML 中未找到訂閱",
+  "@noFeedsFoundInOpml": {
+    "description": "noFeedsFoundInOpml"
+  },
   "importedFeeds": "已匯入 {count} 個訂閱",
   "@importedFeeds": {
     "placeholders": {
       "count": {
         "type": "int"
       }
-    }
+    },
+    "description": "importedFeeds"
   },
   "exportedOpml": "已匯出 OPML",
-
+  "@exportedOpml": {
+    "description": "exportedOpml"
+  },
   "fullTextFailed": "取得全文失敗：{error}",
   "@fullTextFailed": {
     "placeholders": {
       "error": {
         "type": "String"
       }
-    }
+    },
+    "description": "fullTextFailed"
   },
-
   "scrollToLoadMore": "捲動以載入更多",
+  "@scrollToLoadMore": {
+    "description": "scrollToLoadMore"
+  },
   "noArticles": "暫無文章",
+  "@noArticles": {
+    "description": "noArticles"
+  },
   "noUnreadArticles": "暫無未讀文章",
-
+  "@noUnreadArticles": {
+    "description": "noUnreadArticles"
+  },
   "star": "收藏",
+  "@star": {
+    "description": "star"
+  },
   "unstar": "取消收藏",
+  "@unstar": {
+    "description": "unstar"
+  },
   "starred": "已收藏",
+  "@starred": {
+    "description": "starred"
+  },
   "markRead": "標記為已讀",
+  "@markRead": {
+    "description": "markRead"
+  },
   "markUnread": "標記為未讀",
+  "@markUnread": {
+    "description": "markUnread"
+  },
   "collapse": "收起",
+  "@collapse": {
+    "description": "collapse"
+  },
   "expand": "展開",
+  "@expand": {
+    "description": "expand"
+  },
   "openInBrowser": "在瀏覽器打開",
+  "@openInBrowser": {
+    "description": "openInBrowser"
+  },
   "autoMarkRead": "打開時自動標記為已讀",
+  "@autoMarkRead": {
+    "description": "autoMarkRead"
+  },
   "search": "搜尋",
+  "@search": {
+    "description": "search"
+  },
   "groupingAndSorting": "分組與排序",
+  "@groupingAndSorting": {
+    "description": "groupingAndSorting"
+  },
   "rules": "規則",
+  "@rules": {
+    "description": "rules"
+  },
   "services": "服務",
+  "@services": {
+    "description": "services"
+  },
   "autoRefresh": "自動重新整理",
+  "@autoRefresh": {
+    "description": "autoRefresh"
+  },
   "off": "關閉",
+  "@off": {
+    "description": "off"
+  },
   "everyMinutes": "每 {minutes} 分鐘",
   "@everyMinutes": {
     "placeholders": {
       "minutes": {
         "type": "int"
       }
-    }
+    },
+    "description": "everyMinutes"
   },
   "appPreferences": "應用偏好",
+  "@appPreferences": {
+    "description": "appPreferences"
+  },
   "about": "關於",
+  "@about": {
+    "description": "about"
+  },
   "dataDirectory": "資料目錄",
+  "@dataDirectory": {
+    "description": "dataDirectory"
+  },
   "copyPath": "複製路徑",
+  "@copyPath": {
+    "description": "copyPath"
+  },
   "openFolder": "打開資料夾",
-  "keyboardShortcuts": "快速鍵"
+  "@openFolder": {
+    "description": "openFolder"
+  },
+  "keyboardShortcuts": "快速鍵",
+  "@keyboardShortcuts": {
+    "description": "keyboardShortcuts"
+  }
 }
