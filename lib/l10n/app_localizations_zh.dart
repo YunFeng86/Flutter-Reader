@@ -618,10 +618,104 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get search => '搜尋';
 
   @override
+  String get searchInContent => '搜尋內容';
+
+  @override
   String get groupingAndSorting => '分組與排序';
 
   @override
+  String get groupBy => '分組依據';
+
+  @override
+  String get groupNone => '無';
+
+  @override
+  String get groupByDay => '按天';
+
+  @override
+  String get sortOrder => '排序方式';
+
+  @override
+  String get sortNewestFirst => '最新的在先';
+
+  @override
+  String get sortOldestFirst => '最舊的在先';
+
+  @override
   String get rules => '規則';
+
+  @override
+  String get addRule => '新增規則';
+
+  @override
+  String get editRule => '編輯規則';
+
+  @override
+  String get ruleName => '規則名稱';
+
+  @override
+  String get keyword => '關鍵字';
+
+  @override
+  String get matchIn => '匹配範圍';
+
+  @override
+  String get matchTitle => '標題';
+
+  @override
+  String get matchAuthor => '作者';
+
+  @override
+  String get matchLink => '連結';
+
+  @override
+  String get matchContent => '內容';
+
+  @override
+  String get actions => '動作';
+
+  @override
+  String get autoStar => '自動收藏';
+
+  @override
+  String get autoMarkReadAction => '自動標記為已讀';
+
+  @override
+  String get enabled => '啟用';
+
+  @override
+  String get rename => '重新命名';
+
+  @override
+  String get edit => '編輯';
+
+  @override
+  String get nameAlreadyExists => '名稱已存在';
+
+  @override
+  String get lastChecked => '上次檢查';
+
+  @override
+  String get lastSynced => '上次同步';
+
+  @override
+  String get never => '從未';
+
+  @override
+  String get cleanupReadArticles => '清理已讀文章';
+
+  @override
+  String get cleanupNow => '立即清理';
+
+  @override
+  String cleanedArticles(int count) {
+    return '清理了 $count 篇文章';
+  }
+
+  @override
+  String days(int days) {
+    return '$days 天';
+  }
 
   @override
   String get services => '服務';
