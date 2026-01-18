@@ -114,14 +114,31 @@
 
   "star": "Star",
   "unstar": "Unstar",
+  "starred": "Starred",
   "markRead": "Mark read",
   "markUnread": "Mark unread",
   "collapse": "Collapse",
   "expand": "Expand",
+  "openInBrowser": "Open in browser",
+  "autoMarkRead": "Auto-mark as read when opened",
   "search": "Search",
   "groupingAndSorting": "Grouping & Sorting",
   "rules": "Rules",
   "services": "Services",
+  "autoRefresh": "Auto refresh",
+  "off": "Off",
+  "everyMinutes": "Every {minutes} min",
+  "@everyMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "appPreferences": "App Preferences",
-  "about": "About"
+  "about": "About",
+  "dataDirectory": "Data directory",
+  "copyPath": "Copy path",
+  "openFolder": "Open folder",
+  "keyboardShortcuts": "Keyboard shortcuts"
 }

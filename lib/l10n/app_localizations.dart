@@ -507,6 +507,12 @@ abstract class AppLocalizations {
   /// **'Unstar'**
   String get unstar;
 
+  /// No description provided for @starred.
+  ///
+  /// In en, this message translates to:
+  /// **'Starred'**
+  String get starred;
+
   /// No description provided for @markRead.
   ///
   /// In en, this message translates to:
@@ -530,6 +536,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Expand'**
   String get expand;
+
+  /// No description provided for @openInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get openInBrowser;
+
+  /// No description provided for @autoMarkRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-mark as read when opened'**
+  String get autoMarkRead;
 
   /// No description provided for @search.
   ///
@@ -555,6 +573,24 @@ abstract class AppLocalizations {
   /// **'Services'**
   String get services;
 
+  /// No description provided for @autoRefresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto refresh'**
+  String get autoRefresh;
+
+  /// No description provided for @off.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get off;
+
+  /// No description provided for @everyMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Every {minutes} min'**
+  String everyMinutes(int minutes);
+
   /// No description provided for @appPreferences.
   ///
   /// In en, this message translates to:
@@ -566,6 +602,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'About'**
   String get about;
+
+  /// No description provided for @dataDirectory.
+  ///
+  /// In en, this message translates to:
+  /// **'Data directory'**
+  String get dataDirectory;
+
+  /// No description provided for @copyPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy path'**
+  String get copyPath;
+
+  /// No description provided for @openFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Open folder'**
+  String get openFolder;
+
+  /// No description provided for @keyboardShortcuts.
+  ///
+  /// In en, this message translates to:
+  /// **'Keyboard shortcuts'**
+  String get keyboardShortcuts;
 }
 
 class _AppLocalizationsDelegate

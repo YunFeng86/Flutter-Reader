@@ -10,9 +10,7 @@ class ArticleRepository {
   static const int defaultPageSize = 50;
 
   Stream<List<Article>> watchLatest({int? feedId, bool unreadOnly = false}) {
-    var q = _isar.articles
-        .where()
-        .sortByPublishedAtDesc();
+    var q = _isar.articles.where().sortByPublishedAtDesc();
 
     // Isar's `where()` doesn't support filtering by arbitrary fields; use filter().
     // We keep a separate branch to preserve sorting.
@@ -33,20 +31,34 @@ class ArticleRepository {
     int? feedId,
     int? categoryId,
     bool unreadOnly = false,
+    bool starredOnly = false,
+    String searchQuery = '',
   }) {
     final cid = categoryId;
+    final q = searchQuery.trim();
+    final hasQuery = q.isNotEmpty;
     return _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
-        .optional(
-          cid != null && cid < 0,
-          (q) => q.categoryIdIsNull(),
-        )
-        .optional(
-          cid != null && cid >= 0,
-          (q) => q.categoryIdEqualTo(cid!),
-        )
+        .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
+        .optional(cid != null && cid >= 0, (q) => q.categoryIdEqualTo(cid!))
         .optional(unreadOnly, (q) => q.isReadEqualTo(false))
+        .optional(starredOnly, (q) => q.isStarredEqualTo(true))
+        .optional(
+          hasQuery,
+          (q0) => q0.group(
+            (q1) => q1
+                .titleContains(q, caseSensitive: false)
+                .or()
+                .authorContains(q, caseSensitive: false)
+                .or()
+                .linkContains(q, caseSensitive: false)
+                .or()
+                .contentHtmlContains(q, caseSensitive: false)
+                .or()
+                .fullContentHtmlContains(q, caseSensitive: false),
+          ),
+        )
         .sortByPublishedAtDesc()
         .offset(offset)
         .limit(limit)
@@ -97,14 +109,8 @@ class ArticleRepository {
       final qb = _isar.articles
           .filter()
           .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
-          .optional(
-            cid != null && cid < 0,
-            (q) => q.categoryIdIsNull(),
-          )
-          .optional(
-            cid != null && cid >= 0,
-            (q) => q.categoryIdEqualTo(cid!),
-          )
+          .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
+          .optional(cid != null && cid >= 0, (q) => q.categoryIdEqualTo(cid!))
           .isReadEqualTo(false);
 
       final items = await qb.findAll();

@@ -14,13 +14,10 @@ import '../providers/opml_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../utils/platform.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
-  const Sidebar({
-    super.key,
-    required this.onSelectFeed,
-    this.router,
-  });
+  const Sidebar({super.key, required this.onSelectFeed, this.router});
 
   final void Function(int? feedId) onSelectFeed;
   final GoRouter? router;
@@ -31,9 +28,19 @@ class Sidebar extends ConsumerStatefulWidget {
 
 class _SidebarState extends ConsumerState<Sidebar> {
   int? _expandedCategoryId;
-  bool _expandedUncategorized = false;
   final _searchController = TextEditingController();
   String _searchText = '';
+
+  void _closeDrawerIfDesktopDrawer() {
+    if (!isDesktop || widget.router == null) return;
+    final scaffold = Scaffold.maybeOf(context);
+    if (scaffold != null) {
+      scaffold.closeDrawer();
+      return;
+    }
+    final router = widget.router;
+    if (router != null && router.canPop()) router.pop();
+  }
 
   @override
   void initState() {
@@ -54,10 +61,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    // On desktop we sometimes show the sidebar inside a Scaffold drawer that is
+    // *outside* the app's Navigator (see `App` overlay). In that case, using
+    // `Navigator.of(context)` will throw. We only show a close button when the
+    // caller provided a router to pop with.
+    final showDrawerClose = isDesktop && widget.router != null;
     final feeds = ref.watch(feedsProvider);
     final categories = ref.watch(categoriesProvider);
     final selectedFeedId = ref.watch(selectedFeedIdProvider);
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
+    final starredOnly = ref.watch(starredOnlyProvider);
     final allUnread = ref.watch(unreadCountProvider(null));
 
     return Material(
@@ -66,30 +79,49 @@ class _SidebarState extends ConsumerState<Sidebar> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: l10n.search,
-                prefixIcon: const Icon(Icons.search, size: 20),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                isDense: true,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+            child: Row(
+              children: [
+                if (showDrawerClose) ...[
+                  IconButton(
+                    tooltip: MaterialLocalizations.of(
+                      context,
+                    ).backButtonTooltip,
+                    onPressed: () {
+                      _closeDrawerIfDesktopDrawer();
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: l10n.search,
+                      prefixIcon: const Icon(Icons.search, size: 20),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                      isDense: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ),
-                filled: true,
-                fillColor: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest
-                    .withValues(alpha: 0.5),
-              ),
-              style: Theme.of(context).textTheme.bodyMedium,
+              ],
             ),
           ),
           Expanded(
             child: feeds.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text(l10n.errorMessage(e.toString()))),
+              error: (e, _) =>
+                  Center(child: Text(l10n.errorMessage(e.toString()))),
               data: (feedItems) {
                 // Filter feeds by search text
                 final filteredFeeds = _searchText.isEmpty
@@ -97,11 +129,13 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     : feedItems.where((f) {
                         final title = f.title?.toLowerCase() ?? '';
                         final url = f.url.toLowerCase();
-                        return title.contains(_searchText) || url.contains(_searchText);
+                        return title.contains(_searchText) ||
+                            url.contains(_searchText);
                       }).toList();
 
                 return categories.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (e, _) =>
                       Center(child: Text(l10n.errorMessage(e.toString()))),
                   data: (cats) {
@@ -115,19 +149,28 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     // All Articles Tile
                     Widget allTile = allUnread.when(
                       loading: () => _SidebarItem(
-                        selected: selectedFeedId == null && selectedCategoryId == null,
+                        selected:
+                            !starredOnly &&
+                            selectedFeedId == null &&
+                            selectedCategoryId == null,
                         icon: Icons.all_inbox,
                         title: l10n.all,
                         onTap: () => _selectAll(ref),
                       ),
                       error: (e, _) => _SidebarItem(
-                        selected: selectedFeedId == null && selectedCategoryId == null,
+                        selected:
+                            !starredOnly &&
+                            selectedFeedId == null &&
+                            selectedCategoryId == null,
                         icon: Icons.all_inbox,
                         title: l10n.all,
                         onTap: () => _selectAll(ref),
                       ),
                       data: (count) => _SidebarItem(
-                        selected: selectedFeedId == null && selectedCategoryId == null,
+                        selected:
+                            !starredOnly &&
+                            selectedFeedId == null &&
+                            selectedCategoryId == null,
                         icon: Icons.all_inbox,
                         title: l10n.all,
                         count: count,
@@ -135,6 +178,14 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       ),
                     );
                     children.add(allTile);
+                    children.add(
+                      _SidebarItem(
+                        selected: starredOnly,
+                        icon: starredOnly ? Icons.star : Icons.star_border,
+                        title: l10n.starred,
+                        onTap: () => _selectStarred(ref),
+                      ),
+                    );
 
                     // Subscriptions Header with Actions
                     children.add(
@@ -145,13 +196,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
                             Expanded(
                               child: Text(
                                 l10n.subscriptions,
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ),
-                             PopupMenuButton<_SidebarMenu>(
+                            PopupMenuButton<_SidebarMenu>(
                               icon: const Icon(Icons.more_horiz, size: 20),
                               tooltip: l10n.more,
                               padding: EdgeInsets.zero,
@@ -191,8 +245,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               tooltip: l10n.newCategory,
-                              onPressed: () => _showAddCategoryDialog(context, ref),
-                              icon: const Icon(Icons.create_new_folder_outlined),
+                              onPressed: () =>
+                                  _showAddCategoryDialog(context, ref),
+                              icon: const Icon(
+                                Icons.create_new_folder_outlined,
+                              ),
                             ),
                           ],
                         ),
@@ -204,31 +261,54 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       final catFeeds = byCat[c.id] ?? const <Feed>[];
                       if (_searchText.isNotEmpty && catFeeds.isEmpty) continue;
 
-                      children.add(_categoryTile(
-                        context: context,
-                        ref: ref,
-                        category: c,
-                        feeds: catFeeds,
-                        selectedFeedId: selectedFeedId,
-                        selectedCategoryId: selectedCategoryId,
-                      ));
+                      children.add(
+                        _categoryTile(
+                          context: context,
+                          ref: ref,
+                          category: c,
+                          feeds: catFeeds,
+                          selectedFeedId: selectedFeedId,
+                          selectedCategoryId: selectedCategoryId,
+                        ),
+                      );
                     }
 
                     // Uncategorized group.
                     final uncategorizedFeeds = byCat[null] ?? const <Feed>[];
                     if (_searchText.isEmpty || uncategorizedFeeds.isNotEmpty) {
-                       children.add(_uncategorizedTile(
-                        context: context,
-                        ref: ref,
-                        feeds: uncategorizedFeeds,
-                        selectedFeedId: selectedFeedId,
-                        selectedCategoryId: selectedCategoryId,
-                      ));
+                      for (final f in uncategorizedFeeds) {
+                        final unread = ref.watch(unreadCountProvider(f.id));
+                        children.add(
+                          unread.when(
+                            data: (count) => _feedTile(
+                              context,
+                              ref,
+                              f,
+                              selectedFeedId,
+                              count,
+                            ),
+                            loading: () => _feedTile(
+                              context,
+                              ref,
+                              f,
+                              selectedFeedId,
+                              null,
+                            ),
+                            error: (_, _) => _feedTile(
+                              context,
+                              ref,
+                              f,
+                              selectedFeedId,
+                              null,
+                            ),
+                          ),
+                        );
+                      }
                     }
 
                     return ListView(
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      children: children
+                      children: children,
                     );
                   },
                 );
@@ -250,7 +330,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }) {
     final l10n = AppLocalizations.of(context)!;
     final unread = ref.watch(unreadCountByCategoryProvider(category.id));
-    final selected = selectedFeedId == null && selectedCategoryId == category.id;
+    final starredOnly = ref.watch(starredOnlyProvider);
+    final selected =
+        !starredOnly &&
+        selectedFeedId == null &&
+        selectedCategoryId == category.id;
     final expanded = _expandedCategoryId == category.id;
 
     return Column(
@@ -285,98 +369,12 @@ class _SidebarState extends ConsumerState<Sidebar> {
           ...feeds.map((f) {
             final unread = ref.watch(unreadCountProvider(f.id));
             return unread.when(
-              data: (count) => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                count,
-                indent: 16,
-              ),
-              loading: () => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                null,
-                indent: 16,
-              ),
-              error: (_, _) => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                null,
-                indent: 16,
-              ),
-            );
-          }),
-      ],
-    );
-  }
-
-  Widget _uncategorizedTile({
-    required BuildContext context,
-    required WidgetRef ref,
-    required List<Feed> feeds,
-    required int? selectedFeedId,
-    required int? selectedCategoryId,
-  }) {
-    final l10n = AppLocalizations.of(context)!;
-    final expanded = _expandedUncategorized;
-    final selected = selectedFeedId == null && selectedCategoryId == -1;
-    final unread = ref.watch(unreadCountUncategorizedProvider);
-    return Column(
-      children: [
-        ListTile(
-          selected: selected,
-          leading: const Icon(Icons.folder_open_outlined),
-          title: Text(l10n.uncategorized),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              unread.when(
-                data: (c) => _UnreadBadge(c),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-              IconButton(
-                tooltip: expanded ? l10n.collapse : l10n.expand,
-                onPressed: () => setState(() => _expandedUncategorized = !expanded),
-                icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
-              ),
-            ],
-          ),
-          onTap: () => _selectUncategorized(ref),
-        ),
-        if (expanded)
-          ...feeds.map((f) {
-            final unread = ref.watch(unreadCountProvider(f.id));
-            return unread.when(
-              data: (count) => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                count,
-                indent: 16,
-              ),
-              loading: () => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                null,
-                indent: 16,
-              ),
-              error: (_, _) => _feedTile(
-                context,
-                ref,
-                f,
-                selectedFeedId,
-                null,
-                indent: 16,
-              ),
+              data: (count) =>
+                  _feedTile(context, ref, f, selectedFeedId, count, indent: 16),
+              loading: () =>
+                  _feedTile(context, ref, f, selectedFeedId, null, indent: 16),
+              error: (_, _) =>
+                  _feedTile(context, ref, f, selectedFeedId, null, indent: 16),
             );
           }),
       ],
@@ -388,9 +386,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     WidgetRef ref,
     Feed f,
     int? selectedFeedId,
-    int? unreadCount,
-    {double indent = 0}
-  ) {
+    int? unreadCount, {
+    double indent = 0,
+  }) {
     final title = f.title?.trim().isNotEmpty == true ? f.title! : f.url;
     return ListTile(
       selected: selectedFeedId == f.id,
@@ -407,32 +405,42 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   void _select(WidgetRef ref, int? id) {
+    ref.read(starredOnlyProvider.notifier).state = false;
     ref.read(selectedFeedIdProvider.notifier).state = id;
     ref.read(selectedCategoryIdProvider.notifier).state = null;
     widget.onSelectFeed(id);
+    _closeDrawerIfDesktopDrawer();
   }
 
   void _selectAll(WidgetRef ref) {
+    ref.read(starredOnlyProvider.notifier).state = false;
     ref.read(selectedFeedIdProvider.notifier).state = null;
     ref.read(selectedCategoryIdProvider.notifier).state = null;
     widget.onSelectFeed(null);
+    _closeDrawerIfDesktopDrawer();
+  }
+
+  void _selectStarred(WidgetRef ref) {
+    ref.read(starredOnlyProvider.notifier).state = true;
+    ref.read(selectedFeedIdProvider.notifier).state = null;
+    ref.read(selectedCategoryIdProvider.notifier).state = null;
+    widget.onSelectFeed(null);
+    _closeDrawerIfDesktopDrawer();
   }
 
   void _selectCategory(WidgetRef ref, int categoryId) {
+    ref.read(starredOnlyProvider.notifier).state = false;
     ref.read(selectedFeedIdProvider.notifier).state = null;
     ref.read(selectedCategoryIdProvider.notifier).state = categoryId;
     widget.onSelectFeed(null);
+    _closeDrawerIfDesktopDrawer();
   }
 
-  void _selectUncategorized(WidgetRef ref) {
-    // We use -1 sentinel in UI; the Article list filters by `categoryId == null`
-    // by selecting no category and no feed. This keeps MVP simple.
-    ref.read(selectedFeedIdProvider.notifier).state = null;
-    ref.read(selectedCategoryIdProvider.notifier).state = -1;
-    widget.onSelectFeed(null);
-  }
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref, int feedId) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    int feedId,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final ok = await showDialog<bool>(
       context: context,
@@ -456,9 +464,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (ok != true) return;
     await ref.read(feedRepositoryProvider).delete(feedId);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.deleted)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.deleted)));
   }
 
   Future<void> _showAddFeedDialog(BuildContext context, WidgetRef ref) async {
@@ -494,17 +502,24 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (url == null || url.trim().isEmpty) return;
 
     final id = await ref.read(feedRepositoryProvider).upsertUrl(url);
-    await ref.read(syncServiceProvider).refreshFeed(id);
+    final r = await ref.read(syncServiceProvider).refreshFeedSafe(id);
     ref.read(selectedFeedIdProvider.notifier).state = id;
     ref.read(selectedCategoryIdProvider.notifier).state = null;
     widget.onSelectFeed(id);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.addedAndSynced)),
+      SnackBar(
+        content: Text(
+          r.ok ? l10n.addedAndSynced : l10n.errorMessage(r.error.toString()),
+        ),
+      ),
     );
   }
 
-  Future<void> _showAddCategoryDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showAddCategoryDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController();
     final name = await showDialog<String>(
@@ -535,7 +550,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
     setState(() => _expandedCategoryId = id);
   }
 
-  Future<void> _showCategoryMenu(BuildContext context, WidgetRef ref, Category c) async {
+  Future<void> _showCategoryMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Category c,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final v = await showModalBottomSheet<_CategoryAction>(
       context: context,
@@ -556,12 +575,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (v != _CategoryAction.delete) return;
     await ref.read(categoryRepositoryProvider).delete(c.id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.categoryDeleted)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.categoryDeleted)));
   }
 
-  Future<void> _showFeedMenu(BuildContext context, WidgetRef ref, Feed f) async {
+  Future<void> _showFeedMenu(
+    BuildContext context,
+    WidgetRef ref,
+    Feed f,
+  ) async {
     final l10n = AppLocalizations.of(context)!;
     final action = await showModalBottomSheet<_FeedAction>(
       context: context,
@@ -593,7 +616,15 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
     switch (action) {
       case _FeedAction.refresh:
-        await ref.read(syncServiceProvider).refreshFeed(f.id);
+        final r = await ref.read(syncServiceProvider).refreshFeedSafe(f.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              r.ok ? l10n.refreshed : l10n.errorMessage(r.error.toString()),
+            ),
+          ),
+        );
         return;
       case _FeedAction.move:
         await _moveFeedToCategory(context, ref, f);
@@ -606,7 +637,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
   }
 
-  Future<void> _moveFeedToCategory(BuildContext context, WidgetRef ref, Feed f) async {
+  Future<void> _moveFeedToCategory(
+    BuildContext context,
+    WidgetRef ref,
+    Feed f,
+  ) async {
     final cats = await ref.read(categoryRepositoryProvider).getAll();
     if (!context.mounted) return;
     final selected = await showDialog<int?>(
@@ -643,10 +678,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
       },
     );
     if (selected == f.categoryId) return;
-    await ref.read(feedRepositoryProvider).setCategory(feedId: f.id, categoryId: selected);
+    await ref
+        .read(feedRepositoryProvider)
+        .setCategory(feedId: f.id, categoryId: selected);
   }
 
-  Future<void> _onMenu(BuildContext context, WidgetRef ref, _SidebarMenu v) async {
+  Future<void> _onMenu(
+    BuildContext context,
+    WidgetRef ref,
+    _SidebarMenu v,
+  ) async {
     switch (v) {
       case _SidebarMenu.settings:
         final router = widget.router ?? GoRouter.maybeOf(context);
@@ -657,12 +698,19 @@ class _SidebarState extends ConsumerState<Sidebar> {
       case _SidebarMenu.refreshAll:
         final l10n = AppLocalizations.of(context)!;
         final feeds = await ref.read(feedRepositoryProvider).getAll();
-        for (final f in feeds) {
-          await ref.read(syncServiceProvider).refreshFeed(f.id);
-        }
+        final batch = await ref
+            .read(syncServiceProvider)
+            .refreshFeedsSafe(feeds.map((f) => f.id));
         if (!context.mounted) return;
+        final err = batch.firstError?.error;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.refreshedAll)),
+          SnackBar(
+            content: Text(
+              err == null
+                  ? l10n.refreshedAll
+                  : l10n.errorMessage(err.toString()),
+            ),
+          ),
         );
         return;
       case _SidebarMenu.importOpml:
@@ -687,9 +735,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (entries.isEmpty) {
       if (!context.mounted) return;
       final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.noFeedsFoundInOpml)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.noFeedsFoundInOpml)));
       return;
     }
 
@@ -697,16 +745,20 @@ class _SidebarState extends ConsumerState<Sidebar> {
     for (final e in entries) {
       final feedId = await ref.read(feedRepositoryProvider).upsertUrl(e.url);
       if (e.category != null && e.category!.trim().isNotEmpty) {
-        final catId = await ref.read(categoryRepositoryProvider).upsertByName(e.category!);
-        await ref.read(feedRepositoryProvider).setCategory(feedId: feedId, categoryId: catId);
+        final catId = await ref
+            .read(categoryRepositoryProvider)
+            .upsertByName(e.category!);
+        await ref
+            .read(feedRepositoryProvider)
+            .setCategory(feedId: feedId, categoryId: catId);
       }
       added += 1;
     }
     if (!context.mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.importedFeeds(added))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.importedFeeds(added))));
   }
 
   Future<void> _exportOpml(BuildContext context, WidgetRef ref) async {
@@ -715,7 +767,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final feeds = await ref.read(feedRepositoryProvider).getAll();
     final cats = await ref.read(categoryRepositoryProvider).getAll();
     final names = {for (final c in cats) c.id: c.name};
-    final xml = ref.read(opmlServiceProvider).buildOpml(feeds: feeds, categoryNames: names);
+    final xml = ref
+        .read(opmlServiceProvider)
+        .buildOpml(feeds: feeds, categoryNames: names);
     final xfile = XFile.fromData(
       Uint8List.fromList(utf8.encode(xml)),
       mimeType: 'text/xml',
@@ -724,14 +778,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
     await xfile.saveTo(loc.path);
     if (!context.mounted) return;
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.exportedOpml)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.exportedOpml)));
   }
 }
 
 enum _SidebarMenu { settings, refreshAll, importOpml, exportOpml }
+
 enum _FeedAction { refresh, move, delete }
+
 enum _CategoryAction { delete }
 
 class _UnreadBadge extends StatelessWidget {
@@ -774,14 +830,10 @@ class _SidebarItem extends StatelessWidget {
         selected: selected,
         leading: Icon(icon, size: 20),
         title: Text(title),
-        trailing: count != null && count! > 0
-            ? _UnreadBadge(count!)
-            : null,
+        trailing: count != null && count! > 0 ? _UnreadBadge(count!) : null,
         onTap: onTap,
         dense: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         // Visual adjustments to match "denser" look
         visualDensity: VisualDensity.compact,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12),

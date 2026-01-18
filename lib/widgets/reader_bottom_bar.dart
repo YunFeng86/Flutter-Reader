@@ -84,9 +84,8 @@ class ReaderBottomBar extends ConsumerWidget {
             ),
             IconButton(
               tooltip: article.isStarred ? l10n.unstar : l10n.star,
-              onPressed: () => ref
-                  .read(articleRepositoryProvider)
-                  .toggleStar(article.id),
+              onPressed: () =>
+                  ref.read(articleRepositoryProvider).toggleStar(article.id),
               icon: Icon(
                 article.isStarred ? Icons.star : Icons.star_border,
                 color: article.isStarred ? theme.colorScheme.tertiary : null,
@@ -103,12 +102,15 @@ class ReaderBottomBar extends ConsumerWidget {
                     : Icons.mark_email_read,
               ),
             ),
-             // Full Text / Reader Mode Toggle
-             Consumer(
+            // Full Text / Reader Mode Toggle
+            Consumer(
               builder: (context, ref, _) {
-                final hasFull = (article.fullContentHtml ?? '').trim().isNotEmpty;
-                final useFullText =
-                    ref.watch(fullTextViewEnabledProvider(article.id));
+                final hasFull = (article.fullContentHtml ?? '')
+                    .trim()
+                    .isNotEmpty;
+                final useFullText = ref.watch(
+                  fullTextViewEnabledProvider(article.id),
+                );
                 final controller = ref.watch(fullTextControllerProvider);
                 final showFull = hasFull && useFullText;
 
@@ -117,22 +119,30 @@ class ReaderBottomBar extends ConsumerWidget {
                   onPressed: controller.isLoading
                       ? null
                       : hasFull
-                          ? () {
-                              ref
-                                  .read(fullTextViewEnabledProvider(article.id)
-                                      .notifier)
-                                  .state = !useFullText;
-                            }
-                          : () {
-                              // Fetch and show
-                              ref
-                                  .read(fullTextViewEnabledProvider(article.id)
-                                      .notifier)
-                                  .state = true;
-                              ref
-                                  .read(fullTextControllerProvider.notifier)
-                                  .fetch(article.id);
-                            },
+                      ? () {
+                          ref
+                                  .read(
+                                    fullTextViewEnabledProvider(
+                                      article.id,
+                                    ).notifier,
+                                  )
+                                  .state =
+                              !useFullText;
+                        }
+                      : () {
+                          // Fetch and show
+                          ref
+                                  .read(
+                                    fullTextViewEnabledProvider(
+                                      article.id,
+                                    ).notifier,
+                                  )
+                                  .state =
+                              true;
+                          ref
+                              .read(fullTextControllerProvider.notifier)
+                              .fetch(article.id);
+                        },
                   icon: controller.isLoading
                       ? const SizedBox(
                           width: 16,
@@ -141,15 +151,13 @@ class ReaderBottomBar extends ConsumerWidget {
                         )
                       : Icon(
                           Icons.chrome_reader_mode,
-                          color: showFull
-                              ? theme.colorScheme.primary
-                              : null,
+                          color: showFull ? theme.colorScheme.primary : null,
                         ),
                 );
               },
             ),
             IconButton(
-              tooltip: 'Open in Browser', // TODO: Add l10n
+              tooltip: l10n.openInBrowser,
               onPressed: () {
                 final uri = Uri.tryParse(article.link);
                 if (uri != null) {

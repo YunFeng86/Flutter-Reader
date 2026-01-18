@@ -13,7 +13,9 @@ import '../providers/query_providers.dart';
 import '../providers/core_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
+import '../providers/auto_refresh_providers.dart';
 import '../providers/unread_providers.dart';
+import '../services/sync/sync_service.dart';
 import '../ui/layout.dart';
 
 class App extends ConsumerWidget {
@@ -21,16 +23,20 @@ class App extends ConsumerWidget {
 
   Locale _localeFromTag(String tag) {
     // Accept both BCP-47 ("zh-Hant") and underscore ("zh_Hant") formats.
-    final parts =
-        tag.replaceAll('_', '-').split('-').where((p) => p.isNotEmpty).toList();
+    final parts = tag
+        .replaceAll('_', '-')
+        .split('-')
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return Locale(tag);
 
     final languageCode = parts[0];
     String? scriptCode;
     String? countryCode;
 
-    String normalizeScript(String s) =>
-        s.length != 4 ? s : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
+    String normalizeScript(String s) => s.length != 4
+        ? s
+        : '${s[0].toUpperCase()}${s.substring(1).toLowerCase()}';
 
     if (parts.length >= 2) {
       final p1 = parts[1];
@@ -62,6 +68,7 @@ class App extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final appSettings = ref.watch(appSettingsProvider).valueOrNull;
     final localeTag = appSettings?.localeTag;
+    ref.watch(autoRefreshControllerProvider);
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
@@ -72,31 +79,37 @@ class App extends ConsumerWidget {
             final content = child ?? const SizedBox.shrink();
             if (!isDesktop) return content;
 
-            Future<void> refreshAll() async {
+            Future<BatchRefreshResult> refreshAll() async {
               final feedId = ref.read(selectedFeedIdProvider);
               final categoryId = ref.read(selectedCategoryIdProvider);
               if (feedId != null) {
-                await ref.read(syncServiceProvider).refreshFeed(feedId);
-                return;
+                final r = await ref
+                    .read(syncServiceProvider)
+                    .refreshFeedSafe(feedId);
+                return BatchRefreshResult([r]);
               }
 
               final feeds = await ref.read(feedRepositoryProvider).getAll();
               final filtered = (categoryId == null)
                   ? feeds
                   : (categoryId < 0
-                      ? feeds.where((f) => f.categoryId == null)
-                      : feeds.where((f) => f.categoryId == categoryId));
-              for (final f in filtered) {
-                await ref.read(syncServiceProvider).refreshFeed(f.id);
-              }
+                        ? feeds.where((f) => f.categoryId == null)
+                        : feeds.where((f) => f.categoryId == categoryId));
+              return ref
+                  .read(syncServiceProvider)
+                  .refreshFeedsSafe(filtered.map((f) => f.id));
             }
 
             Future<void> markAllRead() async {
               final selectedFeedId = ref.read(selectedFeedIdProvider);
               final selectedCategoryId = ref.read(selectedCategoryIdProvider);
-              await ref.read(articleRepositoryProvider).markAllRead(
+              await ref
+                  .read(articleRepositoryProvider)
+                  .markAllRead(
                     feedId: selectedFeedId,
-                    categoryId: selectedFeedId == null ? selectedCategoryId : null,
+                    categoryId: selectedFeedId == null
+                        ? selectedCategoryId
+                        : null,
                   );
             }
 
@@ -113,46 +126,36 @@ class App extends ConsumerWidget {
                       builder: (context, _) {
                         final l10n = AppLocalizations.of(context)!;
                         final width = MediaQuery.sizeOf(context).width;
-                        final uri = router.routerDelegate.currentConfiguration.uri;
-                        final isArticleRoute = uri.pathSegments.isNotEmpty &&
+                        final uri =
+                            router.routerDelegate.currentConfiguration.uri;
+                        final isArticleRoute =
+                            uri.pathSegments.isNotEmpty &&
                             uri.pathSegments.first == 'article';
                         final mode = desktopModeForWidth(width);
                         final isArticleSeparatePage =
                             isArticleRoute && !desktopReaderEmbedded(mode);
+                        final sidebarVisible = ref.watch(
+                          sidebarVisibleProvider,
+                        );
                         final drawerEnabled =
-                            desktopSidebarInDrawer(mode) && !isArticleSeparatePage;
-
-                        final sidebarVisible = ref.watch(sidebarVisibleProvider);
+                            sidebarVisible &&
+                            desktopSidebarInDrawer(mode) &&
+                            !isArticleSeparatePage;
 
                         final leading = switch (mode) {
                           _ when drawerEnabled => Builder(
-                              builder: (context) {
-                                return IconButton(
-                                  tooltip: MaterialLocalizations.of(context)
-                                      .openAppDrawerTooltip,
-                                  onPressed: () =>
-                                      Scaffold.of(context).openDrawer(),
-                                  icon: const Icon(Icons.menu),
-                                );
-                              },
-                            ),
-                          _ when mode == DesktopPaneMode.threePane => null,
-                          _ when desktopSidebarInline(mode) => SizedBox(
-                              width: 40,
-                              height: 40,
-                              child: IconButton(
-                                tooltip: sidebarVisible ? l10n.collapse : l10n.expand,
-                                onPressed: () => ref
-                                    .read(sidebarVisibleProvider.notifier)
-                                    .state = !sidebarVisible,
-                                icon: Icon(
-                                  sidebarVisible
-                                      ? Icons.keyboard_double_arrow_left
-                                      : Icons.keyboard_double_arrow_right,
-                                ),
-                                padding: EdgeInsets.zero,
-                              ),
-                            ),
+                            builder: (context) {
+                              return IconButton(
+                                tooltip: MaterialLocalizations.of(
+                                  context,
+                                ).openAppDrawerTooltip,
+                                onPressed: () =>
+                                    Scaffold.of(context).openDrawer(),
+                                icon: const Icon(Icons.menu),
+                              );
+                            },
+                          ),
+                          _ when desktopSidebarInline(mode) => null,
                           _ => null,
                         };
 
@@ -160,8 +163,7 @@ class App extends ConsumerWidget {
                           drawer: drawerEnabled
                               ? Drawer(
                                   child: Sidebar(
-                                    onSelectFeed: (_) =>
-                                        Navigator.of(overlayContext).maybePop(),
+                                    onSelectFeed: (_) {},
                                     router: router,
                                   ),
                                 )
@@ -175,28 +177,42 @@ class App extends ConsumerWidget {
                                   IconButton(
                                     tooltip: l10n.refreshAll,
                                     onPressed: () async {
-                                      await refreshAll();
+                                      final batch = await refreshAll();
                                       if (!overlayContext.mounted) return;
-                                      ScaffoldMessenger.of(overlayContext)
-                                          .showSnackBar(
+                                      final err = batch.firstError?.error;
+                                      ScaffoldMessenger.of(
+                                        overlayContext,
+                                      ).showSnackBar(
                                         SnackBar(
-                                            content: Text(l10n.refreshedAll)),
+                                          content: Text(
+                                            err == null
+                                                ? l10n.refreshedAll
+                                                : l10n.errorMessage(
+                                                    err.toString(),
+                                                  ),
+                                          ),
+                                        ),
                                       );
                                     },
                                     icon: const Icon(Icons.refresh),
                                   ),
                                   Consumer(
                                     builder: (context, ref, _) {
-                                      final unreadOnly =
-                                          ref.watch(unreadOnlyProvider);
+                                      final unreadOnly = ref.watch(
+                                        unreadOnlyProvider,
+                                      );
                                       return IconButton(
                                         tooltip: unreadOnly
                                             ? l10n.showAll
                                             : l10n.unreadOnly,
-                                        onPressed: () => ref
-                                                .read(unreadOnlyProvider.notifier)
-                                                .state =
-                                            !unreadOnly,
+                                        onPressed: () =>
+                                            ref
+                                                    .read(
+                                                      unreadOnlyProvider
+                                                          .notifier,
+                                                    )
+                                                    .state =
+                                                !unreadOnly,
                                         icon: Icon(
                                           unreadOnly
                                               ? Icons.filter_alt
@@ -210,8 +226,9 @@ class App extends ConsumerWidget {
                                     onPressed: () async {
                                       await markAllRead();
                                       if (!overlayContext.mounted) return;
-                                      ScaffoldMessenger.of(overlayContext)
-                                          .showSnackBar(
+                                      ScaffoldMessenger.of(
+                                        overlayContext,
+                                      ).showSnackBar(
                                         SnackBar(content: Text(l10n.done)),
                                       );
                                     },

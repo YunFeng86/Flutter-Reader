@@ -114,14 +114,31 @@
 
   "star": "收藏",
   "unstar": "取消收藏",
+  "starred": "已收藏",
   "markRead": "标记为已读",
   "markUnread": "标记为未读",
   "collapse": "收起",
   "expand": "展开",
+  "openInBrowser": "在浏览器打开",
+  "autoMarkRead": "打开时自动标记为已读",
   "search": "搜索",
   "groupingAndSorting": "分组与排序",
   "rules": "规则",
   "services": "服务",
+  "autoRefresh": "自动刷新",
+  "off": "关闭",
+  "everyMinutes": "每 {minutes} 分钟",
+  "@everyMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "appPreferences": "应用偏好",
-  "about": "关于"
+  "about": "关于",
+  "dataDirectory": "数据目录",
+  "copyPath": "复制路径",
+  "openFolder": "打开文件夹",
+  "keyboardShortcuts": "快捷键"
 }

@@ -221,6 +221,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unstar => '取消收藏';
 
   @override
+  String get starred => '已收藏';
+
+  @override
   String get markRead => '标记为已读';
 
   @override
@@ -231,6 +234,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get expand => '展开';
+
+  @override
+  String get openInBrowser => '在浏览器打开';
+
+  @override
+  String get autoMarkRead => '打开时自动标记为已读';
 
   @override
   String get search => '搜索';
@@ -245,10 +254,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get services => '服务';
 
   @override
+  String get autoRefresh => '自动刷新';
+
+  @override
+  String get off => '关闭';
+
+  @override
+  String everyMinutes(int minutes) {
+    return '每 $minutes 分钟';
+  }
+
+  @override
   String get appPreferences => '应用偏好';
 
   @override
   String get about => '关于';
+
+  @override
+  String get dataDirectory => '数据目录';
+
+  @override
+  String get copyPath => '复制路径';
+
+  @override
+  String get openFolder => '打开文件夹';
+
+  @override
+  String get keyboardShortcuts => '快捷键';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -468,6 +500,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get unstar => '取消收藏';
 
   @override
+  String get starred => '已收藏';
+
+  @override
   String get markRead => '標記為已讀';
 
   @override
@@ -478,4 +513,51 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get expand => '展開';
+
+  @override
+  String get openInBrowser => '在瀏覽器打開';
+
+  @override
+  String get autoMarkRead => '打開時自動標記為已讀';
+
+  @override
+  String get search => '搜尋';
+
+  @override
+  String get groupingAndSorting => '分組與排序';
+
+  @override
+  String get rules => '規則';
+
+  @override
+  String get services => '服務';
+
+  @override
+  String get autoRefresh => '自動重新整理';
+
+  @override
+  String get off => '關閉';
+
+  @override
+  String everyMinutes(int minutes) {
+    return '每 $minutes 分鐘';
+  }
+
+  @override
+  String get appPreferences => '應用偏好';
+
+  @override
+  String get about => '關於';
+
+  @override
+  String get dataDirectory => '資料目錄';
+
+  @override
+  String get copyPath => '複製路徑';
+
+  @override
+  String get openFolder => '打開資料夾';
+
+  @override
+  String get keyboardShortcuts => '快速鍵';
 }

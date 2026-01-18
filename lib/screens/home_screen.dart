@@ -4,14 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-import '../providers/app_settings_providers.dart';
 import '../providers/article_list_controller.dart';
 import '../providers/core_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
-import '../services/settings/app_settings.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar.dart';
@@ -28,9 +26,7 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final width = MediaQuery.sizeOf(context).width;
 
-    final appSettingsAsync = ref.watch(appSettingsProvider);
-    final appSettings = appSettingsAsync.valueOrNull ?? const AppSettings();
-    final columns = _effectiveColumns(appSettings.layoutMode, width);
+    final columns = _effectiveColumns(width);
 
     if (isDesktop) {
       final mode = desktopModeForWidth(width);
@@ -40,6 +36,8 @@ class HomeScreen extends ConsumerWidget {
     // 1-column: mobile-style list + drawer, dedicated reader route.
     if (columns == 1) {
       final unreadOnly = ref.watch(unreadOnlyProvider);
+      final starredOnly = ref.watch(starredOnlyProvider);
+      final searchQuery = ref.watch(articleSearchQueryProvider).trim();
       final selectedFeedId = ref.watch(selectedFeedIdProvider);
       final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
       return Scaffold(
@@ -54,10 +52,36 @@ class HomeScreen extends ConsumerWidget {
                     icon: const Icon(Icons.settings),
                   ),
                   IconButton(
+                    tooltip: l10n.starred,
+                    onPressed: () {
+                      final next = !starredOnly;
+                      ref.read(starredOnlyProvider.notifier).state = next;
+                      if (next) {
+                        ref.read(selectedFeedIdProvider.notifier).state = null;
+                        ref.read(selectedCategoryIdProvider.notifier).state =
+                            null;
+                      }
+                    },
+                    icon: Icon(starredOnly ? Icons.star : Icons.star_border),
+                  ),
+                  IconButton(
+                    tooltip: l10n.search,
+                    onPressed: () => _showArticleSearchDialog(context, ref),
+                    icon: const Icon(Icons.search),
+                  ),
+                  if (searchQuery.isNotEmpty)
+                    IconButton(
+                      tooltip: l10n.delete,
+                      onPressed: () =>
+                          ref.read(articleSearchQueryProvider.notifier).state =
+                              '',
+                      icon: const Icon(Icons.clear),
+                    ),
+                  IconButton(
                     tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                    onPressed: () => ref
-                        .read(unreadOnlyProvider.notifier)
-                        .state = !unreadOnly,
+                    onPressed: () =>
+                        ref.read(unreadOnlyProvider.notifier).state =
+                            !unreadOnly,
                     icon: Icon(
                       unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
                     ),
@@ -65,10 +89,13 @@ class HomeScreen extends ConsumerWidget {
                   IconButton(
                     tooltip: l10n.markAllRead,
                     onPressed: () async {
-                      await ref.read(articleRepositoryProvider).markAllRead(
+                      await ref
+                          .read(articleRepositoryProvider)
+                          .markAllRead(
                             feedId: selectedFeedId,
-                            categoryId:
-                                selectedFeedId == null ? selectedCategoryId : null,
+                            categoryId: selectedFeedId == null
+                                ? selectedCategoryId
+                                : null,
                           );
                     },
                     icon: const Icon(Icons.done_all),
@@ -99,6 +126,10 @@ class HomeScreen extends ConsumerWidget {
           const _ToggleUnreadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyM): const _ToggleReadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+          const _SearchIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+          const _SearchIntent(),
     };
 
     return Shortcuts(
@@ -138,20 +169,20 @@ class HomeScreen extends ConsumerWidget {
               final feedId = ref.read(selectedFeedIdProvider);
               final categoryId = ref.read(selectedCategoryIdProvider);
               if (feedId != null) {
-                await ref.read(syncServiceProvider).refreshFeed(feedId);
+                await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
               } else if (categoryId != null) {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
                 final filtered = categoryId < 0
                     ? feeds.where((f) => f.categoryId == null)
                     : feeds.where((f) => f.categoryId == categoryId);
-                for (final f in filtered) {
-                  await ref.read(syncServiceProvider).refreshFeed(f.id);
-                }
+                await ref
+                    .read(syncServiceProvider)
+                    .refreshFeedsSafe(filtered.map((f) => f.id));
               } else {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
-                for (final f in feeds) {
-                  await ref.read(syncServiceProvider).refreshFeed(f.id);
-                }
+                await ref
+                    .read(syncServiceProvider)
+                    .refreshFeedsSafe(feeds.map((f) => f.id));
               }
               return null;
             },
@@ -182,6 +213,12 @@ class HomeScreen extends ConsumerWidget {
               await ref
                   .read(articleRepositoryProvider)
                   .toggleStar(selectedArticleId!);
+              return null;
+            },
+          ),
+          _SearchIntent: CallbackAction<_SearchIntent>(
+            onInvoke: (intent) {
+              _showArticleSearchDialog(context, ref);
               return null;
             },
           ),
@@ -278,6 +315,74 @@ class HomeScreen extends ConsumerWidget {
                                   );
                                 },
                               ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final l10n = AppLocalizations.of(context)!;
+                                  final starredOnly = ref.watch(
+                                    starredOnlyProvider,
+                                  );
+                                  return IconButton(
+                                    tooltip: l10n.starred,
+                                    onPressed: () {
+                                      final next = !starredOnly;
+                                      ref
+                                              .read(
+                                                starredOnlyProvider.notifier,
+                                              )
+                                              .state =
+                                          next;
+                                      if (next) {
+                                        ref
+                                                .read(
+                                                  selectedFeedIdProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            null;
+                                        ref
+                                                .read(
+                                                  selectedCategoryIdProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            null;
+                                      }
+                                    },
+                                    icon: Icon(
+                                      starredOnly
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                    ),
+                                  );
+                                },
+                              ),
+                              IconButton(
+                                tooltip: l10n.search,
+                                onPressed: () =>
+                                    _showArticleSearchDialog(context, ref),
+                                icon: const Icon(Icons.search),
+                              ),
+                              Consumer(
+                                builder: (context, ref, _) {
+                                  final l10n = AppLocalizations.of(context)!;
+                                  final q = ref
+                                      .watch(articleSearchQueryProvider)
+                                      .trim();
+                                  if (q.isEmpty) return const SizedBox.shrink();
+                                  return IconButton(
+                                    tooltip: l10n.delete,
+                                    onPressed: () =>
+                                        ref
+                                                .read(
+                                                  articleSearchQueryProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            '',
+                                    icon: const Icon(Icons.clear),
+                                  );
+                                },
+                              ),
                             ],
                           ),
                         ),
@@ -325,6 +430,10 @@ class HomeScreen extends ConsumerWidget {
           const _ToggleUnreadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyM): const _ToggleReadIntent(),
       const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+          const _SearchIntent(),
+      const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+          const _SearchIntent(),
     };
 
     final sidebarVisible = ref.watch(sidebarVisibleProvider);
@@ -353,12 +462,15 @@ class HomeScreen extends ConsumerWidget {
                   Consumer(
                     builder: (context, ref, _) {
                       final selectedFeedId = ref.watch(selectedFeedIdProvider);
-                      final selectedCategoryId =
-                          ref.watch(selectedCategoryIdProvider);
+                      final selectedCategoryId = ref.watch(
+                        selectedCategoryIdProvider,
+                      );
                       return IconButton(
                         tooltip: l10n.markAllRead,
                         onPressed: () async {
-                          await ref.read(articleRepositoryProvider).markAllRead(
+                          await ref
+                              .read(articleRepositoryProvider)
+                              .markAllRead(
                                 feedId: selectedFeedId,
                                 categoryId: selectedFeedId == null
                                     ? selectedCategoryId
@@ -366,6 +478,49 @@ class HomeScreen extends ConsumerWidget {
                               );
                         },
                         icon: const Icon(Icons.done_all),
+                      );
+                    },
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final starredOnly = ref.watch(starredOnlyProvider);
+                      return IconButton(
+                        tooltip: l10n.starred,
+                        onPressed: () {
+                          final next = !starredOnly;
+                          ref.read(starredOnlyProvider.notifier).state = next;
+                          if (next) {
+                            ref.read(selectedFeedIdProvider.notifier).state =
+                                null;
+                            ref
+                                    .read(selectedCategoryIdProvider.notifier)
+                                    .state =
+                                null;
+                          }
+                        },
+                        icon: Icon(
+                          starredOnly ? Icons.star : Icons.star_border,
+                        ),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    tooltip: l10n.search,
+                    onPressed: () => _showArticleSearchDialog(context, ref),
+                    icon: const Icon(Icons.search),
+                  ),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final q = ref.watch(articleSearchQueryProvider).trim();
+                      if (q.isEmpty) return const SizedBox.shrink();
+                      return IconButton(
+                        tooltip: l10n.delete,
+                        onPressed: () =>
+                            ref
+                                    .read(articleSearchQueryProvider.notifier)
+                                    .state =
+                                '',
+                        icon: const Icon(Icons.clear),
                       );
                     },
                   ),
@@ -391,46 +546,46 @@ class HomeScreen extends ConsumerWidget {
 
     final body = switch (mode) {
       DesktopPaneMode.threePane => Row(
-          children: [
-            if (sidebarVisible) ...[
-              SizedBox(
-                width: kDesktopSidebarWidth,
-                child: Sidebar(
-                  onSelectFeed: (_) {
-                    if (selectedArticleId != null) context.go('/');
-                  },
-                ),
+        children: [
+          if (sidebarVisible) ...[
+            SizedBox(
+              width: kDesktopSidebarWidth,
+              child: Sidebar(
+                onSelectFeed: (_) {
+                  if (selectedArticleId != null) context.go('/');
+                },
               ),
-              const VerticalDivider(width: 1),
-            ],
-            listPane(width: kDesktopListWidth),
+            ),
             const VerticalDivider(width: 1),
-            Expanded(child: readerPane(embedded: true)),
           ],
-        ),
+          listPane(width: kDesktopListWidth),
+          const VerticalDivider(width: 1),
+          Expanded(child: readerPane(embedded: true)),
+        ],
+      ),
       DesktopPaneMode.splitListReader => Row(
-          children: [
-            listPane(width: kDesktopListWidth),
-            const VerticalDivider(width: 1),
-            Expanded(child: readerPane(embedded: true)),
-          ],
-        ),
+        children: [
+          listPane(width: kDesktopListWidth),
+          const VerticalDivider(width: 1),
+          Expanded(child: readerPane(embedded: true)),
+        ],
+      ),
       DesktopPaneMode.splitSidebarList => Row(
-          children: [
-            if (sidebarVisible) ...[
-              SizedBox(
-                width: kDesktopSidebarWidth,
-                child: Sidebar(
-                  onSelectFeed: (_) {
-                    if (selectedArticleId != null) context.go('/');
-                  },
-                ),
+        children: [
+          if (sidebarVisible) ...[
+            SizedBox(
+              width: kDesktopSidebarWidth,
+              child: Sidebar(
+                onSelectFeed: (_) {
+                  if (selectedArticleId != null) context.go('/');
+                },
               ),
-              const VerticalDivider(width: 1),
-            ],
-            Expanded(child: listPane()),
+            ),
+            const VerticalDivider(width: 1),
           ],
-        ),
+          Expanded(child: listPane()),
+        ],
+      ),
       DesktopPaneMode.listOnly => listPane(),
     };
 
@@ -442,7 +597,7 @@ class HomeScreen extends ConsumerWidget {
             onInvoke: (intent) {
               final list =
                   ref.read(articleListControllerProvider).valueOrNull?.items ??
-                      const [];
+                  const [];
               if (list.isEmpty) return null;
               final idx = selectedArticleId == null
                   ? -1
@@ -456,7 +611,7 @@ class HomeScreen extends ConsumerWidget {
             onInvoke: (intent) {
               final list =
                   ref.read(articleListControllerProvider).valueOrNull?.items ??
-                      const [];
+                  const [];
               if (list.isEmpty) return null;
               final idx = selectedArticleId == null
                   ? 0
@@ -471,20 +626,20 @@ class HomeScreen extends ConsumerWidget {
               final feedId = ref.read(selectedFeedIdProvider);
               final categoryId = ref.read(selectedCategoryIdProvider);
               if (feedId != null) {
-                await ref.read(syncServiceProvider).refreshFeed(feedId);
+                await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
               } else if (categoryId != null) {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
                 final filtered = categoryId < 0
                     ? feeds.where((f) => f.categoryId == null)
                     : feeds.where((f) => f.categoryId == categoryId);
-                for (final f in filtered) {
-                  await ref.read(syncServiceProvider).refreshFeed(f.id);
-                }
+                await ref
+                    .read(syncServiceProvider)
+                    .refreshFeedsSafe(filtered.map((f) => f.id));
               } else {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
-                for (final f in feeds) {
-                  await ref.read(syncServiceProvider).refreshFeed(f.id);
-                }
+                await ref
+                    .read(syncServiceProvider)
+                    .refreshFeedsSafe(feeds.map((f) => f.id));
               }
               return null;
             },
@@ -515,6 +670,12 @@ class HomeScreen extends ConsumerWidget {
               await ref
                   .read(articleRepositoryProvider)
                   .toggleStar(selectedArticleId!);
+              return null;
+            },
+          ),
+          _SearchIntent: CallbackAction<_SearchIntent>(
+            onInvoke: (intent) {
+              _showArticleSearchDialog(context, ref);
               return null;
             },
           ),
@@ -549,23 +710,53 @@ class _ToggleStarIntent extends Intent {
   const _ToggleStarIntent();
 }
 
-int _effectiveColumns(AppLayoutMode mode, double width) {
+class _SearchIntent extends Intent {
+  const _SearchIntent();
+}
+
+Future<void> _showArticleSearchDialog(
+  BuildContext context,
+  WidgetRef ref,
+) async {
+  final l10n = AppLocalizations.of(context)!;
+  final controller = TextEditingController(
+    text: ref.read(articleSearchQueryProvider),
+  );
+  final result = await showDialog<String?>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(l10n.search),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(hintText: l10n.search),
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(''),
+            child: Text(l10n.delete),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: Text(l10n.done),
+          ),
+        ],
+      );
+    },
+  );
+  if (result == null) return;
+  ref.read(articleSearchQueryProvider.notifier).state = result.trim();
+}
+
+int _effectiveColumns(double width) {
   // Non-desktop: classic M3-ish breakpoints.
   const mobileThreshold = 600.0;
   const largeThreshold = 1200.0;
-
-  final autoColumns =
-      width < mobileThreshold ? 1 : (width < largeThreshold ? 2 : 3);
-
-  if (mode == AppLayoutMode.auto) return autoColumns;
-
-  final target = switch (mode) {
-    AppLayoutMode.oneColumn => 1,
-    AppLayoutMode.twoColumn => 2,
-    AppLayoutMode.threeColumn => 3,
-    AppLayoutMode.auto => autoColumns,
-  };
-
-  // Never exceed what the window can comfortably display.
-  return target <= autoColumns ? target : autoColumns;
+  return width < mobileThreshold ? 1 : (width < largeThreshold ? 2 : 3);
 }

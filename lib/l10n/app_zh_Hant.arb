@@ -114,8 +114,31 @@
 
   "star": "收藏",
   "unstar": "取消收藏",
+  "starred": "已收藏",
   "markRead": "標記為已讀",
   "markUnread": "標記為未讀",
   "collapse": "收起",
-  "expand": "展開"
+  "expand": "展開",
+  "openInBrowser": "在瀏覽器打開",
+  "autoMarkRead": "打開時自動標記為已讀",
+  "search": "搜尋",
+  "groupingAndSorting": "分組與排序",
+  "rules": "規則",
+  "services": "服務",
+  "autoRefresh": "自動重新整理",
+  "off": "關閉",
+  "everyMinutes": "每 {minutes} 分鐘",
+  "@everyMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "appPreferences": "應用偏好",
+  "about": "關於",
+  "dataDirectory": "資料目錄",
+  "copyPath": "複製路徑",
+  "openFolder": "打開資料夾",
+  "keyboardShortcuts": "快速鍵"
 }

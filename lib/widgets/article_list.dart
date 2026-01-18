@@ -6,6 +6,7 @@ import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../providers/article_list_controller.dart';
 import '../providers/repository_providers.dart';
+import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
 import '../ui/layout.dart';
 import '../utils/platform.dart';
@@ -46,6 +47,8 @@ class _ArticleListState extends ConsumerState<ArticleList> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final unreadOnly = ref.watch(unreadOnlyProvider);
+    final starredOnly = ref.watch(starredOnlyProvider);
+    final searchQuery = ref.watch(articleSearchQueryProvider).trim();
     final state = ref.watch(articleListControllerProvider);
 
     return state.when(
@@ -54,6 +57,9 @@ class _ArticleListState extends ConsumerState<ArticleList> {
       data: (data) {
         final items = data.items;
         if (items.isEmpty) {
+          if (searchQuery.isNotEmpty || starredOnly) {
+            return Center(child: Text(l10n.notFound));
+          }
           return Center(
             child: Text(unreadOnly ? l10n.noUnreadArticles : l10n.noArticles),
           );
@@ -107,7 +113,9 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                     alignment: Alignment.centerLeft,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Icon(
-                      a.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
+                      a.isRead
+                          ? Icons.mark_email_unread
+                          : Icons.mark_email_read,
                       color: Colors.white,
                     ),
                   ),

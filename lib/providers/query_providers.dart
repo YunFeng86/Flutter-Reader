@@ -16,7 +16,16 @@ final categoriesProvider = StreamProvider<List<Category>>((ref) {
 final selectedFeedIdProvider = StateProvider<int?>((ref) => null);
 final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
 
-final articlesProvider = StreamProvider.family<List<Article>, int?>((ref, feedId) {
+/// Whether the article list should show only starred articles.
+final starredOnlyProvider = StateProvider<bool>((ref) => false);
+
+/// User-entered article search query (best-effort substring match).
+final articleSearchQueryProvider = StateProvider<String>((ref) => '');
+
+final articlesProvider = StreamProvider.family<List<Article>, int?>((
+  ref,
+  feedId,
+) {
   return ref.watch(articleRepositoryProvider).watchLatest(feedId: feedId);
 });
 

@@ -223,6 +223,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unstar => 'Unstar';
 
   @override
+  String get starred => 'Starred';
+
+  @override
   String get markRead => 'Mark read';
 
   @override
@@ -233,6 +236,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get expand => 'Expand';
+
+  @override
+  String get openInBrowser => 'Open in browser';
+
+  @override
+  String get autoMarkRead => 'Auto-mark as read when opened';
 
   @override
   String get search => 'Search';
@@ -247,8 +256,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get services => 'Services';
 
   @override
+  String get autoRefresh => 'Auto refresh';
+
+  @override
+  String get off => 'Off';
+
+  @override
+  String everyMinutes(int minutes) {
+    return 'Every $minutes min';
+  }
+
+  @override
   String get appPreferences => 'App Preferences';
 
   @override
   String get about => 'About';
+
+  @override
+  String get dataDirectory => 'Data directory';
+
+  @override
+  String get copyPath => 'Copy path';
+
+  @override
+  String get openFolder => 'Open folder';
+
+  @override
+  String get keyboardShortcuts => 'Keyboard shortcuts';
 }

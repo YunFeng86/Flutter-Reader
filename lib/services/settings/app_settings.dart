@@ -1,49 +1,46 @@
 import 'package:flutter/material.dart';
 
-/// Supported app layout modes.
-///
-/// - auto: decide 1/2/3-column based on screen width (progressive design)
-/// - oneColumn/twoColumn/threeColumn: user-enforced layout, with a narrow-width
-///   fallback to keep the UI usable on very small windows.
-enum AppLayoutMode { auto, oneColumn, twoColumn, threeColumn }
-
 class AppSettings {
+  static const _Unset _unset = _Unset();
+
   const AppSettings({
     this.themeMode = ThemeMode.system,
     this.localeTag,
-    this.layoutMode = AppLayoutMode.auto,
     this.autoMarkRead = true,
+    this.autoRefreshMinutes,
   });
 
   final ThemeMode themeMode;
   // null => follow system language.
   final String? localeTag;
 
-  /// Layout mode preference for desktop/tablet.
-  final AppLayoutMode layoutMode;
-
   /// Whether to auto-mark articles as read when opened in the reader.
   final bool autoMarkRead;
 
+  /// Auto-refresh interval in minutes. `null` means disabled.
+  final int? autoRefreshMinutes;
+
   AppSettings copyWith({
     ThemeMode? themeMode,
-    String? localeTag,
-    AppLayoutMode? layoutMode,
+    Object? localeTag = _unset,
     bool? autoMarkRead,
+    Object? autoRefreshMinutes = _unset,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
-      localeTag: localeTag,
-      layoutMode: layoutMode ?? this.layoutMode,
+      localeTag: localeTag == _unset ? this.localeTag : localeTag as String?,
       autoMarkRead: autoMarkRead ?? this.autoMarkRead,
+      autoRefreshMinutes: autoRefreshMinutes == _unset
+          ? this.autoRefreshMinutes
+          : autoRefreshMinutes as int?,
     );
   }
 
   Map<String, Object?> toJson() => {
     'themeMode': themeMode.name,
     'localeTag': localeTag,
-    'layoutMode': layoutMode.name,
     'autoMarkRead': autoMarkRead,
+    'autoRefreshMinutes': autoRefreshMinutes,
   };
 
   static AppSettings fromJson(Map<String, Object?> json) {
@@ -56,23 +53,22 @@ class AppSettings {
 
     final localeTag = json['localeTag'];
 
-    final rawLayout = json['layoutMode'];
-    final layoutMode = switch (rawLayout) {
-      'oneColumn' => AppLayoutMode.oneColumn,
-      'twoColumn' => AppLayoutMode.twoColumn,
-      'threeColumn' => AppLayoutMode.threeColumn,
-      _ => AppLayoutMode.auto,
-    };
-
     final autoMarkRead = json['autoMarkRead'];
+    final autoRefreshMinutes = json['autoRefreshMinutes'];
 
     return AppSettings(
       themeMode: mode,
       localeTag: localeTag is String && localeTag.trim().isNotEmpty
           ? localeTag
           : null,
-      layoutMode: layoutMode,
       autoMarkRead: autoMarkRead is bool ? autoMarkRead : true,
+      autoRefreshMinutes: autoRefreshMinutes is num
+          ? autoRefreshMinutes.toInt()
+          : null,
     );
   }
+}
+
+class _Unset {
+  const _Unset();
 }

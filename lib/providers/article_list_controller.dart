@@ -39,12 +39,16 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   int? _feedId;
   int? _categoryId;
   bool _unreadOnly = false;
+  bool _starredOnly = false;
+  String _searchQuery = '';
 
   @override
   Future<ArticleListState> build() async {
     _feedId = ref.watch(selectedFeedIdProvider);
     _categoryId = ref.watch(selectedCategoryIdProvider);
     _unreadOnly = ref.watch(unreadOnlyProvider);
+    _starredOnly = ref.watch(starredOnlyProvider);
+    _searchQuery = ref.watch(articleSearchQueryProvider);
 
     // Refresh the list when the underlying query changes (new items from sync,
     // read/star toggles, etc.). For MVP we simply reload the first page.
@@ -64,6 +68,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       feedId: _feedId,
       categoryId: _categoryId,
       unreadOnly: _unreadOnly,
+      starredOnly: _starredOnly,
+      searchQuery: _searchQuery,
     );
     return ArticleListState(items: items, hasMore: items.length == _pageSize);
   }
@@ -76,13 +82,14 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       feedId: _feedId,
       categoryId: _categoryId,
       unreadOnly: _unreadOnly,
+      starredOnly: _starredOnly,
+      searchQuery: _searchQuery,
     );
     final current = state.valueOrNull;
     if (current == null) {
-      state = AsyncValue.data(ArticleListState(
-        items: items,
-        hasMore: items.length == _pageSize,
-      ));
+      state = AsyncValue.data(
+        ArticleListState(items: items, hasMore: items.length == _pageSize),
+      );
       return;
     }
     state = AsyncValue.data(
@@ -103,6 +110,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
         feedId: _feedId,
         categoryId: _categoryId,
         unreadOnly: _unreadOnly,
+        starredOnly: _starredOnly,
+        searchQuery: _searchQuery,
       );
       state = AsyncValue.data(
         current.copyWith(
@@ -119,5 +128,5 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
 
 final articleListControllerProvider =
     AutoDisposeAsyncNotifierProvider<ArticleListController, ArticleListState>(
-  ArticleListController.new,
-);
+      ArticleListController.new,
+    );
