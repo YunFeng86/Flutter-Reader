@@ -20,58 +20,209 @@ import '../providers/settings_providers.dart';
 import '../services/settings/app_settings.dart';
 import '../services/settings/reader_settings.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context)!;
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
 
-    return DefaultTabController(
-      length: 6,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: const BackButton(),
-          title: null,
-          bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            dividerColor: Colors.transparent,
-            tabs: [
-              Tab(
-                icon: const Icon(Icons.settings_outlined),
-                text: l10n.appPreferences,
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  int _selectedIndex = 0;
+
+  List<_SettingsPageItem> _buildItems(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      _SettingsPageItem(
+        icon: Icons.settings_outlined,
+        selectedIcon: Icons.settings,
+        label: l10n.appPreferences,
+        content: const _AppPreferencesTab(),
+      ),
+      _SettingsPageItem(
+        icon: Icons.rss_feed_outlined,
+        selectedIcon: Icons.rss_feed,
+        label: l10n.subscriptions,
+        content: const _SubscriptionsTab(),
+      ),
+      _SettingsPageItem(
+        icon: Icons.format_list_bulleted,
+        selectedIcon: Icons.format_list_bulleted,
+        label: l10n.groupingAndSorting,
+        content: _PlaceholderTab(l10n.groupingAndSorting),
+      ),
+      _SettingsPageItem(
+        icon: Icons.filter_alt_outlined,
+        selectedIcon: Icons.filter_alt,
+        label: l10n.rules,
+        content: _PlaceholderTab(l10n.rules),
+      ),
+      _SettingsPageItem(
+        icon: Icons.cloud_outlined,
+        selectedIcon: Icons.cloud,
+        label: l10n.services,
+        content: const _ServicesTab(),
+      ),
+      _SettingsPageItem(
+        icon: Icons.info_outline,
+        selectedIcon: Icons.info,
+        label: l10n.about,
+        content: const _AboutTab(),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final items = _buildItems(context);
+
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 700) {
+            // Mobile / Narrow Layout
+            return Scaffold(
+              appBar: AppBar(
+                leading: const BackButton(),
+                title: Text(l10n.settings),
               ),
-              Tab(
-                icon: const Icon(Icons.rss_feed_outlined),
-                text: l10n.subscriptions,
+              body: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final item = items[index];
+                  // Match desktop sidebar style
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: ListTile(
+                       dense: true,
+                       visualDensity: VisualDensity.compact,
+                       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                       leading: Icon(item.icon, size: 20),
+                       title: Text(item.label),
+                       trailing: const Icon(Icons.chevron_right, size: 20),
+                       onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(title: Text(item.label)),
+                              body: item.content,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
-              Tab(
-                icon: const Icon(Icons.format_list_bulleted),
-                text: l10n.groupingAndSorting,
-              ),
-              Tab(
-                icon: const Icon(Icons.filter_alt_outlined),
-                text: l10n.rules,
-              ),
-              Tab(icon: const Icon(Icons.cloud_outlined), text: l10n.services),
-              Tab(icon: const Icon(Icons.info_outline), text: l10n.about),
-            ],
-          ),
-        ),
-        body: TabBarView(
-          children: [
-            const _AppPreferencesTab(),
-            const _SubscriptionsTab(),
-            _PlaceholderTab(l10n.groupingAndSorting),
-            _PlaceholderTab(l10n.rules),
-            const _ServicesTab(),
-            const _AboutTab(),
-          ],
-        ),
+            );
+          } else {
+            // Desktop / Wide Layout
+            if (_selectedIndex >= items.length) {
+              _selectedIndex = 0;
+            }
+            final selectedItem = items[_selectedIndex];
+
+            return Column(
+              children: [
+                AppBar(
+                  leading: const BackButton(),
+                  title: Text(l10n.settings),
+                  elevation: 0,
+                  backgroundColor: Colors.transparent,
+                ),
+                Expanded(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Left Sidebar
+                      Container(
+                        width: 260,
+                        color: theme.colorScheme.surfaceContainerLow,
+                        child: ListView.separated(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          itemCount: items.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 4),
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            final isSelected = index == _selectedIndex;
+                            
+                            // Mimic existing Sidebar style
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              child: ListTile(
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                selected: isSelected,
+                                leading: Icon(
+                                  isSelected ? item.selectedIcon : item.icon,
+                                  size: 20,
+                                ),
+                                title: Text(item.label),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedIndex = index;
+                                  });
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      // Divider
+                      VerticalDivider(
+                        width: 1,
+                        thickness: 1,
+                        color: theme.colorScheme.outlineVariant.withOpacity(0.5),
+                      ),
+                      // Right Content Area
+                      Expanded(
+                        child: FocusTraversalGroup(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            transitionBuilder: (child, animation) {
+                               return FadeTransition(opacity: animation, child: child);
+                            },
+                            child: KeyedSubtree(
+                              key: ValueKey(_selectedIndex),
+                              child: Scaffold( // Inner Scaffold for scrolling body
+                                 backgroundColor: Colors.transparent,
+                                 body: selectedItem.content,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }
+}
+
+class _SettingsPageItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final Widget content;
+
+  const _SettingsPageItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.content,
+  });
 }
 
 class _PlaceholderTab extends StatelessWidget {
@@ -98,7 +249,8 @@ class _AppPreferencesTab extends ConsumerWidget {
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800),
         child: ListView(
@@ -272,7 +424,8 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
     final feedsAsync = ref.watch(feedsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 900),
         child: ListView(
@@ -673,7 +826,8 @@ class _ServicesTab extends ConsumerWidget {
       );
     }
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800),
         child: ListView(
@@ -735,7 +889,8 @@ class _AboutTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 800),
         child: ListView(

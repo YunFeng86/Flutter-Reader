@@ -74,7 +74,11 @@ class ArticleListItem extends ConsumerWidget {
                     child: Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (ctx, err, stack) => const Icon(Icons.broken_image, size: 24, color: Colors.grey),
+                      errorBuilder: (ctx, err, stack) => Icon(
+                        Icons.broken_image, 
+                        size: 24, 
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
@@ -165,8 +169,8 @@ class ArticleListItem extends ConsumerWidget {
                     Text(
                       title.isEmpty ? article.link : title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w500, // Always normal/medium weight
-                        color: theme.colorScheme.onSurface, // Always standard color
+                        fontWeight: FontWeight.w400, // Regular weight for M3 title
+                        color: theme.colorScheme.onSurface,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

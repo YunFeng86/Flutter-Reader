@@ -87,7 +87,7 @@ class AppTheme {
     return base.copyWith(
       scaffoldBackgroundColor: cs.surface,
       dividerTheme: DividerThemeData(
-        color: cs.outlineVariant.withAlpha(179),
+        color: cs.outlineVariant,
         thickness: 1,
         space: 1,
       ),
@@ -115,7 +115,8 @@ class AppTheme {
         backgroundColor: cs.surface,
         surfaceTintColor: Colors.transparent,
         width: 320,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        // shape: default M3 shape is rounded on the right. We keep it default for
+        // floating drawers. Fixed sidebars will override this if needed.
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

@@ -541,7 +541,10 @@ class HomeScreen extends ConsumerWidget {
       if (selectedArticleId == null) {
         return Center(child: Text(l10n.selectAnArticle));
       }
-      return ReaderView(articleId: selectedArticleId!, embedded: embedded);
+      return Container(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: ReaderView(articleId: selectedArticleId!, embedded: embedded),
+      );
     }
 
     final body = switch (mode) {
