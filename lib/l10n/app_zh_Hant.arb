@@ -324,13 +324,143 @@
   "@search": {
     "description": "search"
   },
+  "searchInContent": "搜尋內容",
+  "@searchInContent": {
+    "description": "searchInContent"
+  },
   "groupingAndSorting": "分組與排序",
   "@groupingAndSorting": {
     "description": "groupingAndSorting"
   },
+  "groupBy": "分組依據",
+  "@groupBy": {
+    "description": "groupBy"
+  },
+  "groupNone": "無",
+  "@groupNone": {
+    "description": "groupNone"
+  },
+  "groupByDay": "按天",
+  "@groupByDay": {
+    "description": "groupByDay"
+  },
+  "sortOrder": "排序方式",
+  "@sortOrder": {
+    "description": "sortOrder"
+  },
+  "sortNewestFirst": "最新的在先",
+  "@sortNewestFirst": {
+    "description": "sortNewestFirst"
+  },
+  "sortOldestFirst": "最舊的在先",
+  "@sortOldestFirst": {
+    "description": "sortOldestFirst"
+  },
   "rules": "規則",
   "@rules": {
     "description": "rules"
+  },
+  "addRule": "新增規則",
+  "@addRule": {
+    "description": "addRule"
+  },
+  "editRule": "編輯規則",
+  "@editRule": {
+    "description": "editRule"
+  },
+  "ruleName": "規則名稱",
+  "@ruleName": {
+    "description": "ruleName"
+  },
+  "keyword": "關鍵字",
+  "@keyword": {
+    "description": "keyword"
+  },
+  "matchIn": "匹配範圍",
+  "@matchIn": {
+    "description": "matchIn"
+  },
+  "matchTitle": "標題",
+  "@matchTitle": {
+    "description": "matchTitle"
+  },
+  "matchAuthor": "作者",
+  "@matchAuthor": {
+    "description": "matchAuthor"
+  },
+  "matchLink": "連結",
+  "@matchLink": {
+    "description": "matchLink"
+  },
+  "matchContent": "內容",
+  "@matchContent": {
+    "description": "matchContent"
+  },
+  "actions": "動作",
+  "@actions": {
+    "description": "actions"
+  },
+  "autoStar": "自動收藏",
+  "@autoStar": {
+    "description": "autoStar"
+  },
+  "autoMarkReadAction": "自動標記為已讀",
+  "@autoMarkReadAction": {
+    "description": "autoMarkReadAction"
+  },
+  "enabled": "啟用",
+  "@enabled": {
+    "description": "enabled"
+  },
+  "rename": "重新命名",
+  "@rename": {
+    "description": "rename"
+  },
+  "edit": "編輯",
+  "@edit": {
+    "description": "edit"
+  },
+  "nameAlreadyExists": "名稱已存在",
+  "@nameAlreadyExists": {
+    "description": "nameAlreadyExists"
+  },
+  "lastChecked": "上次檢查",
+  "@lastChecked": {
+    "description": "lastChecked"
+  },
+  "lastSynced": "上次同步",
+  "@lastSynced": {
+    "description": "lastSynced"
+  },
+  "never": "從未",
+  "@never": {
+    "description": "never"
+  },
+  "cleanupReadArticles": "清理已讀文章",
+  "@cleanupReadArticles": {
+    "description": "cleanupReadArticles"
+  },
+  "cleanupNow": "立即清理",
+  "@cleanupNow": {
+    "description": "cleanupNow"
+  },
+  "cleanedArticles": "清理了 {count} 篇文章",
+  "@cleanedArticles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "description": "cleanedArticles"
+  },
+  "days": "{days} 天",
+  "@days": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    },
+    "description": "days"
   },
   "services": "服務",
   "@services": {
