@@ -92,7 +92,9 @@ class OpmlService {
   }
 
   void _writeFeedOutline(XmlBuilder b, Feed f) {
-    final text = (f.title?.trim().isNotEmpty == true) ? f.title! : f.url;
+    final text = (f.userTitle?.trim().isNotEmpty == true)
+        ? f.userTitle!
+        : ((f.title?.trim().isNotEmpty == true) ? f.title! : f.url);
     b.element(
       'outline',
       attributes: {
@@ -112,4 +114,3 @@ class OpmlEntry {
   final String url;
   final String? category;
 }
-

@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../providers/article_list_controller.dart';
+import '../providers/app_settings_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
+import '../services/settings/app_settings.dart';
 import '../ui/layout.dart';
 import '../utils/platform.dart';
+import '../models/article.dart';
 import 'article_list_item.dart';
 
 class ArticleList extends ConsumerStatefulWidget {
@@ -50,6 +54,8 @@ class _ArticleListState extends ConsumerState<ArticleList> {
     final starredOnly = ref.watch(starredOnlyProvider);
     final searchQuery = ref.watch(articleSearchQueryProvider).trim();
     final state = ref.watch(articleListControllerProvider);
+    final settings = ref.watch(appSettingsProvider).valueOrNull;
+    final groupMode = settings?.articleGroupMode ?? ArticleGroupMode.none;
 
     return state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -67,13 +73,17 @@ class _ArticleListState extends ConsumerState<ArticleList> {
 
         final narrow = MediaQuery.sizeOf(context).width < 600;
 
+        final entries = groupMode == ArticleGroupMode.day
+            ? _buildDayGroupedEntries(items)
+            : items.map<_ArticleListEntry>((a) => _ArticleEntry(a)).toList();
+
         return Container(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           child: ListView.builder(
             controller: _controller,
-            itemCount: items.length + (data.hasMore ? 1 : 0),
+            itemCount: entries.length + (data.hasMore ? 1 : 0),
             itemBuilder: (context, index) {
-              if (index >= items.length) {
+              if (index >= entries.length) {
                 return Padding(
                   padding: const EdgeInsets.all(16),
                   child: Center(
@@ -84,8 +94,19 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                 );
               }
 
-              final a = items[index];
-              final tile = ArticleListItem(
+              final entry = entries[index];
+              if (entry is _HeaderEntry) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                  child: Text(
+                    entry.title,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                );
+              }
+
+              final a = (entry as _ArticleEntry).article;
+              Widget child = ArticleListItem(
                 article: a,
                 selected: a.id == widget.selectedArticleId,
                 onTap: () {
@@ -102,8 +123,6 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                   }
                 },
               );
-
-              Widget child = tile;
 
               if (narrow) {
                 child = Dismissible(
@@ -148,4 +167,31 @@ class _ArticleListState extends ConsumerState<ArticleList> {
       },
     );
   }
+}
+
+sealed class _ArticleListEntry {}
+
+class _HeaderEntry extends _ArticleListEntry {
+  _HeaderEntry(this.title);
+  final String title;
+}
+
+class _ArticleEntry extends _ArticleListEntry {
+  _ArticleEntry(this.article);
+  final Article article;
+}
+
+List<_ArticleListEntry> _buildDayGroupedEntries(List<Article> items) {
+  final out = <_ArticleListEntry>[];
+  DateTime? currentDay;
+  for (final a in items) {
+    final t = a.publishedAt.toLocal();
+    final day = DateTime(t.year, t.month, t.day);
+    if (currentDay == null || day != currentDay) {
+      currentDay = day;
+      out.add(_HeaderEntry(DateFormat('yyyy/MM/dd').format(day)));
+    }
+    out.add(_ArticleEntry(a));
+  }
+  return out;
 }

@@ -43,9 +43,16 @@ final feedParserProvider = Provider<FeedParser>((ref) => FeedParser());
 final syncServiceProvider = Provider<SyncService>((ref) {
   final feeds = ref.watch(feedRepositoryProvider);
   final articles = ref.watch(articleRepositoryProvider);
+  final rules = ref.watch(ruleRepositoryProvider);
   final client = ref.watch(rssClientProvider);
   final parser = ref.watch(feedParserProvider);
-  return SyncService(feeds: feeds, articles: articles, client: client, parser: parser);
+  return SyncService(
+    feeds: feeds,
+    articles: articles,
+    rules: rules,
+    client: client,
+    parser: parser,
+  );
 });
 
 final articleExtractorProvider = Provider<ArticleExtractor>((ref) {

@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 
 import '../models/article.dart';
+import '../models/rule.dart';
 
 class ArticleRepository {
   ArticleRepository(this._isar);
@@ -33,11 +34,13 @@ class ArticleRepository {
     bool unreadOnly = false,
     bool starredOnly = false,
     String searchQuery = '',
+    bool sortAscending = false,
+    bool searchInContent = true,
   }) {
     final cid = categoryId;
     final q = searchQuery.trim();
     final hasQuery = q.isNotEmpty;
-    return _isar.articles
+    final qb = _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
         .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
@@ -47,22 +50,30 @@ class ArticleRepository {
         .optional(
           hasQuery,
           (q0) => q0.group(
-            (q1) => q1
-                .titleContains(q, caseSensitive: false)
-                .or()
-                .authorContains(q, caseSensitive: false)
-                .or()
-                .linkContains(q, caseSensitive: false)
-                .or()
-                .contentHtmlContains(q, caseSensitive: false)
-                .or()
-                .fullContentHtmlContains(q, caseSensitive: false),
+            (q1) => searchInContent
+                ? q1
+                    .titleContains(q, caseSensitive: false)
+                    .or()
+                    .authorContains(q, caseSensitive: false)
+                    .or()
+                    .linkContains(q, caseSensitive: false)
+                    .or()
+                    .contentHtmlContains(q, caseSensitive: false)
+                    .or()
+                    .fullContentHtmlContains(q, caseSensitive: false)
+                : q1
+                    .titleContains(q, caseSensitive: false)
+                    .or()
+                    .authorContains(q, caseSensitive: false)
+                    .or()
+                    .linkContains(q, caseSensitive: false),
           ),
         )
-        .sortByPublishedAtDesc()
-        .offset(offset)
-        .limit(limit)
-        .findAll();
+        ;
+
+    final sorted =
+        sortAscending ? qb.sortByPublishedAt() : qb.sortByPublishedAtDesc();
+    return sorted.offset(offset).limit(limit).findAll();
   }
 
   Stream<Article?> watchById(int id) {
@@ -103,6 +114,17 @@ class ArticleRepository {
     });
   }
 
+  Future<int> deleteReadUnstarredOlderThan(DateTime cutoffUtc) {
+    return _isar.writeTxn(() async {
+      return _isar.articles
+          .filter()
+          .isReadEqualTo(true)
+          .isStarredEqualTo(false)
+          .publishedAtLessThan(cutoffUtc)
+          .deleteAll();
+    });
+  }
+
   Future<int> markAllRead({int? feedId, int? categoryId}) {
     return _isar.writeTxn(() async {
       final cid = categoryId;
@@ -125,8 +147,14 @@ class ArticleRepository {
     });
   }
 
-  Future<void> upsertMany(int feedId, List<Article> incoming) {
+  Future<void> upsertMany(
+    int feedId,
+    List<Article> incoming, {
+    List<Rule> rules = const [],
+  }) {
     return _isar.writeTxn(() async {
+      final enabledRules = rules.where((r) => r.enabled).toList(growable: false);
+
       for (final a in incoming) {
         final existing = await _isar.articles
             .where()
@@ -145,10 +173,56 @@ class ArticleRepository {
           if (a.publishedAt.millisecondsSinceEpoch == 0) {
             a.publishedAt = existing.publishedAt;
           }
+        } else {
+          // Apply automation rules only on first insert so we don't override
+          // user actions on subsequent refreshes.
+          if (enabledRules.isNotEmpty) {
+            final (markRead, star) = _applyRules(enabledRules, a);
+            if (markRead) a.isRead = true;
+            if (star) a.isStarred = true;
+          }
         }
 
         await _isar.articles.put(a);
       }
     });
+  }
+
+  (bool markRead, bool star) _applyRules(List<Rule> rules, Article a) {
+    bool shouldMarkRead = false;
+    bool shouldStar = false;
+
+    final keywordCache = <int, String>{};
+
+    bool matches(Rule r) {
+      final needle = keywordCache.putIfAbsent(
+        r.id,
+        () => r.keyword.trim().toLowerCase(),
+      );
+      if (needle.isEmpty) return false;
+
+      bool contains(String? haystack) {
+        if (haystack == null || haystack.isEmpty) return false;
+        return haystack.toLowerCase().contains(needle);
+      }
+
+      if (r.matchTitle && contains(a.title)) return true;
+      if (r.matchAuthor && contains(a.author)) return true;
+      if (r.matchLink && contains(a.link)) return true;
+      if (r.matchContent &&
+          (contains(a.contentHtml) || contains(a.fullContentHtml))) {
+        return true;
+      }
+      return false;
+    }
+
+    for (final r in rules) {
+      if (!matches(r)) continue;
+      if (r.autoMarkRead) shouldMarkRead = true;
+      if (r.autoStar) shouldStar = true;
+      if (shouldMarkRead && shouldStar) break;
+    }
+
+    return (shouldMarkRead, shouldStar);
   }
 }

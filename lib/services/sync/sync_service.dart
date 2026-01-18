@@ -1,8 +1,11 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+
 import '../../models/article.dart';
 import '../../repositories/article_repository.dart';
 import '../../repositories/feed_repository.dart';
+import '../../repositories/rule_repository.dart';
 import '../rss/feed_parser.dart';
 import '../rss/rss_client.dart';
 
@@ -37,24 +40,52 @@ class SyncService {
   SyncService({
     required FeedRepository feeds,
     required ArticleRepository articles,
+    required RuleRepository rules,
     required RssClient client,
     required FeedParser parser,
   }) : _feeds = feeds,
        _articles = articles,
+       _rules = rules,
        _client = client,
        _parser = parser;
 
   final FeedRepository _feeds;
   final ArticleRepository _articles;
+  final RuleRepository _rules;
   final RssClient _client;
   final FeedParser _parser;
 
-  Future<int> refreshFeed(int feedId) async {
+  Future<_RefreshOutcome> _refreshFeedOnce(int feedId) async {
     final feed = await _feeds.getById(feedId);
-    if (feed == null) return 0;
+    if (feed == null) {
+      return const _RefreshOutcome(
+        feedId: -1,
+        statusCode: 0,
+        incomingCount: 0,
+      );
+    }
 
-    final xml = await _client.fetchXml(feed.url);
-    final parsed = _parser.parse(xml);
+    final fetched = await _client.fetchXml(
+      feed.url,
+      ifNoneMatch: feed.etag,
+      ifModifiedSince: feed.lastModified,
+    );
+
+    final status = fetched.statusCode;
+    if (status == 304) {
+      return _RefreshOutcome(
+        feedId: feedId,
+        statusCode: 304,
+        incomingCount: 0,
+        etag: fetched.etag,
+        lastModified: fetched.lastModified,
+      );
+    }
+    if (status != 200) {
+      throw Exception('Feed fetch failed: HTTP $status');
+    }
+
+    final parsed = _parser.parse(fetched.body);
 
     await _feeds.updateMeta(
       id: feedId,
@@ -78,8 +109,15 @@ class SyncService {
         })
         .toList(growable: false);
 
-    await _articles.upsertMany(feedId, incoming);
-    return incoming.length;
+    final rules = await _rules.getEnabled();
+    await _articles.upsertMany(feedId, incoming, rules: rules);
+    return _RefreshOutcome(
+      feedId: feedId,
+      statusCode: 200,
+      incomingCount: incoming.length,
+      etag: fetched.etag,
+      lastModified: fetched.lastModified,
+    );
   }
 
   Future<FeedRefreshResult> refreshFeedSafe(
@@ -88,16 +126,52 @@ class SyncService {
   }) async {
     Object? lastError;
     final attempts = maxAttempts < 1 ? 1 : maxAttempts;
+    final sw = Stopwatch()..start();
     for (var i = 0; i < attempts; i++) {
+      final checkedAt = DateTime.now();
       try {
-        final count = await refreshFeed(feedId);
-        return FeedRefreshResult(feedId: feedId, incomingCount: count);
+        final out = await _refreshFeedOnce(feedId);
+        sw.stop();
+
+        await _feeds.updateSyncState(
+          id: feedId,
+          lastCheckedAt: checkedAt,
+          lastStatusCode: out.statusCode,
+          lastDurationMs: sw.elapsedMilliseconds,
+          lastIncomingCount: out.incomingCount,
+          etag: out.etag,
+          lastModified: out.lastModified,
+          clearError: true,
+        );
+
+        return FeedRefreshResult(
+          feedId: feedId,
+          incomingCount: out.incomingCount,
+        );
       } catch (e) {
         lastError = e;
+        // Keep duration per attempt; store the last attempt duration.
+        sw.stop();
+        final statusCode =
+            e is DioException ? e.response?.statusCode : null;
+        await _feeds.updateSyncState(
+          id: feedId,
+          lastCheckedAt: checkedAt,
+          lastStatusCode: statusCode,
+          lastDurationMs: sw.elapsedMilliseconds,
+          lastIncomingCount: 0,
+          lastError: e.toString(),
+          lastErrorAt: DateTime.now(),
+          clearError: false,
+        );
+
         // Small backoff so quick transient failures (DNS/timeout) have a chance
         // to recover without blocking the whole batch for too long.
         if (i < attempts - 1) {
           await Future<void>.delayed(const Duration(milliseconds: 500));
+          sw
+            ..reset()
+            ..start();
         }
       }
     }
@@ -135,6 +209,22 @@ class SyncService {
     await Future.wait(futures);
     return BatchRefreshResult(results);
   }
+}
+
+class _RefreshOutcome {
+  const _RefreshOutcome({
+    required this.feedId,
+    required this.statusCode,
+    required this.incomingCount,
+    this.etag,
+    this.lastModified,
+  });
+
+  final int feedId;
+  final int statusCode;
+  final int incomingCount;
+  final String? etag;
+  final String? lastModified;
 }
 
 class _Semaphore {

@@ -32,29 +32,74 @@ const FeedSchema = CollectionSchema(
       name: r'description',
       type: IsarType.string,
     ),
-    r'lastSyncedAt': PropertySchema(
+    r'etag': PropertySchema(
       id: 3,
+      name: r'etag',
+      type: IsarType.string,
+    ),
+    r'lastCheckedAt': PropertySchema(
+      id: 4,
+      name: r'lastCheckedAt',
+      type: IsarType.dateTime,
+    ),
+    r'lastDurationMs': PropertySchema(
+      id: 5,
+      name: r'lastDurationMs',
+      type: IsarType.long,
+    ),
+    r'lastError': PropertySchema(
+      id: 6,
+      name: r'lastError',
+      type: IsarType.string,
+    ),
+    r'lastErrorAt': PropertySchema(
+      id: 7,
+      name: r'lastErrorAt',
+      type: IsarType.dateTime,
+    ),
+    r'lastIncomingCount': PropertySchema(
+      id: 8,
+      name: r'lastIncomingCount',
+      type: IsarType.long,
+    ),
+    r'lastModified': PropertySchema(
+      id: 9,
+      name: r'lastModified',
+      type: IsarType.string,
+    ),
+    r'lastStatusCode': PropertySchema(
+      id: 10,
+      name: r'lastStatusCode',
+      type: IsarType.long,
+    ),
+    r'lastSyncedAt': PropertySchema(
+      id: 11,
       name: r'lastSyncedAt',
       type: IsarType.dateTime,
     ),
     r'siteUrl': PropertySchema(
-      id: 4,
+      id: 12,
       name: r'siteUrl',
       type: IsarType.string,
     ),
     r'title': PropertySchema(
-      id: 5,
+      id: 13,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 6,
+      id: 14,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'url': PropertySchema(
-      id: 7,
+      id: 15,
       name: r'url',
+      type: IsarType.string,
+    ),
+    r'userTitle': PropertySchema(
+      id: 16,
+      name: r'userTitle',
       type: IsarType.string,
     )
   },
@@ -112,6 +157,24 @@ int _feedEstimateSize(
     }
   }
   {
+    final value = object.etag;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.lastError;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.lastModified;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.siteUrl;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -124,6 +187,12 @@ int _feedEstimateSize(
     }
   }
   bytesCount += 3 + object.url.length * 3;
+  {
+    final value = object.userTitle;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -136,11 +205,20 @@ void _feedSerialize(
   writer.writeLong(offsets[0], object.categoryId);
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.description);
-  writer.writeDateTime(offsets[3], object.lastSyncedAt);
-  writer.writeString(offsets[4], object.siteUrl);
-  writer.writeString(offsets[5], object.title);
-  writer.writeDateTime(offsets[6], object.updatedAt);
-  writer.writeString(offsets[7], object.url);
+  writer.writeString(offsets[3], object.etag);
+  writer.writeDateTime(offsets[4], object.lastCheckedAt);
+  writer.writeLong(offsets[5], object.lastDurationMs);
+  writer.writeString(offsets[6], object.lastError);
+  writer.writeDateTime(offsets[7], object.lastErrorAt);
+  writer.writeLong(offsets[8], object.lastIncomingCount);
+  writer.writeString(offsets[9], object.lastModified);
+  writer.writeLong(offsets[10], object.lastStatusCode);
+  writer.writeDateTime(offsets[11], object.lastSyncedAt);
+  writer.writeString(offsets[12], object.siteUrl);
+  writer.writeString(offsets[13], object.title);
+  writer.writeDateTime(offsets[14], object.updatedAt);
+  writer.writeString(offsets[15], object.url);
+  writer.writeString(offsets[16], object.userTitle);
 }
 
 Feed _feedDeserialize(
@@ -153,12 +231,21 @@ Feed _feedDeserialize(
   object.categoryId = reader.readLongOrNull(offsets[0]);
   object.createdAt = reader.readDateTime(offsets[1]);
   object.description = reader.readStringOrNull(offsets[2]);
+  object.etag = reader.readStringOrNull(offsets[3]);
   object.id = id;
-  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[3]);
-  object.siteUrl = reader.readStringOrNull(offsets[4]);
-  object.title = reader.readStringOrNull(offsets[5]);
-  object.updatedAt = reader.readDateTime(offsets[6]);
-  object.url = reader.readString(offsets[7]);
+  object.lastCheckedAt = reader.readDateTimeOrNull(offsets[4]);
+  object.lastDurationMs = reader.readLongOrNull(offsets[5]);
+  object.lastError = reader.readStringOrNull(offsets[6]);
+  object.lastErrorAt = reader.readDateTimeOrNull(offsets[7]);
+  object.lastIncomingCount = reader.readLongOrNull(offsets[8]);
+  object.lastModified = reader.readStringOrNull(offsets[9]);
+  object.lastStatusCode = reader.readLongOrNull(offsets[10]);
+  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[11]);
+  object.siteUrl = reader.readStringOrNull(offsets[12]);
+  object.title = reader.readStringOrNull(offsets[13]);
+  object.updatedAt = reader.readDateTime(offsets[14]);
+  object.url = reader.readString(offsets[15]);
+  object.userTitle = reader.readStringOrNull(offsets[16]);
   return object;
 }
 
@@ -176,15 +263,33 @@ P _feedDeserializeProp<P>(
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 6:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 8:
+      return (reader.readLongOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readLongOrNull(offset)) as P;
+    case 11:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 12:
+      return (reader.readStringOrNull(offset)) as P;
+    case 13:
+      return (reader.readStringOrNull(offset)) as P;
+    case 14:
+      return (reader.readDateTime(offset)) as P;
+    case 15:
       return (reader.readString(offset)) as P;
+    case 16:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -761,6 +866,150 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'etag',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'etag',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'etag',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagContains(String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'etag',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagMatches(String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'etag',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'etag',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> etagIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'etag',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -805,6 +1054,643 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastCheckedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastCheckedAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastCheckedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastCheckedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastCheckedAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastCheckedAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastCheckedAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastDurationMs',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastDurationMs',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastDurationMs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastDurationMsBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastDurationMs',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastError',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastError',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastError',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'lastError',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'lastError',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastError',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'lastError',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastErrorAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastErrorAt',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastErrorAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastErrorAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastErrorAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastErrorAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastErrorAt',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastIncomingCount',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastIncomingCount',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastIncomingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastIncomingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastIncomingCount',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastIncomingCountBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastIncomingCount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastModified',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastModified',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastModified',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'lastModified',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'lastModified',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastModified',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastModifiedIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'lastModified',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastStatusCode',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastStatusCode',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastStatusCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastStatusCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastStatusCode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> lastStatusCodeBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastStatusCode',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -1350,6 +2236,152 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
       ));
     });
   }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'userTitle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'userTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'userTitle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> userTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'userTitle',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension FeedQueryObject on QueryBuilder<Feed, Feed, QFilterCondition> {}
@@ -1390,6 +2422,102 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
   QueryBuilder<Feed, Feed, QAfterSortBy> sortByDescriptionDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByEtag() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'etag', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByEtagDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'etag', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastCheckedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCheckedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastCheckedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCheckedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastDurationMs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastDurationMsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastDurationMs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastError() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastError', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastErrorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastError', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastErrorAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastErrorAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastErrorAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastErrorAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastIncomingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastIncomingCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastIncomingCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastIncomingCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastModified() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastModifiedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastStatusCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastStatusCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastStatusCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastStatusCode', Sort.desc);
     });
   }
 
@@ -1452,6 +2580,18 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
       return query.addSortBy(r'url', Sort.desc);
     });
   }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByUserTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByUserTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userTitle', Sort.desc);
+    });
+  }
 }
 
 extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
@@ -1491,6 +2631,18 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByEtag() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'etag', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByEtagDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'etag', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -1500,6 +2652,90 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
   QueryBuilder<Feed, Feed, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastCheckedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCheckedAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastCheckedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastCheckedAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastDurationMs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastDurationMsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastDurationMs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastError() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastError', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastErrorDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastError', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastErrorAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastErrorAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastErrorAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastErrorAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastIncomingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastIncomingCount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastIncomingCountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastIncomingCount', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastModified() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastModifiedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastModified', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastStatusCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastStatusCode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByLastStatusCodeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastStatusCode', Sort.desc);
     });
   }
 
@@ -1562,6 +2798,18 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
       return query.addSortBy(r'url', Sort.desc);
     });
   }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByUserTitle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userTitle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByUserTitleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userTitle', Sort.desc);
+    });
+  }
 }
 
 extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
@@ -1581,6 +2829,57 @@ extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'description', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByEtag(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'etag', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastCheckedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastCheckedAt');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastDurationMs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastDurationMs');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastError(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastError', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastErrorAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastErrorAt');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastIncomingCount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastIncomingCount');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastModified(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastModified', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByLastStatusCode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastStatusCode');
     });
   }
 
@@ -1616,6 +2915,13 @@ extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
       return query.addDistinctBy(r'url', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByUserTitle(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userTitle', caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
@@ -1640,6 +2946,54 @@ extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
   QueryBuilder<Feed, String?, QQueryOperations> descriptionProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<Feed, String?, QQueryOperations> etagProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'etag');
+    });
+  }
+
+  QueryBuilder<Feed, DateTime?, QQueryOperations> lastCheckedAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastCheckedAt');
+    });
+  }
+
+  QueryBuilder<Feed, int?, QQueryOperations> lastDurationMsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastDurationMs');
+    });
+  }
+
+  QueryBuilder<Feed, String?, QQueryOperations> lastErrorProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastError');
+    });
+  }
+
+  QueryBuilder<Feed, DateTime?, QQueryOperations> lastErrorAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastErrorAt');
+    });
+  }
+
+  QueryBuilder<Feed, int?, QQueryOperations> lastIncomingCountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastIncomingCount');
+    });
+  }
+
+  QueryBuilder<Feed, String?, QQueryOperations> lastModifiedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastModified');
+    });
+  }
+
+  QueryBuilder<Feed, int?, QQueryOperations> lastStatusCodeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastStatusCode');
     });
   }
 
@@ -1670,6 +3024,12 @@ extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
   QueryBuilder<Feed, String, QQueryOperations> urlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'url');
+    });
+  }
+
+  QueryBuilder<Feed, String?, QQueryOperations> userTitleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userTitle');
     });
   }
 }

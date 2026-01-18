@@ -99,529 +99,709 @@ abstract class AppLocalizations {
     Locale.fromSubtags(languageCode: 'zh', scriptCode: 'Hant'),
   ];
 
-  /// No description provided for @appTitle.
+  /// appTitle
   ///
   /// In en, this message translates to:
   /// **'Flutter Reader'**
   String get appTitle;
 
-  /// No description provided for @notFound.
+  /// notFound
   ///
   /// In en, this message translates to:
   /// **'Not found'**
   String get notFound;
 
-  /// No description provided for @settings.
+  /// settings
   ///
   /// In en, this message translates to:
   /// **'Settings'**
   String get settings;
 
-  /// No description provided for @appearance.
+  /// appearance
   ///
   /// In en, this message translates to:
   /// **'Appearance'**
   String get appearance;
 
-  /// No description provided for @theme.
+  /// theme
   ///
   /// In en, this message translates to:
   /// **'Theme'**
   String get theme;
 
-  /// No description provided for @system.
+  /// system
   ///
   /// In en, this message translates to:
   /// **'System'**
   String get system;
 
-  /// No description provided for @light.
+  /// light
   ///
   /// In en, this message translates to:
   /// **'Light'**
   String get light;
 
-  /// No description provided for @dark.
+  /// dark
   ///
   /// In en, this message translates to:
   /// **'Dark'**
   String get dark;
 
-  /// No description provided for @language.
+  /// language
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get language;
 
-  /// No description provided for @systemLanguage.
+  /// systemLanguage
   ///
   /// In en, this message translates to:
   /// **'System language'**
   String get systemLanguage;
 
-  /// No description provided for @english.
+  /// english
   ///
   /// In en, this message translates to:
   /// **'English'**
   String get english;
 
-  /// No description provided for @chineseSimplified.
+  /// chineseSimplified
   ///
   /// In en, this message translates to:
   /// **'简体中文'**
   String get chineseSimplified;
 
-  /// No description provided for @chineseTraditional.
+  /// chineseTraditional
   ///
   /// In en, this message translates to:
   /// **'繁體中文'**
   String get chineseTraditional;
 
-  /// No description provided for @reader.
+  /// reader
   ///
   /// In en, this message translates to:
   /// **'Reader'**
   String get reader;
 
-  /// No description provided for @fontSize.
+  /// fontSize
   ///
   /// In en, this message translates to:
   /// **'Font size'**
   String get fontSize;
 
-  /// No description provided for @lineHeight.
+  /// lineHeight
   ///
   /// In en, this message translates to:
   /// **'Line height'**
   String get lineHeight;
 
-  /// No description provided for @horizontalPadding.
+  /// horizontalPadding
   ///
   /// In en, this message translates to:
   /// **'Horizontal padding'**
   String get horizontalPadding;
 
-  /// No description provided for @storage.
+  /// storage
   ///
   /// In en, this message translates to:
   /// **'Storage'**
   String get storage;
 
-  /// No description provided for @clearImageCache.
+  /// clearImageCache
   ///
   /// In en, this message translates to:
   /// **'Clear image cache'**
   String get clearImageCache;
 
-  /// No description provided for @clearImageCacheSubtitle.
+  /// clearImageCacheSubtitle
   ///
   /// In en, this message translates to:
   /// **'Remove cached images used for offline reading'**
   String get clearImageCacheSubtitle;
 
-  /// No description provided for @cacheCleared.
+  /// cacheCleared
   ///
   /// In en, this message translates to:
   /// **'Cache cleared'**
   String get cacheCleared;
 
-  /// No description provided for @subscriptions.
+  /// subscriptions
   ///
   /// In en, this message translates to:
   /// **'Subscriptions'**
   String get subscriptions;
 
-  /// No description provided for @all.
+  /// all
   ///
   /// In en, this message translates to:
   /// **'All'**
   String get all;
 
-  /// No description provided for @uncategorized.
+  /// uncategorized
   ///
   /// In en, this message translates to:
   /// **'Uncategorized'**
   String get uncategorized;
 
-  /// No description provided for @refreshAll.
+  /// refreshAll
   ///
   /// In en, this message translates to:
   /// **'Refresh all'**
   String get refreshAll;
 
-  /// No description provided for @refreshSelected.
+  /// refreshSelected
   ///
   /// In en, this message translates to:
   /// **'Refresh selected'**
   String get refreshSelected;
 
-  /// No description provided for @importOpml.
+  /// importOpml
   ///
   /// In en, this message translates to:
   /// **'Import OPML'**
   String get importOpml;
 
-  /// No description provided for @exportOpml.
+  /// exportOpml
   ///
   /// In en, this message translates to:
   /// **'Export OPML'**
   String get exportOpml;
 
-  /// No description provided for @addSubscription.
+  /// addSubscription
   ///
   /// In en, this message translates to:
   /// **'Add subscription'**
   String get addSubscription;
 
-  /// No description provided for @newCategory.
+  /// newCategory
   ///
   /// In en, this message translates to:
   /// **'New category'**
   String get newCategory;
 
-  /// No description provided for @articles.
+  /// articles
   ///
   /// In en, this message translates to:
   /// **'Articles'**
   String get articles;
 
-  /// No description provided for @unread.
+  /// unread
   ///
   /// In en, this message translates to:
   /// **'Unread'**
   String get unread;
 
-  /// No description provided for @markAllRead.
+  /// markAllRead
   ///
   /// In en, this message translates to:
   /// **'Mark all read'**
   String get markAllRead;
 
-  /// No description provided for @fullText.
+  /// fullText
   ///
   /// In en, this message translates to:
   /// **'Full text'**
   String get fullText;
 
-  /// No description provided for @readerSettings.
+  /// readerSettings
   ///
   /// In en, this message translates to:
   /// **'Reader settings'**
   String get readerSettings;
 
-  /// No description provided for @done.
+  /// done
   ///
   /// In en, this message translates to:
   /// **'Done'**
   String get done;
 
-  /// No description provided for @more.
+  /// more
   ///
   /// In en, this message translates to:
   /// **'More'**
   String get more;
 
-  /// No description provided for @showAll.
+  /// showAll
   ///
   /// In en, this message translates to:
   /// **'Show all'**
   String get showAll;
 
-  /// No description provided for @unreadOnly.
+  /// unreadOnly
   ///
   /// In en, this message translates to:
   /// **'Unread only'**
   String get unreadOnly;
 
-  /// No description provided for @selectAnArticle.
+  /// selectAnArticle
   ///
   /// In en, this message translates to:
   /// **'Select an article'**
   String get selectAnArticle;
 
-  /// No description provided for @errorMessage.
+  /// errorMessage
   ///
   /// In en, this message translates to:
   /// **'Error: {error}'**
   String errorMessage(String error);
 
-  /// No description provided for @unreadCountError.
+  /// unreadCountError
   ///
   /// In en, this message translates to:
   /// **'Unread count error: {error}'**
   String unreadCountError(String error);
 
-  /// No description provided for @refreshed.
+  /// refreshed
   ///
   /// In en, this message translates to:
   /// **'Refreshed'**
   String get refreshed;
 
-  /// No description provided for @refreshedAll.
+  /// refreshedAll
   ///
   /// In en, this message translates to:
   /// **'Refreshed all'**
   String get refreshedAll;
 
-  /// No description provided for @add.
+  /// add
   ///
   /// In en, this message translates to:
   /// **'Add'**
   String get add;
 
-  /// No description provided for @cancel.
+  /// cancel
   ///
   /// In en, this message translates to:
   /// **'Cancel'**
   String get cancel;
 
-  /// No description provided for @create.
+  /// create
   ///
   /// In en, this message translates to:
   /// **'Create'**
   String get create;
 
-  /// No description provided for @delete.
+  /// delete
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @deleted.
+  /// deleted
   ///
   /// In en, this message translates to:
   /// **'Deleted'**
   String get deleted;
 
-  /// No description provided for @rssAtomUrl.
+  /// rssAtomUrl
   ///
   /// In en, this message translates to:
   /// **'RSS/Atom URL'**
   String get rssAtomUrl;
 
-  /// No description provided for @name.
+  /// name
   ///
   /// In en, this message translates to:
   /// **'Name'**
   String get name;
 
-  /// No description provided for @addedAndSynced.
+  /// addedAndSynced
   ///
   /// In en, this message translates to:
   /// **'Added & synced'**
   String get addedAndSynced;
 
-  /// No description provided for @deleteSubscription.
+  /// deleteSubscription
   ///
   /// In en, this message translates to:
   /// **'Delete subscription'**
   String get deleteSubscription;
 
-  /// No description provided for @deleteSubscriptionConfirmTitle.
+  /// deleteSubscriptionConfirmTitle
   ///
   /// In en, this message translates to:
   /// **'Delete subscription?'**
   String get deleteSubscriptionConfirmTitle;
 
-  /// No description provided for @deleteSubscriptionConfirmContent.
+  /// deleteSubscriptionConfirmContent
   ///
   /// In en, this message translates to:
   /// **'This will delete its cached articles too.'**
   String get deleteSubscriptionConfirmContent;
 
-  /// No description provided for @deleteCategory.
+  /// deleteCategory
   ///
   /// In en, this message translates to:
   /// **'Delete category'**
   String get deleteCategory;
 
-  /// No description provided for @categoryDeleted.
+  /// categoryDeleted
   ///
   /// In en, this message translates to:
   /// **'Category deleted'**
   String get categoryDeleted;
 
-  /// No description provided for @refresh.
+  /// refresh
   ///
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refresh;
 
-  /// No description provided for @moveToCategory.
+  /// moveToCategory
   ///
   /// In en, this message translates to:
   /// **'Move to category'**
   String get moveToCategory;
 
-  /// No description provided for @noFeedsFoundInOpml.
+  /// noFeedsFoundInOpml
   ///
   /// In en, this message translates to:
   /// **'No feeds found in OPML'**
   String get noFeedsFoundInOpml;
 
-  /// No description provided for @importedFeeds.
+  /// importedFeeds
   ///
   /// In en, this message translates to:
   /// **'Imported {count} feeds'**
   String importedFeeds(int count);
 
-  /// No description provided for @exportedOpml.
+  /// exportedOpml
   ///
   /// In en, this message translates to:
   /// **'Exported OPML'**
   String get exportedOpml;
 
-  /// No description provided for @fullTextFailed.
+  /// fullTextFailed
   ///
   /// In en, this message translates to:
   /// **'Full text failed: {error}'**
   String fullTextFailed(String error);
 
-  /// No description provided for @scrollToLoadMore.
+  /// scrollToLoadMore
   ///
   /// In en, this message translates to:
   /// **'Scroll to load more'**
   String get scrollToLoadMore;
 
-  /// No description provided for @noArticles.
+  /// noArticles
   ///
   /// In en, this message translates to:
   /// **'No articles'**
   String get noArticles;
 
-  /// No description provided for @noUnreadArticles.
+  /// noUnreadArticles
   ///
   /// In en, this message translates to:
   /// **'No unread articles'**
   String get noUnreadArticles;
 
-  /// No description provided for @star.
+  /// star
   ///
   /// In en, this message translates to:
   /// **'Star'**
   String get star;
 
-  /// No description provided for @unstar.
+  /// unstar
   ///
   /// In en, this message translates to:
   /// **'Unstar'**
   String get unstar;
 
-  /// No description provided for @starred.
+  /// starred
   ///
   /// In en, this message translates to:
   /// **'Starred'**
   String get starred;
 
-  /// No description provided for @markRead.
+  /// markRead
   ///
   /// In en, this message translates to:
   /// **'Mark read'**
   String get markRead;
 
-  /// No description provided for @markUnread.
+  /// markUnread
   ///
   /// In en, this message translates to:
   /// **'Mark unread'**
   String get markUnread;
 
-  /// No description provided for @collapse.
+  /// collapse
   ///
   /// In en, this message translates to:
   /// **'Collapse'**
   String get collapse;
 
-  /// No description provided for @expand.
+  /// expand
   ///
   /// In en, this message translates to:
   /// **'Expand'**
   String get expand;
 
-  /// No description provided for @openInBrowser.
+  /// openInBrowser
   ///
   /// In en, this message translates to:
   /// **'Open in browser'**
   String get openInBrowser;
 
-  /// No description provided for @autoMarkRead.
+  /// autoMarkRead
   ///
   /// In en, this message translates to:
   /// **'Auto-mark as read when opened'**
   String get autoMarkRead;
 
-  /// No description provided for @search.
+  /// search
   ///
   /// In en, this message translates to:
   /// **'Search'**
   String get search;
 
-  /// No description provided for @groupingAndSorting.
+  /// searchInContent
+  ///
+  /// In en, this message translates to:
+  /// **'Search in content'**
+  String get searchInContent;
+
+  /// groupingAndSorting
   ///
   /// In en, this message translates to:
   /// **'Grouping & Sorting'**
   String get groupingAndSorting;
 
-  /// No description provided for @rules.
+  /// groupBy
+  ///
+  /// In en, this message translates to:
+  /// **'Group by'**
+  String get groupBy;
+
+  /// groupNone
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get groupNone;
+
+  /// groupByDay
+  ///
+  /// In en, this message translates to:
+  /// **'Day'**
+  String get groupByDay;
+
+  /// sortOrder
+  ///
+  /// In en, this message translates to:
+  /// **'Sort order'**
+  String get sortOrder;
+
+  /// sortNewestFirst
+  ///
+  /// In en, this message translates to:
+  /// **'Newest first'**
+  String get sortNewestFirst;
+
+  /// sortOldestFirst
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest first'**
+  String get sortOldestFirst;
+
+  /// rules
   ///
   /// In en, this message translates to:
   /// **'Rules'**
   String get rules;
 
-  /// No description provided for @services.
+  /// addRule
+  ///
+  /// In en, this message translates to:
+  /// **'Add rule'**
+  String get addRule;
+
+  /// editRule
+  ///
+  /// In en, this message translates to:
+  /// **'Edit rule'**
+  String get editRule;
+
+  /// ruleName
+  ///
+  /// In en, this message translates to:
+  /// **'Rule name'**
+  String get ruleName;
+
+  /// keyword
+  ///
+  /// In en, this message translates to:
+  /// **'Keyword'**
+  String get keyword;
+
+  /// matchIn
+  ///
+  /// In en, this message translates to:
+  /// **'Match in'**
+  String get matchIn;
+
+  /// matchTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get matchTitle;
+
+  /// matchAuthor
+  ///
+  /// In en, this message translates to:
+  /// **'Author'**
+  String get matchAuthor;
+
+  /// matchLink
+  ///
+  /// In en, this message translates to:
+  /// **'Link'**
+  String get matchLink;
+
+  /// matchContent
+  ///
+  /// In en, this message translates to:
+  /// **'Content'**
+  String get matchContent;
+
+  /// actions
+  ///
+  /// In en, this message translates to:
+  /// **'Actions'**
+  String get actions;
+
+  /// autoStar
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-star'**
+  String get autoStar;
+
+  /// autoMarkReadAction
+  ///
+  /// In en, this message translates to:
+  /// **'Auto mark as read'**
+  String get autoMarkReadAction;
+
+  /// enabled
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get enabled;
+
+  /// rename
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// edit
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// nameAlreadyExists
+  ///
+  /// In en, this message translates to:
+  /// **'Name already exists'**
+  String get nameAlreadyExists;
+
+  /// lastChecked
+  ///
+  /// In en, this message translates to:
+  /// **'Last checked'**
+  String get lastChecked;
+
+  /// lastSynced
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced'**
+  String get lastSynced;
+
+  /// never
+  ///
+  /// In en, this message translates to:
+  /// **'Never'**
+  String get never;
+
+  /// cleanupReadArticles
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup read articles'**
+  String get cleanupReadArticles;
+
+  /// cleanupNow
+  ///
+  /// In en, this message translates to:
+  /// **'Run cleanup'**
+  String get cleanupNow;
+
+  /// cleanedArticles
+  ///
+  /// In en, this message translates to:
+  /// **'Cleaned {count} articles'**
+  String cleanedArticles(int count);
+
+  /// days
+  ///
+  /// In en, this message translates to:
+  /// **'{days} days'**
+  String days(int days);
+
+  /// services
   ///
   /// In en, this message translates to:
   /// **'Services'**
   String get services;
 
-  /// No description provided for @autoRefresh.
+  /// autoRefresh
   ///
   /// In en, this message translates to:
   /// **'Auto refresh'**
   String get autoRefresh;
 
-  /// No description provided for @off.
+  /// off
   ///
   /// In en, this message translates to:
   /// **'Off'**
   String get off;
 
-  /// No description provided for @everyMinutes.
+  /// everyMinutes
   ///
   /// In en, this message translates to:
   /// **'Every {minutes} min'**
   String everyMinutes(int minutes);
 
-  /// No description provided for @appPreferences.
+  /// appPreferences
   ///
   /// In en, this message translates to:
   /// **'App Preferences'**
   String get appPreferences;
 
-  /// No description provided for @about.
+  /// about
   ///
   /// In en, this message translates to:
   /// **'About'**
   String get about;
 
-  /// No description provided for @dataDirectory.
+  /// dataDirectory
   ///
   /// In en, this message translates to:
   /// **'Data directory'**
   String get dataDirectory;
 
-  /// No description provided for @copyPath.
+  /// copyPath
   ///
   /// In en, this message translates to:
   /// **'Copy path'**
   String get copyPath;
 
-  /// No description provided for @openFolder.
+  /// openFolder
   ///
   /// In en, this message translates to:
   /// **'Open folder'**
   String get openFolder;
 
-  /// No description provided for @keyboardShortcuts.
+  /// keyboardShortcuts
   ///
   /// In en, this message translates to:
   /// **'Keyboard shortcuts'**

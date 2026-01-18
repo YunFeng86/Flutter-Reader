@@ -7,6 +7,8 @@ import 'core_providers.dart';
 import 'repository_providers.dart';
 import 'query_providers.dart';
 import 'unread_providers.dart';
+import 'app_settings_providers.dart';
+import '../services/settings/app_settings.dart';
 
 class ArticleListState {
   const ArticleListState({
@@ -41,6 +43,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   bool _unreadOnly = false;
   bool _starredOnly = false;
   String _searchQuery = '';
+  bool _sortAscending = false;
+  bool _searchInContent = true;
 
   @override
   Future<ArticleListState> build() async {
@@ -49,6 +53,11 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     _unreadOnly = ref.watch(unreadOnlyProvider);
     _starredOnly = ref.watch(starredOnlyProvider);
     _searchQuery = ref.watch(articleSearchQueryProvider);
+    final settings = ref.watch(appSettingsProvider).valueOrNull;
+    _sortAscending =
+        (settings?.articleSortOrder ?? ArticleSortOrder.newestFirst) ==
+        ArticleSortOrder.oldestFirst;
+    _searchInContent = settings?.searchInContent ?? true;
 
     // Refresh the list when the underlying query changes (new items from sync,
     // read/star toggles, etc.). For MVP we simply reload the first page.
@@ -70,6 +79,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       unreadOnly: _unreadOnly,
       starredOnly: _starredOnly,
       searchQuery: _searchQuery,
+      sortAscending: _sortAscending,
+      searchInContent: _searchInContent,
     );
     return ArticleListState(items: items, hasMore: items.length == _pageSize);
   }
@@ -84,6 +95,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       unreadOnly: _unreadOnly,
       starredOnly: _starredOnly,
       searchQuery: _searchQuery,
+      sortAscending: _sortAscending,
+      searchInContent: _searchInContent,
     );
     final current = state.valueOrNull;
     if (current == null) {
@@ -112,6 +125,8 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
         unreadOnly: _unreadOnly,
         starredOnly: _starredOnly,
         searchQuery: _searchQuery,
+        sortAscending: _sortAscending,
+        searchInContent: _searchInContent,
       );
       state = AsyncValue.data(
         current.copyWith(

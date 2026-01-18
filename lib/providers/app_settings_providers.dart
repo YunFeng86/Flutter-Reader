@@ -38,6 +38,26 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(autoRefreshMinutes: minutes));
   }
+
+  Future<void> setArticleGroupMode(ArticleGroupMode mode) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(articleGroupMode: mode));
+  }
+
+  Future<void> setArticleSortOrder(ArticleSortOrder order) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(articleSortOrder: order));
+  }
+
+  Future<void> setSearchInContent(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(searchInContent: value));
+  }
+
+  Future<void> setCleanupReadOlderThanDays(int? days) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(cleanupReadOlderThanDays: days));
+  }
 }
 
 final appSettingsProvider =

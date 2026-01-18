@@ -57,6 +57,17 @@ class FeedRepository {
     });
   }
 
+  Future<void> setUserTitle({required int feedId, String? userTitle}) {
+    return _isar.writeTxn(() async {
+      final feed = await _isar.feeds.get(feedId);
+      if (feed == null) return;
+      final t = userTitle?.trim();
+      feed.userTitle = (t == null || t.isEmpty) ? null : t;
+      feed.updatedAt = DateTime.now();
+      await _isar.feeds.put(feed);
+    });
+  }
+
   Future<void> updateMeta({
     required int id,
     String? title,
@@ -71,6 +82,42 @@ class FeedRepository {
       feed.siteUrl = siteUrl ?? feed.siteUrl;
       feed.description = description ?? feed.description;
       feed.lastSyncedAt = lastSyncedAt ?? feed.lastSyncedAt;
+      feed.updatedAt = DateTime.now();
+      await _isar.feeds.put(feed);
+    });
+  }
+
+  Future<void> updateSyncState({
+    required int id,
+    DateTime? lastCheckedAt,
+    int? lastStatusCode,
+    int? lastDurationMs,
+    int? lastIncomingCount,
+    String? etag,
+    String? lastModified,
+    String? lastError,
+    DateTime? lastErrorAt,
+    required bool clearError,
+  }) {
+    return _isar.writeTxn(() async {
+      final feed = await _isar.feeds.get(id);
+      if (feed == null) return;
+
+      feed.lastCheckedAt = lastCheckedAt ?? feed.lastCheckedAt;
+      feed.lastStatusCode = lastStatusCode ?? feed.lastStatusCode;
+      feed.lastDurationMs = lastDurationMs ?? feed.lastDurationMs;
+      feed.lastIncomingCount = lastIncomingCount ?? feed.lastIncomingCount;
+      feed.etag = etag ?? feed.etag;
+      feed.lastModified = lastModified ?? feed.lastModified;
+
+      if (clearError) {
+        feed.lastError = null;
+        feed.lastErrorAt = null;
+      } else {
+        feed.lastError = lastError ?? feed.lastError;
+        feed.lastErrorAt = lastErrorAt ?? feed.lastErrorAt;
+      }
+
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);
     });

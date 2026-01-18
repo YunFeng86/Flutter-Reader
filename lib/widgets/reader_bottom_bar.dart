@@ -24,6 +24,12 @@ class ReaderBottomBar extends ConsumerWidget {
     final theme = Theme.of(context);
     final feedMap = ref.watch(feedMapProvider);
     final feed = feedMap[article.feedId];
+    final feedTitleRaw = feed == null
+        ? null
+        : (feed.userTitle?.trim().isNotEmpty == true
+            ? feed.userTitle!
+            : feed.title);
+    final feedTitle = feedTitleRaw?.trim();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -43,7 +49,7 @@ class ReaderBottomBar extends ConsumerWidget {
         child: Row(
           children: [
             // Feed Info
-            if (feed != null) ...[
+            if (feed != null && feedTitle != null && feedTitle.isNotEmpty) ...[
               Container(
                 width: 24,
                 height: 24,
@@ -53,7 +59,7 @@ class ReaderBottomBar extends ConsumerWidget {
                 ),
                 child: Center(
                   child: Text(
-                    feed.title?.substring(0, 1).toUpperCase() ?? '',
+                    feedTitle.substring(0, 1).toUpperCase(),
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurfaceVariant,
@@ -64,7 +70,7 @@ class ReaderBottomBar extends ConsumerWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  feed.title ?? '',
+                  feedTitle,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.bold,

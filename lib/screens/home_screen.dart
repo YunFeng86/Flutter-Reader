@@ -5,11 +5,13 @@ import 'package:flutter_reader/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/article_list_controller.dart';
+import '../providers/app_settings_providers.dart';
 import '../providers/core_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../services/settings/app_settings.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar.dart';
@@ -633,38 +635,61 @@ Future<void> _showArticleSearchDialog(
   WidgetRef ref,
 ) async {
   final l10n = AppLocalizations.of(context)!;
+  final appSettings = ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
+  var searchInContent = appSettings.searchInContent;
   final controller = TextEditingController(
     text: ref.read(articleSearchQueryProvider),
   );
   final result = await showDialog<String?>(
     context: context,
     builder: (context) {
-      return AlertDialog(
-        title: Text(l10n.search),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(hintText: l10n.search),
-          onSubmitted: (v) => Navigator.of(context).pop(v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(null),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(''),
-            child: Text(l10n.delete),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text),
-            child: Text(l10n.done),
-          ),
-        ],
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
+            title: Text(l10n.search),
+            content: SizedBox(
+              width: 520,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    decoration: InputDecoration(hintText: l10n.search),
+                    onSubmitted: (v) => Navigator.of(context).pop(v),
+                  ),
+                  const SizedBox(height: 12),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.searchInContent),
+                    value: searchInContent,
+                    onChanged: (v) =>
+                        setState(() => searchInContent = v ?? true),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(''),
+                child: Text(l10n.delete),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: Text(l10n.done),
+              ),
+            ],
+          );
+        },
       );
     },
   );
   if (result == null) return;
+  await ref.read(appSettingsProvider.notifier).setSearchInContent(searchInContent);
   ref.read(articleSearchQueryProvider.notifier).state = result.trim();
 }
 

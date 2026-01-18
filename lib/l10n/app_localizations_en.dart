@@ -247,10 +247,104 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Search';
 
   @override
+  String get searchInContent => 'Search in content';
+
+  @override
   String get groupingAndSorting => 'Grouping & Sorting';
 
   @override
+  String get groupBy => 'Group by';
+
+  @override
+  String get groupNone => 'None';
+
+  @override
+  String get groupByDay => 'Day';
+
+  @override
+  String get sortOrder => 'Sort order';
+
+  @override
+  String get sortNewestFirst => 'Newest first';
+
+  @override
+  String get sortOldestFirst => 'Oldest first';
+
+  @override
   String get rules => 'Rules';
+
+  @override
+  String get addRule => 'Add rule';
+
+  @override
+  String get editRule => 'Edit rule';
+
+  @override
+  String get ruleName => 'Rule name';
+
+  @override
+  String get keyword => 'Keyword';
+
+  @override
+  String get matchIn => 'Match in';
+
+  @override
+  String get matchTitle => 'Title';
+
+  @override
+  String get matchAuthor => 'Author';
+
+  @override
+  String get matchLink => 'Link';
+
+  @override
+  String get matchContent => 'Content';
+
+  @override
+  String get actions => 'Actions';
+
+  @override
+  String get autoStar => 'Auto-star';
+
+  @override
+  String get autoMarkReadAction => 'Auto mark as read';
+
+  @override
+  String get enabled => 'Enabled';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get nameAlreadyExists => 'Name already exists';
+
+  @override
+  String get lastChecked => 'Last checked';
+
+  @override
+  String get lastSynced => 'Last synced';
+
+  @override
+  String get never => 'Never';
+
+  @override
+  String get cleanupReadArticles => 'Cleanup read articles';
+
+  @override
+  String get cleanupNow => 'Run cleanup';
+
+  @override
+  String cleanedArticles(int count) {
+    return 'Cleaned $count articles';
+  }
+
+  @override
+  String days(int days) {
+    return '$days days';
+  }
 
   @override
   String get services => 'Services';

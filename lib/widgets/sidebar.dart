@@ -127,7 +127,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 final filteredFeeds = _searchText.isEmpty
                     ? feedItems
                     : feedItems.where((f) {
-                        final title = f.title?.toLowerCase() ?? '';
+                        final title = (f.userTitle ?? f.title ?? '').toLowerCase();
                         final url = f.url.toLowerCase();
                         return title.contains(_searchText) ||
                             url.contains(_searchText);
@@ -389,13 +389,16 @@ class _SidebarState extends ConsumerState<Sidebar> {
     int? unreadCount, {
     double indent = 0,
   }) {
-    final title = f.title?.trim().isNotEmpty == true ? f.title! : f.url;
+    final displayTitle = f.userTitle?.trim().isNotEmpty == true
+        ? f.userTitle!
+        : (f.title?.trim().isNotEmpty == true ? f.title! : f.url);
     return ListTile(
       selected: selectedFeedId == f.id,
       contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
       leading: const Icon(Icons.rss_feed),
-      title: Text(title),
-      subtitle: f.title?.trim().isNotEmpty == true
+      title: Text(displayTitle),
+      subtitle: (f.userTitle?.trim().isNotEmpty == true ||
+              f.title?.trim().isNotEmpty == true)
           ? Text(f.url, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
       trailing: unreadCount == null ? null : _UnreadBadge(unreadCount),
@@ -563,6 +566,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
           child: Wrap(
             children: [
               ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(l10n.rename),
+                onTap: () => Navigator.of(context).pop(_CategoryAction.rename),
+              ),
+              ListTile(
                 leading: const Icon(Icons.delete_outline),
                 title: Text(l10n.deleteCategory),
                 onTap: () => Navigator.of(context).pop(_CategoryAction.delete),
@@ -572,12 +580,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
         );
       },
     );
-    if (v != _CategoryAction.delete) return;
-    await ref.read(categoryRepositoryProvider).delete(c.id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.categoryDeleted)));
+    switch (v) {
+      case _CategoryAction.rename:
+        await _renameCategory(context, ref, c);
+        return;
+      case _CategoryAction.delete:
+        await ref.read(categoryRepositoryProvider).delete(c.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.categoryDeleted)));
+        return;
+      case null:
+        return;
+    }
   }
 
   Future<void> _showFeedMenu(
@@ -592,6 +609,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
         return SafeArea(
           child: Wrap(
             children: [
+              ListTile(
+                leading: const Icon(Icons.edit_outlined),
+                title: Text(l10n.edit),
+                onTap: () => Navigator.of(context).pop(_FeedAction.edit),
+              ),
               ListTile(
                 leading: const Icon(Icons.refresh),
                 title: Text(l10n.refresh),
@@ -615,6 +637,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (!context.mounted) return;
 
     switch (action) {
+      case _FeedAction.edit:
+        await _editFeedTitle(context, ref, f);
+        return;
       case _FeedAction.refresh:
         final r = await ref.read(syncServiceProvider).refreshFeedSafe(f.id);
         if (!context.mounted) return;
@@ -635,6 +660,90 @@ class _SidebarState extends ConsumerState<Sidebar> {
       case null:
         return;
     }
+  }
+
+  Future<void> _renameCategory(
+    BuildContext context,
+    WidgetRef ref,
+    Category c,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: c.name);
+    final next = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.rename),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: l10n.name),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text(l10n.done),
+            ),
+          ],
+        );
+      },
+    );
+    if (next == null) return;
+    try {
+      await ref.read(categoryRepositoryProvider).rename(c.id, next);
+    } catch (e) {
+      if (!context.mounted) return;
+      final msg = e.toString().contains('already exists')
+          ? l10n.nameAlreadyExists
+          : e.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(msg))),
+      );
+    }
+  }
+
+  Future<void> _editFeedTitle(
+    BuildContext context,
+    WidgetRef ref,
+    Feed f,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: f.userTitle ?? '');
+    final next = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.edit),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: l10n.name),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(''),
+              child: Text(l10n.delete),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text(l10n.done),
+            ),
+          ],
+        );
+      },
+    );
+    if (next == null) return;
+    await ref
+        .read(feedRepositoryProvider)
+        .setUserTitle(feedId: f.id, userTitle: next);
   }
 
   Future<void> _moveFeedToCategory(
@@ -786,9 +895,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
 enum _SidebarMenu { settings, refreshAll, importOpml, exportOpml }
 
-enum _FeedAction { refresh, move, delete }
+enum _FeedAction { edit, refresh, move, delete }
 
-enum _CategoryAction { delete }
+enum _CategoryAction { rename, delete }
 
 class _UnreadBadge extends StatelessWidget {
   const _UnreadBadge(this.count);

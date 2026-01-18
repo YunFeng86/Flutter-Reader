@@ -96,7 +96,11 @@ class ArticleListItem extends ConsumerWidget {
                         Expanded(
                           child: Row(
                             children: [
-                              if (feed?.title != null) ...[
+                              if (feed != null &&
+                                  ((feed.userTitle?.trim().isNotEmpty ==
+                                          true) ||
+                                      (feed.title?.trim().isNotEmpty ==
+                                          true))) ...[
                                 // Feed Icon + Name
                                 Container(
                                    padding: const EdgeInsets.all(2),
@@ -113,11 +117,15 @@ class ArticleListItem extends ConsumerWidget {
                                 const SizedBox(width: 6),
                                 Flexible(
                                   child: Text(
-                                    feed!.title!,
-                                    style: theme.textTheme.labelMedium?.copyWith(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                    (feed.userTitle?.trim().isNotEmpty == true)
+                                        ? feed.userTitle!
+                                        : (feed.title ?? ''),
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color:
+                                              theme.colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),

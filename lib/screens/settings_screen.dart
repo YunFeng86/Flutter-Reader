@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/feed.dart';
+import '../models/rule.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/opml_providers.dart';
 import '../providers/query_providers.dart';
@@ -48,13 +49,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         icon: Icons.format_list_bulleted,
         selectedIcon: Icons.format_list_bulleted,
         label: l10n.groupingAndSorting,
-        content: _PlaceholderTab(l10n.groupingAndSorting),
+        content: const _GroupingSortingTab(),
       ),
       _SettingsPageItem(
         icon: Icons.filter_alt_outlined,
         selectedIcon: Icons.filter_alt,
         label: l10n.rules,
-        content: _PlaceholderTab(l10n.rules),
+        content: const _RulesTab(),
       ),
       _SettingsPageItem(
         icon: Icons.cloud_outlined,
@@ -245,15 +246,434 @@ class _SettingsPageItem {
   });
 }
 
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab(this.title);
+class _GroupingSortingTab extends ConsumerWidget {
+  const _GroupingSortingTab();
 
-  final String title;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final appSettings =
+        ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 800),
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            _SectionHeader(title: l10n.groupingAndSorting),
+            const SizedBox(height: 8),
+
+            // Group by
+            Text(l10n.groupBy, style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<ArticleGroupMode>(
+                  value: appSettings.articleGroupMode,
+                  isExpanded: true,
+                  items: [
+                    DropdownMenuItem(
+                      value: ArticleGroupMode.none,
+                      child: Text(l10n.groupNone),
+                    ),
+                    DropdownMenuItem(
+                      value: ArticleGroupMode.day,
+                      child: Text(l10n.groupByDay),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    if (v == null) return;
+                    ref.read(appSettingsProvider.notifier).setArticleGroupMode(v);
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Sort order
+            Text(l10n.sortOrder, style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 8),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Theme.of(context).dividerColor),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<ArticleSortOrder>(
+                  value: appSettings.articleSortOrder,
+                  isExpanded: true,
+                  items: [
+                    DropdownMenuItem(
+                      value: ArticleSortOrder.newestFirst,
+                      child: Text(l10n.sortNewestFirst),
+                    ),
+                    DropdownMenuItem(
+                      value: ArticleSortOrder.oldestFirst,
+                      child: Text(l10n.sortOldestFirst),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    if (v == null) return;
+                    ref.read(appSettingsProvider.notifier).setArticleSortOrder(v);
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RulesTab extends ConsumerWidget {
+  const _RulesTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final repo = ref.watch(ruleRepositoryProvider);
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 900),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _SectionHeader(title: l10n.rules)),
+                  FilledButton.icon(
+                    onPressed: () => _showRuleEditor(context, ref),
+                    icon: const Icon(Icons.add),
+                    label: Text(l10n.addRule),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: StreamBuilder<List<Rule>>(
+                  stream: repo.watchAll(),
+                  builder: (context, snap) {
+                    if (snap.hasError) {
+                      return Center(
+                        child: Text(l10n.errorMessage('${snap.error}')),
+                      );
+                    }
+                    if (!snap.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    final rules = snap.data ?? const <Rule>[];
+                    if (rules.isEmpty) {
+                      return Center(child: Text(l10n.notFound));
+                    }
+
+                    return ListView.separated(
+                      itemCount: rules.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final r = rules[index];
+                        return ListTile(
+                          title: Text(r.name),
+                          subtitle: Text(
+                            r.keyword,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          leading: Switch(
+                            value: r.enabled,
+                            onChanged: (v) => repo.setEnabled(r.id, v),
+                          ),
+                          trailing: PopupMenuButton<_RuleMenuAction>(
+                            onSelected: (v) async {
+                              switch (v) {
+                                case _RuleMenuAction.edit:
+                                  await _showRuleEditor(context, ref, existing: r);
+                                  return;
+                                case _RuleMenuAction.delete:
+                                  final ok = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: Text(l10n.delete),
+                                        content: Text(r.name),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(false),
+                                            child: Text(l10n.cancel),
+                                          ),
+                                          FilledButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(true),
+                                            child: Text(l10n.delete),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                  if (ok == true) {
+                                    await repo.delete(r.id);
+                                  }
+                                  return;
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                value: _RuleMenuAction.edit,
+                                child: Text(l10n.editRule),
+                              ),
+                              PopupMenuItem(
+                                value: _RuleMenuAction.delete,
+                                child: Text(l10n.delete),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRuleEditor(
+    BuildContext context,
+    WidgetRef ref, {
+    Rule? existing,
+  }) async {
+    final draft = await showDialog<_RuleDraft>(
+      context: context,
+      builder: (context) => _RuleEditorDialog(existing: existing),
+    );
+    if (draft == null) return;
+    if (!context.mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+
+    if (!draft.hasMatchField) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(l10n.matchIn))),
+      );
+      return;
+    }
+    if (!draft.hasAction) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(l10n.actions))),
+      );
+      return;
+    }
+
+    try {
+      await ref.read(ruleRepositoryProvider).upsert(
+            id: existing?.id,
+            name: draft.name,
+            keyword: draft.keyword,
+            enabled: draft.enabled,
+            matchTitle: draft.matchTitle,
+            matchAuthor: draft.matchAuthor,
+            matchLink: draft.matchLink,
+            matchContent: draft.matchContent,
+            autoStar: draft.autoStar,
+            autoMarkRead: draft.autoMarkRead,
+          );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+      );
+    }
+  }
+}
+
+enum _RuleMenuAction { edit, delete }
+
+class _RuleDraft {
+  _RuleDraft({
+    required this.enabled,
+    required this.name,
+    required this.keyword,
+    required this.matchTitle,
+    required this.matchAuthor,
+    required this.matchLink,
+    required this.matchContent,
+    required this.autoStar,
+    required this.autoMarkRead,
+  });
+
+  final bool enabled;
+  final String name;
+  final String keyword;
+  final bool matchTitle;
+  final bool matchAuthor;
+  final bool matchLink;
+  final bool matchContent;
+  final bool autoStar;
+  final bool autoMarkRead;
+
+  bool get hasMatchField => matchTitle || matchAuthor || matchLink || matchContent;
+  bool get hasAction => autoStar || autoMarkRead;
+}
+
+class _RuleEditorDialog extends StatefulWidget {
+  const _RuleEditorDialog({this.existing});
+
+  final Rule? existing;
+
+  @override
+  State<_RuleEditorDialog> createState() => _RuleEditorDialogState();
+}
+
+class _RuleEditorDialogState extends State<_RuleEditorDialog> {
+  late final TextEditingController _name;
+  late final TextEditingController _keyword;
+  bool _enabled = true;
+  bool _matchTitle = true;
+  bool _matchAuthor = false;
+  bool _matchLink = false;
+  bool _matchContent = false;
+  bool _autoStar = false;
+  bool _autoMarkRead = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final r = widget.existing;
+    _name = TextEditingController(text: r?.name ?? '');
+    _keyword = TextEditingController(text: r?.keyword ?? '');
+    _enabled = r?.enabled ?? true;
+    _matchTitle = r?.matchTitle ?? true;
+    _matchAuthor = r?.matchAuthor ?? false;
+    _matchLink = r?.matchLink ?? false;
+    _matchContent = r?.matchContent ?? false;
+    _autoStar = r?.autoStar ?? false;
+    _autoMarkRead = r?.autoMarkRead ?? false;
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _keyword.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(widget.existing == null ? l10n.addRule : l10n.editRule),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _name,
+                decoration: InputDecoration(labelText: l10n.ruleName),
+                autofocus: widget.existing == null,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _keyword,
+                decoration: InputDecoration(labelText: l10n.keyword),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.enabled),
+                value: _enabled,
+                onChanged: (v) => setState(() => _enabled = v),
+              ),
+              const Divider(height: 24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(l10n.matchIn, style: Theme.of(context).textTheme.labelLarge),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.matchTitle),
+                value: _matchTitle,
+                onChanged: (v) => setState(() => _matchTitle = v ?? false),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.matchAuthor),
+                value: _matchAuthor,
+                onChanged: (v) => setState(() => _matchAuthor = v ?? false),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.matchLink),
+                value: _matchLink,
+                onChanged: (v) => setState(() => _matchLink = v ?? false),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.matchContent),
+                value: _matchContent,
+                onChanged: (v) => setState(() => _matchContent = v ?? false),
+              ),
+              const Divider(height: 24),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(l10n.actions, style: Theme.of(context).textTheme.labelLarge),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.autoStar),
+                value: _autoStar,
+                onChanged: (v) => setState(() => _autoStar = v ?? false),
+              ),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(l10n.autoMarkReadAction),
+                value: _autoMarkRead,
+                onChanged: (v) => setState(() => _autoMarkRead = v ?? false),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop(
+              _RuleDraft(
+                enabled: _enabled,
+                name: _name.text,
+                keyword: _keyword.text,
+                matchTitle: _matchTitle,
+                matchAuthor: _matchAuthor,
+                matchLink: _matchLink,
+                matchContent: _matchContent,
+                autoStar: _autoStar,
+                autoMarkRead: _autoMarkRead,
+              ),
+            );
+          },
+          child: Text(l10n.done),
+        ),
+      ],
     );
   }
 }
@@ -413,6 +833,71 @@ class _AppPreferencesTab extends ConsumerWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.cleanupReadArticles,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButton<int?>(
+                              value: appSettings.cleanupReadOlderThanDays,
+                              isExpanded: true,
+                              items: [
+                                DropdownMenuItem<int?>(
+                                  value: null,
+                                  child: Text(l10n.off),
+                                ),
+                                for (final d in const [7, 30, 90, 180])
+                                  DropdownMenuItem<int?>(
+                                    value: d,
+                                    child: Text(l10n.days(d)),
+                                  ),
+                              ],
+                              onChanged: (v) => ref
+                                  .read(appSettingsProvider.notifier)
+                                  .setCleanupReadOlderThanDays(v),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton(
+                            onPressed: appSettings.cleanupReadOlderThanDays ==
+                                    null
+                                ? null
+                                : () async {
+                                    final days =
+                                        appSettings.cleanupReadOlderThanDays!;
+                                    final cutoff = DateTime.now()
+                                        .toUtc()
+                                        .subtract(Duration(days: days));
+                                    final n = await ref
+                                        .read(articleRepositoryProvider)
+                                        .deleteReadUnstarredOlderThan(cutoff);
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.cleanedArticles(n)),
+                                      ),
+                                    );
+                                  },
+                            child: Text(l10n.cleanupNow),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -527,7 +1012,7 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
                     final filteredFeeds = _searchText.isEmpty
                         ? feeds
                         : feeds.where((f) {
-                            final t = f.title?.toLowerCase() ?? '';
+                            final t = (f.userTitle ?? f.title ?? '').toLowerCase();
                             return t.contains(_searchText) ||
                                 f.url.toLowerCase().contains(_searchText);
                           }).toList();
@@ -553,16 +1038,32 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
                           tiles.add(
                             _CategorySection(
                               categoryName: c.name,
+                              onRename: () => _renameCategory(
+                                context,
+                                categoryId: c.id,
+                                currentName: c.name,
+                              ),
                               onDelete: () => _deleteCategory(context, c.id),
                               children: (catFeeds)
                                   .map((f) {
                                     return _FeedTile(
-                                      title:
-                                          (f.title?.trim().isNotEmpty == true)
-                                          ? f.title!
-                                          : f.url,
+                                      title: (f.userTitle?.trim().isNotEmpty ==
+                                              true)
+                                          ? f.userTitle!
+                                          : (f.title?.trim().isNotEmpty ==
+                                                  true)
+                                              ? f.title!
+                                              : f.url,
                                       url: f.url,
+                                      lastCheckedAt: f.lastCheckedAt,
                                       lastSyncedAt: f.lastSyncedAt,
+                                      lastStatusCode: f.lastStatusCode,
+                                      lastError: f.lastError,
+                                      onEdit: () => _editFeedTitle(
+                                        context,
+                                        feedId: f.id,
+                                        currentTitle: f.userTitle,
+                                      ),
                                       onRefresh: () =>
                                           _refreshFeed(context, f.id),
                                       onMove: () =>
@@ -581,16 +1082,28 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
                           tiles.add(
                             _CategorySection(
                               categoryName: l10n.uncategorized,
+                              onRename: null,
                               onDelete: null,
                               children: uncategorized
                                   .map((f) {
                                     return _FeedTile(
-                                      title:
-                                          (f.title?.trim().isNotEmpty == true)
-                                          ? f.title!
-                                          : f.url,
+                                      title: (f.userTitle?.trim().isNotEmpty ==
+                                              true)
+                                          ? f.userTitle!
+                                          : (f.title?.trim().isNotEmpty ==
+                                                  true)
+                                              ? f.title!
+                                              : f.url,
                                       url: f.url,
+                                      lastCheckedAt: f.lastCheckedAt,
                                       lastSyncedAt: f.lastSyncedAt,
+                                      lastStatusCode: f.lastStatusCode,
+                                      lastError: f.lastError,
+                                      onEdit: () => _editFeedTitle(
+                                        context,
+                                        feedId: f.id,
+                                        currentTitle: f.userTitle,
+                                      ),
                                       onRefresh: () =>
                                           _refreshFeed(context, f.id),
                                       onMove: () =>
@@ -784,6 +1297,90 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
 
   Future<void> _deleteCategory(BuildContext context, int categoryId) async {
     await ref.read(categoryRepositoryProvider).delete(categoryId);
+  }
+
+  Future<void> _renameCategory(
+    BuildContext context, {
+    required int categoryId,
+    required String currentName,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: currentName);
+    final next = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.rename),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: l10n.name),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text(l10n.done),
+            ),
+          ],
+        );
+      },
+    );
+    if (next == null) return;
+    try {
+      await ref.read(categoryRepositoryProvider).rename(categoryId, next);
+    } catch (e) {
+      if (!context.mounted) return;
+      final msg =
+          e.toString().contains('already exists') ? l10n.nameAlreadyExists : e.toString();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(msg))),
+      );
+    }
+  }
+
+  Future<void> _editFeedTitle(
+    BuildContext context, {
+    required int feedId,
+    required String? currentTitle,
+  }) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: currentTitle ?? '');
+    final next = await showDialog<String?>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(l10n.edit),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: l10n.name),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: Text(l10n.cancel),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(''),
+              child: Text(l10n.delete),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              child: Text(l10n.done),
+            ),
+          ],
+        );
+      },
+    );
+    if (next == null) return;
+    await ref.read(feedRepositoryProvider).setUserTitle(
+          feedId: feedId,
+          userTitle: next,
+        );
   }
 
   Future<void> _importOpml(BuildContext context) async {
@@ -1055,11 +1652,13 @@ class _AboutTab extends StatelessWidget {
 class _CategorySection extends StatelessWidget {
   const _CategorySection({
     required this.categoryName,
+    required this.onRename,
     required this.children,
     required this.onDelete,
   });
 
   final String categoryName;
+  final VoidCallback? onRename;
   final List<Widget> children;
   final VoidCallback? onDelete;
 
@@ -1087,6 +1686,12 @@ class _CategorySection extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (onRename != null)
+                  IconButton(
+                    tooltip: AppLocalizations.of(context)!.rename,
+                    onPressed: onRename,
+                    icon: const Icon(Icons.edit_outlined),
+                  ),
                 if (onDelete != null)
                   IconButton(
                     tooltip: AppLocalizations.of(context)!.deleteCategory,
@@ -1117,7 +1722,11 @@ class _FeedTile extends StatelessWidget {
   const _FeedTile({
     required this.title,
     required this.url,
+    required this.lastCheckedAt,
     required this.lastSyncedAt,
+    required this.lastStatusCode,
+    required this.lastError,
+    required this.onEdit,
     required this.onRefresh,
     required this.onMove,
     required this.onDelete,
@@ -1125,7 +1734,11 @@ class _FeedTile extends StatelessWidget {
 
   final String title;
   final String url;
+  final DateTime? lastCheckedAt;
   final DateTime? lastSyncedAt;
+  final int? lastStatusCode;
+  final String? lastError;
+  final VoidCallback onEdit;
   final VoidCallback onRefresh;
   final VoidCallback onMove;
   final VoidCallback onDelete;
@@ -1133,21 +1746,39 @@ class _FeedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final synced = lastSyncedAt == null
-        ? null
+    final checkedStr = lastCheckedAt == null
+        ? l10n.never
+        : DateFormat('yyyy/MM/dd HH:mm').format(lastCheckedAt!.toLocal());
+    final syncedStr = lastSyncedAt == null
+        ? l10n.never
         : DateFormat('yyyy/MM/dd HH:mm').format(lastSyncedAt!.toLocal());
+
+    final lines = <String>[
+      url,
+      '${l10n.lastChecked}: $checkedStr'
+          '${lastStatusCode == null ? '' : ' (${lastStatusCode!})'}',
+      '${l10n.lastSynced}: $syncedStr',
+      if (lastError != null && lastError!.trim().isNotEmpty)
+        l10n.errorMessage(lastError!.trim()),
+    ];
+
+    // Keep the tile compact, but show enough status to debug sync issues.
+    final maxLines = lines.length.clamp(2, 4);
     return ListTile(
       leading: const Icon(Icons.rss_feed),
       title: Text(title),
       subtitle: Text(
-        synced == null ? url : '$url\n$synced',
-        maxLines: 2,
+        lines.join('\n'),
+        maxLines: maxLines,
         overflow: TextOverflow.ellipsis,
       ),
-      isThreeLine: synced != null,
+      isThreeLine: true,
       trailing: PopupMenuButton<_FeedMenuAction>(
         onSelected: (v) {
           switch (v) {
+            case _FeedMenuAction.edit:
+              onEdit();
+              return;
             case _FeedMenuAction.refresh:
               onRefresh();
               return;
@@ -1160,6 +1791,10 @@ class _FeedTile extends StatelessWidget {
           }
         },
         itemBuilder: (context) => [
+          PopupMenuItem(
+            value: _FeedMenuAction.edit,
+            child: Text(l10n.edit),
+          ),
           PopupMenuItem(
             value: _FeedMenuAction.refresh,
             child: Text(l10n.refresh),
@@ -1178,7 +1813,7 @@ class _FeedTile extends StatelessWidget {
   }
 }
 
-enum _FeedMenuAction { refresh, move, delete }
+enum _FeedMenuAction { edit, refresh, move, delete }
 
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({required this.title});

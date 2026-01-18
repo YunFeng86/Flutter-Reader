@@ -324,13 +324,143 @@
   "@search": {
     "description": "search"
   },
+  "searchInContent": "Search in content",
+  "@searchInContent": {
+    "description": "searchInContent"
+  },
   "groupingAndSorting": "Grouping & Sorting",
   "@groupingAndSorting": {
     "description": "groupingAndSorting"
   },
+  "groupBy": "Group by",
+  "@groupBy": {
+    "description": "groupBy"
+  },
+  "groupNone": "None",
+  "@groupNone": {
+    "description": "groupNone"
+  },
+  "groupByDay": "Day",
+  "@groupByDay": {
+    "description": "groupByDay"
+  },
+  "sortOrder": "Sort order",
+  "@sortOrder": {
+    "description": "sortOrder"
+  },
+  "sortNewestFirst": "Newest first",
+  "@sortNewestFirst": {
+    "description": "sortNewestFirst"
+  },
+  "sortOldestFirst": "Oldest first",
+  "@sortOldestFirst": {
+    "description": "sortOldestFirst"
+  },
   "rules": "Rules",
   "@rules": {
     "description": "rules"
+  },
+  "addRule": "Add rule",
+  "@addRule": {
+    "description": "addRule"
+  },
+  "editRule": "Edit rule",
+  "@editRule": {
+    "description": "editRule"
+  },
+  "ruleName": "Rule name",
+  "@ruleName": {
+    "description": "ruleName"
+  },
+  "keyword": "Keyword",
+  "@keyword": {
+    "description": "keyword"
+  },
+  "matchIn": "Match in",
+  "@matchIn": {
+    "description": "matchIn"
+  },
+  "matchTitle": "Title",
+  "@matchTitle": {
+    "description": "matchTitle"
+  },
+  "matchAuthor": "Author",
+  "@matchAuthor": {
+    "description": "matchAuthor"
+  },
+  "matchLink": "Link",
+  "@matchLink": {
+    "description": "matchLink"
+  },
+  "matchContent": "Content",
+  "@matchContent": {
+    "description": "matchContent"
+  },
+  "actions": "Actions",
+  "@actions": {
+    "description": "actions"
+  },
+  "autoStar": "Auto-star",
+  "@autoStar": {
+    "description": "autoStar"
+  },
+  "autoMarkReadAction": "Auto mark as read",
+  "@autoMarkReadAction": {
+    "description": "autoMarkReadAction"
+  },
+  "enabled": "Enabled",
+  "@enabled": {
+    "description": "enabled"
+  },
+  "rename": "Rename",
+  "@rename": {
+    "description": "rename"
+  },
+  "edit": "Edit",
+  "@edit": {
+    "description": "edit"
+  },
+  "nameAlreadyExists": "Name already exists",
+  "@nameAlreadyExists": {
+    "description": "nameAlreadyExists"
+  },
+  "lastChecked": "Last checked",
+  "@lastChecked": {
+    "description": "lastChecked"
+  },
+  "lastSynced": "Last synced",
+  "@lastSynced": {
+    "description": "lastSynced"
+  },
+  "never": "Never",
+  "@never": {
+    "description": "never"
+  },
+  "cleanupReadArticles": "Cleanup read articles",
+  "@cleanupReadArticles": {
+    "description": "cleanupReadArticles"
+  },
+  "cleanupNow": "Run cleanup",
+  "@cleanupNow": {
+    "description": "cleanupNow"
+  },
+  "cleanedArticles": "Cleaned {count} articles",
+  "@cleanedArticles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    },
+    "description": "cleanedArticles"
+  },
+  "days": "{days} days",
+  "@days": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    },
+    "description": "days"
   },
   "services": "Services",
   "@services": {

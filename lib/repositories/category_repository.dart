@@ -52,4 +52,22 @@ class CategoryRepository {
       await _isar.categorys.delete(id);
     });
   }
+
+  Future<void> rename(int id, String name) async {
+    final n = name.trim();
+    if (n.isEmpty) throw ArgumentError('Category name is empty');
+
+    final existing = await _isar.categorys.filter().nameEqualTo(n).findFirst();
+    if (existing != null && existing.id != id) {
+      throw ArgumentError('Category name already exists');
+    }
+
+    await _isar.writeTxn(() async {
+      final c = await _isar.categorys.get(id);
+      if (c == null) return;
+      c.name = n;
+      c.updatedAt = DateTime.now();
+      await _isar.categorys.put(c);
+    });
+  }
 }
