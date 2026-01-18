@@ -20,7 +20,7 @@ Future<void> main() async {
     const options = WindowOptions(
       size: Size(1200, 800),
       center: true,
-      minimumSize: Size(620, 520),
+      minimumSize: Size(360, 520),
       titleBarStyle: TitleBarStyle.hidden,
     );
     windowManager.waitUntilReadyToShow(options, () async {
