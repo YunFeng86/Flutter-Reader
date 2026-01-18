@@ -269,141 +269,153 @@ class _AppPreferencesTab extends ConsumerWidget {
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            // Language
-            _SectionHeader(title: l10n.language),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String?>(
-                  value: appSettings.localeTag,
-                  isExpanded: true,
-                  items: [
-                    DropdownMenuItem<String?>(
-                      value: null,
-                      child: Text(l10n.systemLanguage),
+    return SingleChildScrollView(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Language
+                _SectionHeader(title: l10n.language),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String?>(
+                      value: appSettings.localeTag,
+                      isExpanded: true,
+                      items: [
+                        DropdownMenuItem<String?>(
+                          value: null,
+                          child: Text(l10n.systemLanguage),
+                        ),
+                        DropdownMenuItem<String?>(
+                          value: 'en',
+                          child: Text(l10n.english),
+                        ),
+                        DropdownMenuItem<String?>(
+                          value: 'zh',
+                          child: Text(l10n.chineseSimplified),
+                        ),
+                        DropdownMenuItem<String?>(
+                          value: 'zh-Hant',
+                          child: Text(l10n.chineseTraditional),
+                        ),
+                      ],
+                      onChanged: (v) => ref
+                          .read(appSettingsProvider.notifier)
+                          .setLocaleTag(v),
                     ),
-                    DropdownMenuItem<String?>(
-                      value: 'en',
-                      child: Text(l10n.english),
-                    ),
-                    DropdownMenuItem<String?>(
-                      value: 'zh',
-                      child: Text(l10n.chineseSimplified),
-                    ),
-                    DropdownMenuItem<String?>(
-                      value: 'zh-Hant',
-                      child: Text(l10n.chineseTraditional),
-                    ),
-                  ],
-                  onChanged: (v) =>
-                      ref.read(appSettingsProvider.notifier).setLocaleTag(v),
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-            // Theme
-            _SectionHeader(title: l10n.theme),
-            RadioGroup<ThemeMode>(
-              groupValue: appSettings.themeMode,
-              onChanged: (v) {
-                if (v == null) return;
-                ref.read(appSettingsProvider.notifier).setThemeMode(v);
-              },
-              child: Column(
-                children: [
-                  _ThemeRadioItem(label: l10n.system, value: ThemeMode.system),
-                  _ThemeRadioItem(label: l10n.light, value: ThemeMode.light),
-                  _ThemeRadioItem(label: l10n.dark, value: ThemeMode.dark),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Reader Settings (Font Size, etc.)
-            // Kept here to maintain functionality even though not strictly in reference image
-            _SectionHeader(title: l10n.readerSettings),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(l10n.autoMarkRead),
-              value: appSettings.autoMarkRead,
-              onChanged: (v) =>
-                  ref.read(appSettingsProvider.notifier).setAutoMarkRead(v),
-            ),
-            _SliderTile(
-              title: l10n.fontSize,
-              value: readerSettings.fontSize,
-              min: 12,
-              max: 28,
-              format: (v) => v.toStringAsFixed(0),
-              onChanged: (v) => ref
-                  .read(readerSettingsProvider.notifier)
-                  .save(readerSettings.copyWith(fontSize: v)),
-            ),
-            _SliderTile(
-              title: l10n.lineHeight,
-              value: readerSettings.lineHeight,
-              min: 1.1,
-              max: 2.2,
-              format: (v) => v.toStringAsFixed(1),
-              onChanged: (v) => ref
-                  .read(readerSettingsProvider.notifier)
-                  .save(readerSettings.copyWith(lineHeight: v)),
-            ),
-            _SliderTile(
-              title: l10n.horizontalPadding,
-              value: readerSettings.horizontalPadding,
-              min: 8,
-              max: 32,
-              format: (v) => v.toStringAsFixed(0),
-              onChanged: (v) => ref
-                  .read(readerSettingsProvider.notifier)
-                  .save(readerSettings.copyWith(horizontalPadding: v)),
-            ),
-            const SizedBox(height: 24),
-
-            // Cleanup
-            _SectionHeader(title: l10n.storage),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // Theme
+                _SectionHeader(title: l10n.theme),
+                RadioGroup<ThemeMode>(
+                  groupValue: appSettings.themeMode,
+                  onChanged: (v) {
+                    if (v == null) return;
+                    ref.read(appSettingsProvider.notifier).setThemeMode(v);
+                  },
+                  child: Column(
                     children: [
-                      Expanded(child: Text(l10n.clearImageCacheSubtitle)),
+                      _ThemeRadioItem(
+                        label: l10n.system,
+                        value: ThemeMode.system,
+                      ),
+                      _ThemeRadioItem(
+                        label: l10n.light,
+                        value: ThemeMode.light,
+                      ),
+                      _ThemeRadioItem(label: l10n.dark, value: ThemeMode.dark),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  OutlinedButton(
-                    onPressed: () async {
-                      await ref.read(cacheManagerProvider).emptyCache();
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.cacheCleared)),
-                      );
-                    },
-                    child: Text(l10n.clearImageCache),
+                ),
+                const SizedBox(height: 24),
+
+                // Reader Settings (Font Size, etc.)
+                // Kept here to maintain functionality even though not strictly in reference image
+                _SectionHeader(title: l10n.readerSettings),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(l10n.autoMarkRead),
+                  value: appSettings.autoMarkRead,
+                  onChanged: (v) =>
+                      ref.read(appSettingsProvider.notifier).setAutoMarkRead(v),
+                ),
+                _SliderTile(
+                  title: l10n.fontSize,
+                  value: readerSettings.fontSize,
+                  min: 12,
+                  max: 28,
+                  format: (v) => v.toStringAsFixed(0),
+                  onChanged: (v) => ref
+                      .read(readerSettingsProvider.notifier)
+                      .save(readerSettings.copyWith(fontSize: v)),
+                ),
+                _SliderTile(
+                  title: l10n.lineHeight,
+                  value: readerSettings.lineHeight,
+                  min: 1.1,
+                  max: 2.2,
+                  format: (v) => v.toStringAsFixed(1),
+                  onChanged: (v) => ref
+                      .read(readerSettingsProvider.notifier)
+                      .save(readerSettings.copyWith(lineHeight: v)),
+                ),
+                _SliderTile(
+                  title: l10n.horizontalPadding,
+                  value: readerSettings.horizontalPadding,
+                  min: 8,
+                  max: 32,
+                  format: (v) => v.toStringAsFixed(0),
+                  onChanged: (v) => ref
+                      .read(readerSettingsProvider.notifier)
+                      .save(readerSettings.copyWith(horizontalPadding: v)),
+                ),
+                const SizedBox(height: 24),
+
+                // Cleanup
+                _SectionHeader(title: l10n.storage),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                ],
-              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(l10n.clearImageCacheSubtitle)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        onPressed: () async {
+                          await ref.read(cacheManagerProvider).emptyCache();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(l10n.cacheCleared)),
+                          );
+                        },
+                        child: Text(l10n.clearImageCache),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -444,150 +456,165 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
     final feedsAsync = ref.watch(feedsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 900),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            Row(
+    return SingleChildScrollView(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: l10n.search,
-                      prefixIcon: const Icon(Icons.search),
-                      isDense: true,
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: l10n.search,
+                          prefixIcon: const Icon(Icons.search),
+                          isDense: true,
+                          filled: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    IconButton(
+                      tooltip: l10n.refreshAll,
+                      onPressed: () => _refreshAll(context),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                    IconButton(
+                      tooltip: l10n.importOpml,
+                      onPressed: () => _importOpml(context),
+                      icon: const Icon(Icons.file_upload_outlined),
+                    ),
+                    IconButton(
+                      tooltip: l10n.exportOpml,
+                      onPressed: () => _exportOpml(context),
+                      icon: const Icon(Icons.file_download_outlined),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                IconButton(
-                  tooltip: l10n.refreshAll,
-                  onPressed: () => _refreshAll(context),
-                  icon: const Icon(Icons.refresh),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    FilledButton.icon(
+                      onPressed: () => _showAddFeedDialog(context),
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.addSubscription),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: () => _showAddCategoryDialog(context),
+                      icon: const Icon(Icons.create_new_folder_outlined),
+                      label: Text(l10n.newCategory),
+                    ),
+                  ],
                 ),
-                IconButton(
-                  tooltip: l10n.importOpml,
-                  onPressed: () => _importOpml(context),
-                  icon: const Icon(Icons.file_upload_outlined),
-                ),
-                IconButton(
-                  tooltip: l10n.exportOpml,
-                  onPressed: () => _exportOpml(context),
-                  icon: const Icon(Icons.file_download_outlined),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                FilledButton.icon(
-                  onPressed: () => _showAddFeedDialog(context),
-                  icon: const Icon(Icons.add),
-                  label: Text(l10n.addSubscription),
-                ),
-                const SizedBox(width: 12),
-                OutlinedButton.icon(
-                  onPressed: () => _showAddCategoryDialog(context),
-                  icon: const Icon(Icons.create_new_folder_outlined),
-                  label: Text(l10n.newCategory),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.subscriptions),
-            feedsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Text(l10n.errorMessage(e.toString())),
-              data: (feeds) {
-                final filteredFeeds = _searchText.isEmpty
-                    ? feeds
-                    : feeds.where((f) {
-                        final t = f.title?.toLowerCase() ?? '';
-                        return t.contains(_searchText) ||
-                            f.url.toLowerCase().contains(_searchText);
-                      }).toList();
-
-                return categoriesAsync.when(
+                const SizedBox(height: 24),
+                _SectionHeader(title: l10n.subscriptions),
+                feedsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (e, _) => Text(l10n.errorMessage(e.toString())),
-                  data: (cats) {
-                    final byCat = <int?, List<Feed>>{};
-                    for (final f in filteredFeeds) {
-                      byCat.putIfAbsent(f.categoryId, () => <Feed>[]).add(f);
-                    }
+                  data: (feeds) {
+                    final filteredFeeds = _searchText.isEmpty
+                        ? feeds
+                        : feeds.where((f) {
+                            final t = f.title?.toLowerCase() ?? '';
+                            return t.contains(_searchText) ||
+                                f.url.toLowerCase().contains(_searchText);
+                          }).toList();
 
-                    final tiles = <Widget>[];
-                    for (final c in cats) {
-                      final catFeeds = byCat[c.id] ?? const <Feed>[];
-                      if (_searchText.isNotEmpty && catFeeds.isEmpty) continue;
-                      tiles.add(
-                        _CategorySection(
-                          categoryName: c.name,
-                          onDelete: () => _deleteCategory(context, c.id),
-                          children: (catFeeds)
-                              .map((f) {
-                                return _FeedTile(
-                                  title: (f.title?.trim().isNotEmpty == true)
-                                      ? f.title!
-                                      : f.url,
-                                  url: f.url,
-                                  lastSyncedAt: f.lastSyncedAt,
-                                  onRefresh: () => _refreshFeed(context, f.id),
-                                  onMove: () =>
-                                      _moveFeedToCategory(context, f.id),
-                                  onDelete: () => _deleteFeed(context, f.id),
-                                );
-                              })
-                              .toList(growable: false),
-                        ),
-                      );
-                    }
+                    return categoriesAsync.when(
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, _) => Text(l10n.errorMessage(e.toString())),
+                      data: (cats) {
+                        final byCat = <int?, List<Feed>>{};
+                        for (final f in filteredFeeds) {
+                          byCat
+                              .putIfAbsent(f.categoryId, () => <Feed>[])
+                              .add(f);
+                        }
 
-                    final uncategorized = byCat[null] ?? const <Feed>[];
-                    if (_searchText.isEmpty || uncategorized.isNotEmpty) {
-                      tiles.add(
-                        _CategorySection(
-                          categoryName: l10n.uncategorized,
-                          onDelete: null,
-                          children: uncategorized
-                              .map((f) {
-                                return _FeedTile(
-                                  title: (f.title?.trim().isNotEmpty == true)
-                                      ? f.title!
-                                      : f.url,
-                                  url: f.url,
-                                  lastSyncedAt: f.lastSyncedAt,
-                                  onRefresh: () => _refreshFeed(context, f.id),
-                                  onMove: () =>
-                                      _moveFeedToCategory(context, f.id),
-                                  onDelete: () => _deleteFeed(context, f.id),
-                                );
-                              })
-                              .toList(growable: false),
-                        ),
-                      );
-                    }
+                        final tiles = <Widget>[];
+                        for (final c in cats) {
+                          final catFeeds = byCat[c.id] ?? const <Feed>[];
+                          if (_searchText.isNotEmpty && catFeeds.isEmpty)
+                            continue;
+                          tiles.add(
+                            _CategorySection(
+                              categoryName: c.name,
+                              onDelete: () => _deleteCategory(context, c.id),
+                              children: (catFeeds)
+                                  .map((f) {
+                                    return _FeedTile(
+                                      title:
+                                          (f.title?.trim().isNotEmpty == true)
+                                          ? f.title!
+                                          : f.url,
+                                      url: f.url,
+                                      lastSyncedAt: f.lastSyncedAt,
+                                      onRefresh: () =>
+                                          _refreshFeed(context, f.id),
+                                      onMove: () =>
+                                          _moveFeedToCategory(context, f.id),
+                                      onDelete: () =>
+                                          _deleteFeed(context, f.id),
+                                    );
+                                  })
+                                  .toList(growable: false),
+                            ),
+                          );
+                        }
 
-                    if (tiles.isEmpty) {
-                      return Text(l10n.notFound);
-                    }
+                        final uncategorized = byCat[null] ?? const <Feed>[];
+                        if (_searchText.isEmpty || uncategorized.isNotEmpty) {
+                          tiles.add(
+                            _CategorySection(
+                              categoryName: l10n.uncategorized,
+                              onDelete: null,
+                              children: uncategorized
+                                  .map((f) {
+                                    return _FeedTile(
+                                      title:
+                                          (f.title?.trim().isNotEmpty == true)
+                                          ? f.title!
+                                          : f.url,
+                                      url: f.url,
+                                      lastSyncedAt: f.lastSyncedAt,
+                                      onRefresh: () =>
+                                          _refreshFeed(context, f.id),
+                                      onMove: () =>
+                                          _moveFeedToCategory(context, f.id),
+                                      onDelete: () =>
+                                          _deleteFeed(context, f.id),
+                                    );
+                                  })
+                                  .toList(growable: false),
+                            ),
+                          );
+                        }
 
-                    return Column(children: tiles);
+                        if (tiles.isEmpty) {
+                          return Text(l10n.notFound);
+                        }
+
+                        return Column(children: tiles);
+                      },
+                    );
                   },
-                );
-              },
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -846,55 +873,60 @@ class _ServicesTab extends ConsumerWidget {
       );
     }
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            _SectionHeader(title: l10n.services),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.autoRefresh),
-                  const SizedBox(height: 8),
-                  DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: interval,
-                      isExpanded: true,
-                      items: [
-                        DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text(l10n.off),
+    return SingleChildScrollView(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SectionHeader(title: l10n.services),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.autoRefresh),
+                      const SizedBox(height: 8),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<int?>(
+                          value: interval,
+                          isExpanded: true,
+                          items: [
+                            DropdownMenuItem<int?>(
+                              value: null,
+                              child: Text(l10n.off),
+                            ),
+                            for (final m in const [5, 15, 30, 60])
+                              DropdownMenuItem<int?>(
+                                value: m,
+                                child: Text(l10n.everyMinutes(m)),
+                              ),
+                          ],
+                          onChanged: (v) => ref
+                              .read(appSettingsProvider.notifier)
+                              .setAutoRefreshMinutes(v),
                         ),
-                        for (final m in const [5, 15, 30, 60])
-                          DropdownMenuItem<int?>(
-                            value: m,
-                            child: Text(l10n.everyMinutes(m)),
-                          ),
-                      ],
-                      onChanged: (v) => ref
-                          .read(appSettingsProvider.notifier)
-                          .setAutoRefreshMinutes(v),
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: refreshNow,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(l10n.refreshAll),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: refreshNow,
-                    icon: const Icon(Icons.refresh),
-                    label: Text(l10n.refreshAll),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -909,102 +941,110 @@ class _AboutTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
 
-    return Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 800),
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            _SectionHeader(title: l10n.about),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(l10n.appTitle, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 12),
-                  FutureBuilder(
-                    future: getApplicationDocumentsDirectory(),
-                    builder: (context, snapshot) {
-                      final path = snapshot.data?.path;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.dataDirectory,
-                            style: theme.textTheme.labelLarge,
-                          ),
-                          const SizedBox(height: 4),
-                          SelectableText(path ?? '...'),
-                          const SizedBox(height: 8),
-                          Row(
+    return SingleChildScrollView(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 800),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SectionHeader(title: l10n.about),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.appTitle, style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 12),
+                      FutureBuilder(
+                        future: getApplicationDocumentsDirectory(),
+                        builder: (context, snapshot) {
+                          final path = snapshot.data?.path;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              OutlinedButton(
-                                onPressed: path == null
-                                    ? null
-                                    : () async {
-                                        await Clipboard.setData(
-                                          ClipboardData(text: path),
-                                        );
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(content: Text(l10n.done)),
-                                        );
-                                      },
-                                child: Text(l10n.copyPath),
+                              Text(
+                                l10n.dataDirectory,
+                                style: theme.textTheme.labelLarge,
                               ),
-                              const SizedBox(width: 12),
-                              OutlinedButton(
-                                onPressed: path == null
-                                    ? null
-                                    : () {
-                                        launchUrl(
-                                          Uri.file(path),
-                                          mode: LaunchMode.externalApplication,
-                                        );
-                                      },
-                                child: Text(l10n.openFolder),
+                              const SizedBox(height: 4),
+                              SelectableText(path ?? '...'),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () async {
+                                            await Clipboard.setData(
+                                              ClipboardData(text: path),
+                                            );
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(l10n.done),
+                                              ),
+                                            );
+                                          },
+                                    child: Text(l10n.copyPath),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () {
+                                            launchUrl(
+                                              Uri.file(path),
+                                              mode: LaunchMode
+                                                  .externalApplication,
+                                            );
+                                          },
+                                    child: Text(l10n.openFolder),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ],
-                      );
-                    },
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            _SectionHeader(title: l10n.keyboardShortcuts),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.dividerColor),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: DefaultTextStyle(
-                style: theme.textTheme.bodyMedium!,
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('J / K: Next / previous article'),
-                    Text('R: Refresh (current selection)'),
-                    Text('U: Toggle unread-only'),
-                    Text('M: Toggle read/unread for selected article'),
-                    Text('S: Toggle star for selected article'),
-                    Text('Ctrl+F: Search articles'),
-                  ],
                 ),
-              ),
+                const SizedBox(height: 24),
+                _SectionHeader(title: l10n.keyboardShortcuts),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: DefaultTextStyle(
+                    style: theme.textTheme.bodyMedium!,
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('J / K: Next / previous article'),
+                        Text('R: Refresh (current selection)'),
+                        Text('U: Toggle unread-only'),
+                        Text('M: Toggle read/unread for selected article'),
+                        Text('S: Toggle star for selected article'),
+                        Text('Ctrl+F: Search articles'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
