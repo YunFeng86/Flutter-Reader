@@ -496,22 +496,6 @@ class HomeScreen extends ConsumerWidget {
           Expanded(child: readerPane(embedded: true)),
         ],
       ),
-      DesktopPaneMode.splitSidebarList => Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (sidebarVisible) ...[
-            SizedBox(
-              width: kDesktopSidebarWidth,
-              child: Sidebar(
-                onSelectFeed: (_) {
-                  if (selectedArticleId != null) context.go('/');
-                },
-              ),
-            ),
-          ],
-          Expanded(child: listPane()),
-        ],
-      ),
       DesktopPaneMode.listOnly => listPane(),
     };
 
