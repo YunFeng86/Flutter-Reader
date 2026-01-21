@@ -8,6 +8,8 @@ import '../../repositories/feed_repository.dart';
 import '../../repositories/rule_repository.dart';
 import '../rss/feed_parser.dart';
 import '../rss/rss_client.dart';
+import '../notifications/notification_service.dart';
+import '../cache/article_cache_service.dart';
 
 class FeedRefreshResult {
   const FeedRefreshResult({
@@ -43,26 +45,33 @@ class SyncService {
     required RuleRepository rules,
     required RssClient client,
     required FeedParser parser,
+    required NotificationService notifications,
+    required ArticleCacheService cache,
   }) : _feeds = feeds,
        _articles = articles,
        _rules = rules,
        _client = client,
-       _parser = parser;
+       _parser = parser,
+       _notifications = notifications,
+       _cache = cache;
 
   final FeedRepository _feeds;
   final ArticleRepository _articles;
   final RuleRepository _rules;
   final RssClient _client;
   final FeedParser _parser;
+  final NotificationService _notifications;
+  final ArticleCacheService _cache;
+
+  Future<int> offlineCacheFeed(int feedId) async {
+    final articles = await _articles.getUnread(feedId: feedId);
+    return _cache.cacheArticles(articles);
+  }
 
   Future<_RefreshOutcome> _refreshFeedOnce(int feedId) async {
     final feed = await _feeds.getById(feedId);
     if (feed == null) {
-      return const _RefreshOutcome(
-        feedId: -1,
-        statusCode: 0,
-        incomingCount: 0,
-      );
+      return const _RefreshOutcome(feedId: -1, statusCode: 0, incomingCount: 0);
     }
 
     final fetched = await _client.fetchXml(
@@ -110,7 +119,18 @@ class SyncService {
         .toList(growable: false);
 
     final rules = await _rules.getEnabled();
-    await _articles.upsertMany(feedId, incoming, rules: rules);
+    final (newArticles, keywordArticles) = await _articles.upsertMany(
+      feedId,
+      incoming,
+      rules: rules,
+    );
+
+    if (keywordArticles.isNotEmpty) {
+      await _notifications.showKeywordArticlesNotification(keywordArticles);
+    } else if (newArticles.isNotEmpty) {
+      await _notifications.showNewArticlesNotification(newArticles);
+    }
+
     return _RefreshOutcome(
       feedId: feedId,
       statusCode: 200,
@@ -152,8 +172,7 @@ class SyncService {
         lastError = e;
         // Keep duration per attempt; store the last attempt duration.
         sw.stop();
-        final statusCode =
-            e is DioException ? e.response?.statusCode : null;
+        final statusCode = e is DioException ? e.response?.statusCode : null;
         await _feeds.updateSyncState(
           id: feedId,
           lastCheckedAt: checkedAt,
