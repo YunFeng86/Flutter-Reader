@@ -40,8 +40,10 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   StreamSubscription<void>? _sub;
   int? _feedId;
   int? _categoryId;
+  int? _tagId;
   bool _unreadOnly = false;
   bool _starredOnly = false;
+  bool _readLaterOnly = false;
   String _searchQuery = '';
   bool _sortAscending = false;
   bool _searchInContent = true;
@@ -50,8 +52,10 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   Future<ArticleListState> build() async {
     _feedId = ref.watch(selectedFeedIdProvider);
     _categoryId = ref.watch(selectedCategoryIdProvider);
+    _tagId = ref.watch(selectedTagIdProvider);
     _unreadOnly = ref.watch(unreadOnlyProvider);
     _starredOnly = ref.watch(starredOnlyProvider);
+    _readLaterOnly = ref.watch(readLaterOnlyProvider);
     _searchQuery = ref.watch(articleSearchQueryProvider);
     final settings = ref.watch(appSettingsProvider).valueOrNull;
     _sortAscending =
@@ -76,8 +80,10 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       limit: _pageSize,
       feedId: _feedId,
       categoryId: _categoryId,
+      tagId: _tagId,
       unreadOnly: _unreadOnly,
       starredOnly: _starredOnly,
+      readLaterOnly: _readLaterOnly,
       searchQuery: _searchQuery,
       sortAscending: _sortAscending,
       searchInContent: _searchInContent,
@@ -92,8 +98,10 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       limit: _pageSize,
       feedId: _feedId,
       categoryId: _categoryId,
+      tagId: _tagId,
       unreadOnly: _unreadOnly,
       starredOnly: _starredOnly,
+      readLaterOnly: _readLaterOnly,
       searchQuery: _searchQuery,
       sortAscending: _sortAscending,
       searchInContent: _searchInContent,
@@ -122,8 +130,10 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
         limit: _pageSize,
         feedId: _feedId,
         categoryId: _categoryId,
+        tagId: _tagId,
         unreadOnly: _unreadOnly,
         starredOnly: _starredOnly,
+        readLaterOnly: _readLaterOnly,
         searchQuery: _searchQuery,
         sortAscending: _sortAscending,
         searchInContent: _searchInContent,

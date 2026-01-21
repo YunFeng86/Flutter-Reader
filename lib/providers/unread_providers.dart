@@ -7,7 +7,10 @@ import 'core_providers.dart';
 final unreadOnlyProvider = StateProvider<bool>((ref) => false);
 
 /// Watches unread count for a given feedId. Use `null` for "All".
-final unreadCountProvider = StreamProvider.family<int, int?>((ref, feedId) async* {
+final unreadCountProvider = StreamProvider.family<int, int?>((
+  ref,
+  feedId,
+) async* {
   final isar = ref.watch(isarProvider);
 
   final qb = isar.articles
@@ -22,8 +25,10 @@ final unreadCountProvider = StreamProvider.family<int, int?>((ref, feedId) async
   }
 });
 
-final unreadCountByCategoryProvider =
-    StreamProvider.family<int, int>((ref, categoryId) async* {
+final unreadCountByCategoryProvider = StreamProvider.family<int, int>((
+  ref,
+  categoryId,
+) async* {
   final isar = ref.watch(isarProvider);
   final qb = isar.articles
       .filter()
@@ -38,6 +43,16 @@ final unreadCountByCategoryProvider =
 final unreadCountUncategorizedProvider = StreamProvider<int>((ref) async* {
   final isar = ref.watch(isarProvider);
   final qb = isar.articles.filter().categoryIdIsNull().isReadEqualTo(false);
+  yield await qb.count();
+  await for (final _ in qb.watchLazy()) {
+    yield await qb.count();
+  }
+});
+
+/// Watches total count of Read Later articles.
+final readLaterCountProvider = StreamProvider<int>((ref) async* {
+  final isar = ref.watch(isarProvider);
+  final qb = isar.articles.filter().isReadLaterEqualTo(true);
   yield await qb.count();
   await for (final _ in qb.watchLazy()) {
     yield await qb.count();

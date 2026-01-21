@@ -8,6 +8,7 @@ import '../services/rss/rss_client.dart';
 import '../services/sync/sync_service.dart';
 import '../services/extract/article_extractor.dart';
 import '../services/cache/article_cache_service.dart';
+import '../services/notifications/notification_service.dart';
 import 'repository_providers.dart';
 
 final dioProvider = Provider<Dio>((ref) {
@@ -40,18 +41,25 @@ final rssClientProvider = Provider<RssClient>((ref) {
 
 final feedParserProvider = Provider<FeedParser>((ref) => FeedParser());
 
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
+});
+
 final syncServiceProvider = Provider<SyncService>((ref) {
   final feeds = ref.watch(feedRepositoryProvider);
   final articles = ref.watch(articleRepositoryProvider);
   final rules = ref.watch(ruleRepositoryProvider);
   final client = ref.watch(rssClientProvider);
   final parser = ref.watch(feedParserProvider);
+  final notifications = ref.watch(notificationServiceProvider);
   return SyncService(
     feeds: feeds,
     articles: articles,
     rules: rules,
     client: client,
     parser: parser,
+    notifications: notifications,
+    cache: ref.watch(articleCacheServiceProvider),
   );
 });
 

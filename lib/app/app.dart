@@ -1,6 +1,8 @@
+import 'dart:async';
+
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import 'router.dart';
@@ -69,6 +71,9 @@ class App extends ConsumerWidget {
     final appSettings = ref.watch(appSettingsProvider).valueOrNull;
     final localeTag = appSettings?.localeTag;
     ref.watch(autoRefreshControllerProvider);
+    unawaited(
+      ref.watch(notificationServiceProvider).init().catchError((_) {}),
+    );
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {

@@ -4,6 +4,7 @@ import '../repositories/article_repository.dart';
 import '../repositories/category_repository.dart';
 import '../repositories/feed_repository.dart';
 import '../repositories/rule_repository.dart';
+import '../repositories/tag_repository.dart';
 import 'core_providers.dart';
 
 final feedRepositoryProvider = Provider<FeedRepository>((ref) {
@@ -20,4 +21,8 @@ final categoryRepositoryProvider = Provider<CategoryRepository>((ref) {
 
 final ruleRepositoryProvider = Provider<RuleRepository>((ref) {
   return RuleRepository(ref.watch(isarProvider));
+});
+
+final tagRepositoryProvider = Provider<TagRepository>((ref) {
+  return TagRepository(ref.watch(isarProvider));
 });
