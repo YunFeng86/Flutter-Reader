@@ -23,8 +23,8 @@ class Rule {
 
   bool autoStar = false;
   bool autoMarkRead = false;
+  bool notify = false;
 
   DateTime createdAt = DateTime.now();
   DateTime updatedAt = DateTime.now();
 }
-

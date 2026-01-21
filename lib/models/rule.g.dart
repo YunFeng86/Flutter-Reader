@@ -67,8 +67,13 @@ const RuleSchema = CollectionSchema(
       name: r'name',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'notify': PropertySchema(
       id: 10,
+      name: r'notify',
+      type: IsarType.bool,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -154,7 +159,8 @@ void _ruleSerialize(
   writer.writeBool(offsets[7], object.matchLink);
   writer.writeBool(offsets[8], object.matchTitle);
   writer.writeString(offsets[9], object.name);
-  writer.writeDateTime(offsets[10], object.updatedAt);
+  writer.writeBool(offsets[10], object.notify);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 Rule _ruleDeserialize(
@@ -175,7 +181,8 @@ Rule _ruleDeserialize(
   object.matchLink = reader.readBool(offsets[7]);
   object.matchTitle = reader.readBool(offsets[8]);
   object.name = reader.readString(offsets[9]);
-  object.updatedAt = reader.readDateTime(offsets[10]);
+  object.notify = reader.readBool(offsets[10]);
+  object.updatedAt = reader.readDateTime(offsets[11]);
   return object;
 }
 
@@ -207,6 +214,8 @@ P _ruleDeserializeProp<P>(
     case 9:
       return (reader.readString(offset)) as P;
     case 10:
+      return (reader.readBool(offset)) as P;
+    case 11:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -867,6 +876,15 @@ extension RuleQueryFilter on QueryBuilder<Rule, Rule, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Rule, Rule, QAfterFilterCondition> notifyEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notify',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Rule, Rule, QAfterFilterCondition> updatedAtEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -1046,6 +1064,18 @@ extension RuleQuerySortBy on QueryBuilder<Rule, Rule, QSortBy> {
     });
   }
 
+  QueryBuilder<Rule, Rule, QAfterSortBy> sortByNotify() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notify', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Rule, Rule, QAfterSortBy> sortByNotifyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notify', Sort.desc);
+    });
+  }
+
   QueryBuilder<Rule, Rule, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1192,6 +1222,18 @@ extension RuleQuerySortThenBy on QueryBuilder<Rule, Rule, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Rule, Rule, QAfterSortBy> thenByNotify() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notify', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Rule, Rule, QAfterSortBy> thenByNotifyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notify', Sort.desc);
+    });
+  }
+
   QueryBuilder<Rule, Rule, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1268,6 +1310,12 @@ extension RuleQueryWhereDistinct on QueryBuilder<Rule, Rule, QDistinct> {
     });
   }
 
+  QueryBuilder<Rule, Rule, QDistinct> distinctByNotify() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notify');
+    });
+  }
+
   QueryBuilder<Rule, Rule, QDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -1339,6 +1387,12 @@ extension RuleQueryProperty on QueryBuilder<Rule, Rule, QQueryProperty> {
   QueryBuilder<Rule, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Rule, bool, QQueryOperations> notifyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notify');
     });
   }
 

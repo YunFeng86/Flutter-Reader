@@ -8,7 +8,9 @@ class RuleRepository {
   final Isar _isar;
 
   Stream<List<Rule>> watchAll() {
-    return _isar.rules.where().sortByUpdatedAtDesc().watch(fireImmediately: true);
+    return _isar.rules.where().sortByUpdatedAtDesc().watch(
+      fireImmediately: true,
+    );
   }
 
   Future<List<Rule>> getAll() {
@@ -16,7 +18,11 @@ class RuleRepository {
   }
 
   Future<List<Rule>> getEnabled() {
-    return _isar.rules.filter().enabledEqualTo(true).sortByUpdatedAtDesc().findAll();
+    return _isar.rules
+        .filter()
+        .enabledEqualTo(true)
+        .sortByUpdatedAtDesc()
+        .findAll();
   }
 
   Future<int> upsert({
@@ -28,6 +34,7 @@ class RuleRepository {
     required bool matchAuthor,
     required bool matchLink,
     required bool matchContent,
+    required bool notify,
     required bool autoStar,
     required bool autoMarkRead,
   }) async {
@@ -48,6 +55,7 @@ class RuleRepository {
         ..matchAuthor = matchAuthor
         ..matchLink = matchLink
         ..matchContent = matchContent
+        ..notify = notify
         ..autoStar = autoStar
         ..autoMarkRead = autoMarkRead
         ..updatedAt = now;
@@ -71,4 +79,3 @@ class RuleRepository {
     });
   }
 }
-
