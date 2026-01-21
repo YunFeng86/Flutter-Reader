@@ -12,6 +12,7 @@ class AppSettings {
     this.localeTag,
     this.autoMarkRead = true,
     this.autoRefreshMinutes,
+    this.autoRefreshConcurrency = 2,
     this.articleGroupMode = ArticleGroupMode.none,
     this.articleSortOrder = ArticleSortOrder.newestFirst,
     this.searchInContent = true,
@@ -27,6 +28,9 @@ class AppSettings {
 
   /// Auto-refresh interval in minutes. `null` means disabled.
   final int? autoRefreshMinutes;
+
+  /// Number of concurrent feeds to refresh at once.
+  final int autoRefreshConcurrency;
 
   /// How the article list should be grouped (view-only; does not change data).
   final ArticleGroupMode articleGroupMode;
@@ -47,6 +51,7 @@ class AppSettings {
     Object? localeTag = _unset,
     bool? autoMarkRead,
     Object? autoRefreshMinutes = _unset,
+    int? autoRefreshConcurrency,
     ArticleGroupMode? articleGroupMode,
     ArticleSortOrder? articleSortOrder,
     bool? searchInContent,
@@ -59,6 +64,8 @@ class AppSettings {
       autoRefreshMinutes: autoRefreshMinutes == _unset
           ? this.autoRefreshMinutes
           : autoRefreshMinutes as int?,
+      autoRefreshConcurrency:
+          autoRefreshConcurrency ?? this.autoRefreshConcurrency,
       articleGroupMode: articleGroupMode ?? this.articleGroupMode,
       articleSortOrder: articleSortOrder ?? this.articleSortOrder,
       searchInContent: searchInContent ?? this.searchInContent,
@@ -73,6 +80,7 @@ class AppSettings {
     'localeTag': localeTag,
     'autoMarkRead': autoMarkRead,
     'autoRefreshMinutes': autoRefreshMinutes,
+    'autoRefreshConcurrency': autoRefreshConcurrency,
     'articleGroupMode': articleGroupMode.name,
     'articleSortOrder': articleSortOrder.name,
     'searchInContent': searchInContent,
@@ -91,6 +99,7 @@ class AppSettings {
 
     final autoMarkRead = json['autoMarkRead'];
     final autoRefreshMinutes = json['autoRefreshMinutes'];
+    final autoRefreshConcurrency = json['autoRefreshConcurrency'];
     final searchInContent = json['searchInContent'];
     final cleanupReadOlderThanDays = json['cleanupReadOlderThanDays'];
 
@@ -119,6 +128,9 @@ class AppSettings {
       autoRefreshMinutes: autoRefreshMinutes is num
           ? autoRefreshMinutes.toInt()
           : null,
+      autoRefreshConcurrency: autoRefreshConcurrency is num
+          ? autoRefreshConcurrency.toInt()
+          : 2,
       articleGroupMode: parseGroupMode(json['articleGroupMode']),
       articleSortOrder: parseSortOrder(json['articleSortOrder']),
       searchInContent: searchInContent is bool ? searchInContent : true,

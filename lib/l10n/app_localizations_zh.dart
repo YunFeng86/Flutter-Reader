@@ -111,6 +111,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unread => '未读';
 
   @override
+  String get refreshConcurrency => '刷新并发数';
+
+  @override
+  String refreshingProgress(int current, int total) {
+    return '正在刷新 $current/$total...';
+  }
+
+  @override
   String get markAllRead => '全部已读';
 
   @override
@@ -383,6 +391,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoRefresh => '自动刷新';
 
   @override
+  String get autoRefreshSubtitle => '在后台自动刷新订阅源';
+
+  @override
   String get off => '关闭';
 
   @override
@@ -514,6 +525,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get unread => '未讀';
+
+  @override
+  String get refreshConcurrency => '重新整理並發數';
+
+  @override
+  String refreshingProgress(int current, int total) {
+    return '正在重新整理 $current/$total...';
+  }
 
   @override
   String get markAllRead => '全部已讀';
@@ -786,6 +805,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get autoRefresh => '自動重新整理';
+
+  @override
+  String get autoRefreshSubtitle => '在背景自動重新整理訂閱來源';
 
   @override
   String get off => '關閉';

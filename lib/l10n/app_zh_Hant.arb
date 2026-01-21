@@ -133,6 +133,21 @@
   "@unread": {
     "description": "unread"
   },
+  "refreshConcurrency": "重新整理並發數",
+  "@refreshConcurrency": {
+    "description": "refreshConcurrency"
+  },
+  "refreshingProgress": "正在重新整理 {current}/{total}...",
+  "@refreshingProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "markAllRead": "全部已讀",
   "@markAllRead": {
     "description": "markAllRead"
@@ -511,6 +526,10 @@
   "autoRefresh": "自動重新整理",
   "@autoRefresh": {
     "description": "autoRefresh"
+  },
+  "autoRefreshSubtitle": "在背景自動重新整理訂閱來源",
+  "@autoRefreshSubtitle": {
+    "description": "autoRefreshSubtitle"
   },
   "off": "關閉",
   "@off": {

@@ -112,6 +112,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unread => 'Unread';
 
   @override
+  String get refreshConcurrency => 'Refresh Concurrency';
+
+  @override
+  String refreshingProgress(int current, int total) {
+    return 'Refreshing $current/$total...';
+  }
+
+  @override
   String get markAllRead => 'Mark all read';
 
   @override
@@ -383,6 +391,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoRefresh => 'Auto refresh';
+
+  @override
+  String get autoRefreshSubtitle => 'Automatically refresh feeds in background';
 
   @override
   String get off => 'Off';

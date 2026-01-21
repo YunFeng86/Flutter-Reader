@@ -130,6 +130,11 @@
   "@unread": {
     "description": "unread"
   },
+  "refreshConcurrency": "刷新并发数",
+  "@refreshConcurrency": {
+    "description": "refreshConcurrency"
+  },
+  "refreshingProgress": "正在刷新 {current}/{total}...",
   "markAllRead": "全部已读",
   "@markAllRead": {
     "description": "markAllRead"
@@ -508,6 +513,10 @@
   "autoRefresh": "自动刷新",
   "@autoRefresh": {
     "description": "autoRefresh"
+  },
+  "autoRefreshSubtitle": "在后台自动刷新订阅源",
+  "@autoRefreshSubtitle": {
+    "description": "autoRefreshSubtitle"
   },
   "off": "关闭",
   "@off": {

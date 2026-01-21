@@ -136,6 +136,21 @@
   "@unread": {
     "description": "unread"
   },
+  "refreshConcurrency": "Refresh Concurrency",
+  "@refreshConcurrency": {
+    "description": "refreshConcurrency"
+  },
+  "refreshingProgress": "Refreshing {current}/{total}...",
+  "@refreshingProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
   "markAllRead": "Mark all read",
   "@markAllRead": {
     "description": "markAllRead"
@@ -513,6 +528,10 @@
   "autoRefresh": "Auto refresh",
   "@autoRefresh": {
     "description": "autoRefresh"
+  },
+  "autoRefreshSubtitle": "Automatically refresh feeds in background",
+  "@autoRefreshSubtitle": {
+    "description": "autoRefreshSubtitle"
   },
   "off": "Off",
   "@off": {

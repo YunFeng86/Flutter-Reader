@@ -49,18 +49,19 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     super.initState();
 
     // Show extraction errors from the one-shot full text fetch.
-    _fullTextSub = ref.listenManual<AsyncValue<void>>(fullTextControllerProvider, (
-      prev,
-      next,
-    ) {
-      if (!mounted) return;
-      if (next.hasError) {
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
-        );
-      }
-    }, fireImmediately: false);
+    _fullTextSub = ref.listenManual<AsyncValue<void>>(
+      fullTextControllerProvider,
+      (prev, next) {
+        if (!mounted) return;
+        if (next.hasError) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
+          );
+        }
+      },
+      fireImmediately: false,
+    );
 
     _listenArticle(widget.articleId);
   }
@@ -75,6 +76,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
   void _listenArticle(int articleId) {
     _articleSub?.close();
+    var hasMarkedRead = false; // 追踪是否已标记
     _articleSub = ref.listenManual<AsyncValue<Article?>>(
       articleProvider(articleId),
       (prev, next) {
@@ -83,11 +85,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         // Auto-mark as read when entering/opening the reader for this article.
         // If the user explicitly toggles the article back to unread while
         // staying on this reader view, we do not immediately flip it back.
-        if (prev == null) {
+        if (!hasMarkedRead && a != null && !a.isRead) {
           final appSettings =
               ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
-          if (appSettings.autoMarkRead && a != null && !a.isRead) {
+          if (appSettings.autoMarkRead) {
             ref.read(articleRepositoryProvider).markRead(articleId, true);
+            hasMarkedRead = true;
           }
         }
 
@@ -181,79 +184,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
         final contentWidget = html.isEmpty
             ? Center(child: Text(article.link))
-            : SingleChildScrollView(
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: ReaderView.maxReadingWidth,
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        settings.horizontalPadding,
-                        24, // Top padding
-                        settings.horizontalPadding,
-                        100, // Bottom padding for floating bar
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          inlineHeader,
-                          HtmlWidget(
-                            html,
-                            baseUrl: Uri.tryParse(article.link),
-                            textStyle: TextStyle(
-                              fontSize: settings.fontSize,
-                              height: settings.lineHeight,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            onTapUrl: (url) async {
-                              final uri = Uri.tryParse(url);
-                              if (uri == null) return false;
-                              return launchUrl(
-                                uri,
-                                mode: LaunchMode.externalApplication,
-                              );
-                            },
-                            onTapImage: (meta) {
-                              final src = meta.sources.isNotEmpty
-                                  ? meta.sources.first.url
-                                  : null;
-                              if (src == null || src.trim().isEmpty) return;
-                              showDialog<void>(
-                                context: context,
-                                builder: (context) {
-                                  return Dialog(
-                                    insetPadding: EdgeInsets.zero,
-                                    child: Stack(
-                                      children: [
-                                        InteractiveViewer(
-                                          child: Image.network(
-                                            src,
-                                            fit: BoxFit.contain,
-                                          ),
-                                        ),
-                                        Positioned(
-                                          top: 8,
-                                          right: 8,
-                                          child: IconButton(
-                                            onPressed: () =>
-                                                Navigator.of(context).pop(),
-                                            icon: const Icon(Icons.close),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+            : _buildContentWidget(
+                context,
+                html,
+                article,
+                settings,
+                inlineHeader,
               );
 
         final bottomBar = Positioned(
@@ -311,6 +247,152 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         return Stack(
           fit: StackFit.expand,
           children: [contentWidget, bottomBar],
+        );
+      },
+    );
+  }
+
+  Widget _buildContentWidget(
+    BuildContext context,
+    String html,
+    Article article,
+    ReaderSettings settings,
+    Widget inlineHeader,
+  ) {
+    const chunkThreshold = 50000;
+    if (html.length < chunkThreshold) {
+      return SingleChildScrollView(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: ReaderView.maxReadingWidth,
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                settings.horizontalPadding,
+                24, // Top padding
+                settings.horizontalPadding,
+                100, // Bottom padding for floating bar
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  inlineHeader,
+                  HtmlWidget(
+                    html,
+                    baseUrl: Uri.tryParse(article.link),
+                    textStyle: TextStyle(
+                      fontSize: settings.fontSize,
+                      height: settings.lineHeight,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    onTapUrl: _onTapUrl,
+                    onTapImage: _onTapImage,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Lazy load long articles
+    final chunks = _splitHtmlIntoChunks(html);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: ReaderView.maxReadingWidth),
+        child: ListView.builder(
+          padding: EdgeInsets.fromLTRB(
+            settings.horizontalPadding,
+            24,
+            settings.horizontalPadding,
+            100,
+          ),
+          itemCount: chunks.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) return inlineHeader;
+            return HtmlWidget(
+              chunks[index - 1],
+              baseUrl: Uri.tryParse(article.link),
+              textStyle: TextStyle(
+                fontSize: settings.fontSize,
+                height: settings.lineHeight,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              onTapUrl: _onTapUrl,
+              onTapImage: _onTapImage,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  List<String> _splitHtmlIntoChunks(String html, {int chunkSize = 20000}) {
+    final chunks = <String>[];
+    int start = 0;
+    // Regex to find closing block tags (case insensitive)
+    final blockTagRe = RegExp(
+      r'</(p|div|section|article|h[1-6]|ul|ol|table|blockquote)>',
+      caseSensitive: false,
+    );
+
+    while (start < html.length) {
+      if (start + chunkSize >= html.length) {
+        chunks.add(html.substring(start));
+        break;
+      }
+
+      int end = start + chunkSize;
+      // Look for the next closing tag after the rough chunk boundary
+      final match = blockTagRe.firstMatch(html.substring(end));
+      if (match != null) {
+        // Split after the closing tag
+        end += match.end;
+      } else {
+        // Fallback: look for generic closing tag
+        final closeIdx = html.indexOf('>', end);
+        if (closeIdx != -1) {
+          end = closeIdx + 1;
+        }
+        // If really no tags, use hard cut (unlikely for HTML)
+      }
+
+      chunks.add(html.substring(start, end));
+      start = end;
+    }
+    return chunks;
+  }
+
+  Future<bool> _onTapUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _onTapImage(ImageMetadata meta) {
+    final src = meta.sources.isNotEmpty ? meta.sources.first.url : null;
+    if (src == null || src.trim().isEmpty) return;
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            children: [
+              InteractiveViewer(child: Image.network(src, fit: BoxFit.contain)),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

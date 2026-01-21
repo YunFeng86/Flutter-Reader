@@ -28,6 +28,11 @@ class ArticleList extends ConsumerStatefulWidget {
 class _ArticleListState extends ConsumerState<ArticleList> {
   late final ScrollController _controller;
 
+  // Cache to avoid recalculating entries on every build
+  List<Article> _cachedItems = [];
+  ArticleGroupMode _cachedGroupMode = ArticleGroupMode.none;
+  List<_ArticleListEntry> _cachedEntries = [];
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +50,21 @@ class _ArticleListState extends ConsumerState<ArticleList> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  List<_ArticleListEntry> _getEntries(
+    List<Article> items,
+    ArticleGroupMode groupMode,
+  ) {
+    // Only recalculate if items or groupMode changed
+    if (items != _cachedItems || groupMode != _cachedGroupMode) {
+      _cachedItems = items;
+      _cachedGroupMode = groupMode;
+      _cachedEntries = groupMode == ArticleGroupMode.day
+          ? _buildDayGroupedEntries(items)
+          : items.map<_ArticleListEntry>((a) => _ArticleEntry(a)).toList();
+    }
+    return _cachedEntries;
   }
 
   @override
@@ -78,9 +98,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
 
         final narrow = MediaQuery.sizeOf(context).width < 600;
 
-        final entries = groupMode == ArticleGroupMode.day
-            ? _buildDayGroupedEntries(items)
-            : items.map<_ArticleListEntry>((a) => _ArticleEntry(a)).toList();
+        final entries = _getEntries(items, groupMode);
 
         return Container(
           color: Theme.of(context).colorScheme.surfaceContainerLow,

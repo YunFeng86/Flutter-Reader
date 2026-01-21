@@ -303,6 +303,18 @@ abstract class AppLocalizations {
   /// **'Unread'**
   String get unread;
 
+  /// refreshConcurrency
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh Concurrency'**
+  String get refreshConcurrency;
+
+  /// No description provided for @refreshingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing {current}/{total}...'**
+  String refreshingProgress(int current, int total);
+
   /// markAllRead
   ///
   /// In en, this message translates to:
@@ -818,6 +830,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto refresh'**
   String get autoRefresh;
+
+  /// autoRefreshSubtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically refresh feeds in background'**
+  String get autoRefreshSubtitle;
 
   /// off
   ///

@@ -203,29 +203,52 @@ class SyncService {
 
   Future<BatchRefreshResult> refreshFeedsSafe(
     Iterable<int> feedIds, {
-    int maxConcurrent = 4,
+    int maxConcurrent = 2,
     int maxAttemptsPerFeed = 2,
+    void Function(int current, int total)? onProgress,
   }) async {
     final ids = feedIds.toList(growable: false);
     if (ids.isEmpty) return const BatchRefreshResult([]);
 
-    final sem = _Semaphore(maxConcurrent < 1 ? 1 : maxConcurrent);
-    final results = <FeedRefreshResult>[];
-    final futures = <Future<void>>[];
+    final total = ids.length;
+    var completed = 0;
 
-    for (final id in ids) {
-      futures.add(() async {
-        await sem.acquire();
-        try {
-          final r = await refreshFeedSafe(id, maxAttempts: maxAttemptsPerFeed);
-          results.add(r);
-        } finally {
-          sem.release();
-        }
-      }());
+    // Split into batches to avoid creating too many futures at once
+    const batchSize = 10;
+    final results = <FeedRefreshResult>[];
+
+    for (var i = 0; i < total; i += batchSize) {
+      final end = (i + batchSize < total) ? i + batchSize : total;
+      final batchIds = ids.sublist(i, end);
+
+      final sem = _Semaphore(maxConcurrent < 1 ? 1 : maxConcurrent);
+      final futures = <Future<void>>[];
+
+      for (final id in batchIds) {
+        futures.add(() async {
+          await sem.acquire();
+          try {
+            final r = await refreshFeedSafe(
+              id,
+              maxAttempts: maxAttemptsPerFeed,
+            );
+            results.add(r);
+            completed++;
+            onProgress?.call(completed, total);
+          } finally {
+            sem.release();
+          }
+        }());
+      }
+
+      await Future.wait(futures);
+
+      // Small pause between batches to let the event loop process other events
+      if (end < total) {
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
     }
 
-    await Future.wait(futures);
     return BatchRefreshResult(results);
   }
 }

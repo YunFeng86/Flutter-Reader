@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:html/parser.dart' as html_parser;
@@ -16,7 +17,8 @@ class ArticleExtractor {
 
   Future<ExtractedArticle> extract(String url) async {
     final html = await _fetchHtml(url);
-    return _extractFromHtml(html: html, url: url);
+    // Use compute to parse HTML in a separate isolate to avoid blocking the UI thread.
+    return compute(_extractInIsolate, _ExtractParams(html: html, url: url));
   }
 
   Future<String> _fetchHtml(String url) async {
@@ -29,14 +31,21 @@ class ArticleExtractor {
               'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'User-Agent':
               'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
-                  '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
       ),
     );
     return res.data ?? '';
   }
 
-  ExtractedArticle _extractFromHtml({required String html, required String url}) {
+  static ExtractedArticle _extractInIsolate(_ExtractParams params) {
+    return _extractFromHtmlStatic(html: params.html, url: params.url);
+  }
+
+  static ExtractedArticle _extractFromHtmlStatic({
+    required String html,
+    required String url,
+  }) {
     final base = Uri.tryParse(url);
     final doc = html_parser.parse(html);
 
@@ -50,12 +59,13 @@ class ArticleExtractor {
     _stripNoise(body);
 
     final candidate =
-            _pickRuleBasedCandidate(doc, body) ?? _pickBestCandidate(body) ?? body;
+        _pickRuleBasedCandidate(doc, body) ?? _pickBestCandidate(body) ?? body;
     _stripNoise(candidate);
     _stripBoilerplateByClass(candidate);
     _absolutizeUrls(candidate, base);
 
-    final contentHtml = '''
+    final contentHtml =
+        '''
 <article>
   <h1>${_escapeHtml(title)}</h1>
   ${candidate.innerHtml}
@@ -65,8 +75,10 @@ class ArticleExtractor {
     return ExtractedArticle(title: title, contentHtml: contentHtml);
   }
 
-  String _pickTitle(dom.Document doc) {
-    final og = doc.querySelector('meta[property="og:title"]')?.attributes['content'];
+  static String _pickTitle(dom.Document doc) {
+    final og = doc
+        .querySelector('meta[property="og:title"]')
+        ?.attributes['content'];
     if (og != null && og.trim().isNotEmpty) return og.trim();
     final t = doc.querySelector('title')?.text;
     if (t != null && t.trim().isNotEmpty) return t.trim();
@@ -74,7 +86,7 @@ class ArticleExtractor {
     return '';
   }
 
-  void _stripNoise(dom.Element root) {
+  static void _stripNoise(dom.Element root) {
     const removeTags = {
       'script',
       'style',
@@ -97,38 +109,28 @@ class ArticleExtractor {
     }
   }
 
-  dom.Element? _pickRuleBasedCandidate(dom.Document doc, dom.Element body) {
+  static dom.Element? _pickRuleBasedCandidate(
+    dom.Document doc,
+    dom.Element body,
+  ) {
     final detector = _detectCms(doc, body);
     final selectors = switch (detector) {
       _Cms.wordpress => const [
-          'article .entry-content',
-          'article .post-content',
-          '.entry-content',
-          '.post-content',
-          'article',
-        ],
-      _Cms.hexo => const [
-          '.post-content',
-          '.article-entry',
-          'article',
-        ],
+        'article .entry-content',
+        'article .post-content',
+        '.entry-content',
+        '.post-content',
+        'article',
+      ],
+      _Cms.hexo => const ['.post-content', '.article-entry', 'article'],
       _Cms.hugo => const [
-          '.post-content',
-          '.content',
-          'main article',
-          'article',
-        ],
-      _Cms.halo => const [
-          '.post-content',
-          '.post-body',
-          '.content',
-          'article',
-        ],
-      _Cms.unknown => const [
-          'article',
-          'main article',
-          'main',
-        ],
+        '.post-content',
+        '.content',
+        'main article',
+        'article',
+      ],
+      _Cms.halo => const ['.post-content', '.post-body', '.content', 'article'],
+      _Cms.unknown => const ['article', 'main article', 'main'],
     };
 
     for (final sel in selectors) {
@@ -139,11 +141,11 @@ class ArticleExtractor {
     return null;
   }
 
-  _Cms _detectCms(dom.Document doc, dom.Element body) {
-    final gen = (doc.querySelector('meta[name="generator"]')
-                ?.attributes['content'] ??
-            '')
-        .toLowerCase();
+  static _Cms _detectCms(dom.Document doc, dom.Element body) {
+    final gen =
+        (doc.querySelector('meta[name="generator"]')?.attributes['content'] ??
+                '')
+            .toLowerCase();
     if (gen.contains('wordpress')) return _Cms.wordpress;
     if (gen.contains('hexo')) return _Cms.hexo;
     if (gen.contains('hugo')) return _Cms.hugo;
@@ -155,7 +157,7 @@ class ArticleExtractor {
     return _Cms.unknown;
   }
 
-  void _stripBoilerplateByClass(dom.Element root) {
+  static void _stripBoilerplateByClass(dom.Element root) {
     final re = RegExp(
       r'(comment|comments|respond|share|social|related|breadcrumb|nav|footer|header|subscribe|newsletter|sidebar)',
       caseSensitive: false,
@@ -163,13 +165,14 @@ class ArticleExtractor {
     for (final el in root.querySelectorAll('*')) {
       final cls = el.className;
       final id = el.id;
-      if ((cls.isNotEmpty && re.hasMatch(cls)) || (id.isNotEmpty && re.hasMatch(id))) {
+      if ((cls.isNotEmpty && re.hasMatch(cls)) ||
+          (id.isNotEmpty && re.hasMatch(id))) {
         el.remove();
       }
     }
   }
 
-  dom.Element? _pickBestCandidate(dom.Element body) {
+  static dom.Element? _pickBestCandidate(dom.Element body) {
     final articles = body.querySelectorAll('article');
     if (articles.isNotEmpty) {
       return _maxByScore(articles);
@@ -186,7 +189,7 @@ class ArticleExtractor {
     return null;
   }
 
-  dom.Element? _maxByScore(List<dom.Element> nodes) {
+  static dom.Element? _maxByScore(List<dom.Element> nodes) {
     dom.Element? best;
     var bestScore = double.negativeInfinity;
     for (final n in nodes) {
@@ -203,9 +206,9 @@ class ArticleExtractor {
     return best;
   }
 
-  int _textLen(dom.Element e) => e.text.trim().length;
+  static int _textLen(dom.Element e) => e.text.trim().length;
 
-  int _linkTextLen(dom.Element e) {
+  static int _linkTextLen(dom.Element e) {
     var sum = 0;
     for (final a in e.querySelectorAll('a')) {
       sum += a.text.trim().length;
@@ -213,7 +216,7 @@ class ArticleExtractor {
     return sum;
   }
 
-  void _absolutizeUrls(dom.Element root, Uri? base) {
+  static void _absolutizeUrls(dom.Element root, Uri? base) {
     if (base == null) return;
     for (final img in root.querySelectorAll('img')) {
       final src = img.attributes['src'];
@@ -227,7 +230,7 @@ class ArticleExtractor {
     }
   }
 
-  String _escapeHtml(String s) {
+  static String _escapeHtml(String s) {
     return s
         .replaceAll('&', '&amp;')
         .replaceAll('<', '&lt;')
@@ -235,6 +238,12 @@ class ArticleExtractor {
         .replaceAll('"', '&quot;')
         .replaceAll("'", '&#39;');
   }
+}
+
+class _ExtractParams {
+  final String html;
+  final String url;
+  _ExtractParams({required this.html, required this.url});
 }
 
 enum _Cms { unknown, wordpress, hexo, hugo, halo }

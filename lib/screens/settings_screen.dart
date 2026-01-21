@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/category.dart';
 import '../models/feed.dart';
 import '../models/rule.dart';
 import '../providers/app_settings_providers.dart';
@@ -972,197 +973,207 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
     final feedsAsync = ref.watch(feedsProvider);
     final categoriesAsync = ref.watch(categoriesProvider);
 
-    return SingleChildScrollView(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 900),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: l10n.search,
-                          prefixIcon: const Icon(Icons.search),
-                          isDense: true,
-                          filled: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: InputDecoration(
+                              hintText: l10n.search,
+                              prefixIcon: const Icon(Icons.search),
+                              isDense: true,
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        IconButton(
+                          tooltip: l10n.refreshAll,
+                          onPressed: () => _refreshAll(context),
+                          icon: const Icon(Icons.refresh),
+                        ),
+                        IconButton(
+                          tooltip: l10n.importOpml,
+                          onPressed: () => _importOpml(context),
+                          icon: const Icon(Icons.file_upload_outlined),
+                        ),
+                        IconButton(
+                          tooltip: l10n.exportOpml,
+                          onPressed: () => _exportOpml(context),
+                          icon: const Icon(Icons.file_download_outlined),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 12),
-                    IconButton(
-                      tooltip: l10n.refreshAll,
-                      onPressed: () => _refreshAll(context),
-                      icon: const Icon(Icons.refresh),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        FilledButton.icon(
+                          onPressed: () => _showAddFeedDialog(context),
+                          icon: const Icon(Icons.add),
+                          label: Text(l10n.addSubscription),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => _showAddCategoryDialog(context),
+                          icon: const Icon(Icons.create_new_folder_outlined),
+                          label: Text(l10n.newCategory),
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      tooltip: l10n.importOpml,
-                      onPressed: () => _importOpml(context),
-                      icon: const Icon(Icons.file_upload_outlined),
-                    ),
-                    IconButton(
-                      tooltip: l10n.exportOpml,
-                      onPressed: () => _exportOpml(context),
-                      icon: const Icon(Icons.file_download_outlined),
-                    ),
+                    const SizedBox(height: 24),
+                    _SectionHeader(title: l10n.subscriptions),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () => _showAddFeedDialog(context),
-                      icon: const Icon(Icons.add),
-                      label: Text(l10n.addSubscription),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _showAddCategoryDialog(context),
-                      icon: const Icon(Icons.create_new_folder_outlined),
-                      label: Text(l10n.newCategory),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                _SectionHeader(title: l10n.subscriptions),
-                feedsAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Text(l10n.errorMessage(e.toString())),
-                  data: (feeds) {
-                    final filteredFeeds = _searchText.isEmpty
-                        ? feeds
-                        : feeds.where((f) {
-                            final t = (f.userTitle ?? f.title ?? '')
-                                .toLowerCase();
-                            return t.contains(_searchText) ||
-                                f.url.toLowerCase().contains(_searchText);
-                          }).toList();
-
-                    return categoriesAsync.when(
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (e, _) => Text(l10n.errorMessage(e.toString())),
-                      data: (cats) {
-                        final byCat = <int?, List<Feed>>{};
-                        for (final f in filteredFeeds) {
-                          byCat
-                              .putIfAbsent(f.categoryId, () => <Feed>[])
-                              .add(f);
-                        }
-
-                        final tiles = <Widget>[];
-                        for (final c in cats) {
-                          final catFeeds = byCat[c.id] ?? const <Feed>[];
-                          if (_searchText.isNotEmpty && catFeeds.isEmpty) {
-                            continue;
-                          }
-                          tiles.add(
-                            _CategorySection(
-                              categoryName: c.name,
-                              onRename: () => _renameCategory(
-                                context,
-                                categoryId: c.id,
-                                currentName: c.name,
-                              ),
-                              onDelete: () => _deleteCategory(context, c.id),
-                              children: (catFeeds)
-                                  .map((f) {
-                                    return _FeedTile(
-                                      title:
-                                          (f.userTitle?.trim().isNotEmpty ==
-                                              true)
-                                          ? f.userTitle!
-                                          : (f.title?.trim().isNotEmpty == true)
-                                          ? f.title!
-                                          : f.url,
-                                      url: f.url,
-                                      lastCheckedAt: f.lastCheckedAt,
-                                      lastSyncedAt: f.lastSyncedAt,
-                                      lastStatusCode: f.lastStatusCode,
-                                      lastError: f.lastError,
-                                      onEdit: () => _editFeedTitle(
-                                        context,
-                                        feedId: f.id,
-                                        currentTitle: f.userTitle,
-                                      ),
-                                      onRefresh: () =>
-                                          _refreshFeed(context, f.id),
-                                      onMove: () =>
-                                          _moveFeedToCategory(context, f.id),
-                                      onDelete: () =>
-                                          _deleteFeed(context, f.id),
-                                    );
-                                  })
-                                  .toList(growable: false),
-                            ),
-                          );
-                        }
-
-                        final uncategorized = byCat[null] ?? const <Feed>[];
-                        if (_searchText.isEmpty || uncategorized.isNotEmpty) {
-                          tiles.add(
-                            _CategorySection(
-                              categoryName: l10n.uncategorized,
-                              onRename: null,
-                              onDelete: null,
-                              children: uncategorized
-                                  .map((f) {
-                                    return _FeedTile(
-                                      title:
-                                          (f.userTitle?.trim().isNotEmpty ==
-                                              true)
-                                          ? f.userTitle!
-                                          : (f.title?.trim().isNotEmpty == true)
-                                          ? f.title!
-                                          : f.url,
-                                      url: f.url,
-                                      lastCheckedAt: f.lastCheckedAt,
-                                      lastSyncedAt: f.lastSyncedAt,
-                                      lastStatusCode: f.lastStatusCode,
-                                      lastError: f.lastError,
-                                      onEdit: () => _editFeedTitle(
-                                        context,
-                                        feedId: f.id,
-                                        currentTitle: f.userTitle,
-                                      ),
-                                      onRefresh: () =>
-                                          _refreshFeed(context, f.id),
-                                      onMove: () =>
-                                          _moveFeedToCategory(context, f.id),
-                                      onDelete: () =>
-                                          _deleteFeed(context, f.id),
-                                    );
-                                  })
-                                  .toList(growable: false),
-                            ),
-                          );
-                        }
-
-                        if (tiles.isEmpty) {
-                          return Text(l10n.notFound);
-                        }
-
-                        return Column(children: tiles);
-                      },
-                    );
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+        feedsAsync.when(
+          loading: () => const SliverToBoxAdapter(
+            child: Center(child: LinearProgressIndicator()),
+          ),
+          error: (e, _) => SliverToBoxAdapter(
+            child: Center(child: Text(l10n.errorMessage(e.toString()))),
+          ),
+          data: (feeds) {
+            final filteredFeeds = _searchText.isEmpty
+                ? feeds
+                : feeds.where((f) {
+                    final t = (f.userTitle ?? f.title ?? '').toLowerCase();
+                    return t.contains(_searchText) ||
+                        f.url.toLowerCase().contains(_searchText);
+                  }).toList();
+
+            return categoriesAsync.when(
+              loading: () => const SliverToBoxAdapter(
+                child: Center(child: LinearProgressIndicator()),
+              ),
+              error: (e, _) => SliverToBoxAdapter(
+                child: Center(child: Text(l10n.errorMessage(e.toString()))),
+              ),
+              data: (cats) {
+                final byCat = <int?, List<Feed>>{};
+                for (final f in filteredFeeds) {
+                  byCat.putIfAbsent(f.categoryId, () => <Feed>[]).add(f);
+                }
+
+                final items = <_SubscriptionItem>[];
+
+                // Sorted categories
+                for (final c in cats) {
+                  final catFeeds = byCat[c.id] ?? const <Feed>[];
+                  if (_searchText.isNotEmpty && catFeeds.isEmpty) {
+                    continue;
+                  }
+                  items.add(_HeaderItem(c, c.name));
+                  for (final f in catFeeds) {
+                    items.add(_FeedItem(f));
+                  }
+                }
+
+                // Uncategorized
+                final uncategorized = byCat[null] ?? const <Feed>[];
+                if (_searchText.isEmpty || uncategorized.isNotEmpty) {
+                  items.add(_HeaderItem(null, l10n.uncategorized));
+                  for (final f in uncategorized) {
+                    items.add(_FeedItem(f));
+                  }
+                }
+
+                if (items.isEmpty) {
+                  return SliverToBoxAdapter(
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(l10n.notFound),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  sliver: SliverList.builder(
+                    itemCount: items.length,
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 900),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: Builder(
+                            builder: (context) {
+                              if (item is _HeaderItem) {
+                                return _CategoryHeaderWidget(
+                                  name: item.name,
+                                  onRename: item.category == null
+                                      ? null
+                                      : () => _renameCategory(
+                                          context,
+                                          categoryId: item.category!.id,
+                                          currentName: item.category!.name,
+                                        ),
+                                  onDelete: item.category == null
+                                      ? null
+                                      : () => _deleteCategory(
+                                          context,
+                                          item.category!.id,
+                                        ),
+                                );
+                              } else if (item is _FeedItem) {
+                                final f = item.feed;
+                                return _FeedTile(
+                                  title:
+                                      (f.userTitle?.trim().isNotEmpty == true)
+                                      ? f.userTitle!
+                                      : (f.title?.trim().isNotEmpty == true)
+                                      ? f.title!
+                                      : f.url,
+                                  url: f.url,
+                                  lastCheckedAt: f.lastCheckedAt,
+                                  lastSyncedAt: f.lastSyncedAt,
+                                  lastStatusCode: f.lastStatusCode,
+                                  lastError: f.lastError,
+                                  onEdit: () => _editFeedTitle(
+                                    context,
+                                    feedId: f.id,
+                                    currentTitle: f.userTitle,
+                                  ),
+                                  onRefresh: () => _refreshFeed(context, f.id),
+                                  onMove: () =>
+                                      _moveFeedToCategory(context, f.id),
+                                  onDelete: () => _deleteFeed(context, f.id),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -1256,10 +1267,57 @@ class _SubscriptionsTabState extends ConsumerState<_SubscriptionsTab> {
   Future<void> _refreshAll(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
     final feeds = await ref.read(feedRepositoryProvider).getAll();
+    if (feeds.isEmpty) return;
+
+    final appSettings = ref.read(appSettingsProvider).valueOrNull;
+    final concurrency = appSettings?.autoRefreshConcurrency ?? 2;
+
+    if (!context.mounted) return;
+
+    // Show progress dialog
+    final progressNotifier = ValueNotifier<String>('0/${feeds.length}');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            content: Row(
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(width: 24),
+                ValueListenableBuilder<String>(
+                  valueListenable: progressNotifier,
+                  builder: (context, value, _) {
+                    return Text(
+                      l10n.refreshingProgress(
+                        int.tryParse(value.split('/')[0]) ?? 0,
+                        int.tryParse(value.split('/')[1]) ?? feeds.length,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
     final batch = await ref
         .read(syncServiceProvider)
-        .refreshFeedsSafe(feeds.map((f) => f.id));
+        .refreshFeedsSafe(
+          feeds.map((f) => f.id),
+          maxConcurrent: concurrency,
+          onProgress: (current, total) {
+            progressNotifier.value = '$current/$total';
+          },
+        );
+
     if (!context.mounted) return;
+    Navigator.of(context).pop(); // Close progress dialog
+
     final err = batch.firstError?.error;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -1498,10 +1556,56 @@ class _ServicesTab extends ConsumerWidget {
 
     Future<void> refreshNow() async {
       final feeds = await ref.read(feedRepositoryProvider).getAll();
+      if (feeds.isEmpty) return;
+
+      final concurrency = appSettings.autoRefreshConcurrency;
+
+      if (!context.mounted) return;
+
+      // Show progress dialog
+      final progressNotifier = ValueNotifier<String>('0/${feeds.length}');
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return PopScope(
+            canPop: false,
+            child: AlertDialog(
+              content: Row(
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(width: 24),
+                  ValueListenableBuilder<String>(
+                    valueListenable: progressNotifier,
+                    builder: (context, value, _) {
+                      return Text(
+                        l10n.refreshingProgress(
+                          int.tryParse(value.split('/')[0]) ?? 0,
+                          int.tryParse(value.split('/')[1]) ?? feeds.length,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
       final batch = await ref
           .read(syncServiceProvider)
-          .refreshFeedsSafe(feeds.map((f) => f.id));
+          .refreshFeedsSafe(
+            feeds.map((f) => f.id),
+            maxConcurrent: concurrency,
+            onProgress: (current, total) {
+              progressNotifier.value = '$current/$total';
+            },
+          );
+
       if (!context.mounted) return;
+      Navigator.of(context).pop(); // Close progress dialog
+
       final err = batch.firstError?.error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1532,7 +1636,10 @@ class _ServicesTab extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l10n.autoRefresh),
+                      Text(
+                        l10n.autoRefreshSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       const SizedBox(height: 8),
                       DropdownButtonHideUnderline(
                         child: DropdownButton<int?>(
@@ -1552,6 +1659,32 @@ class _ServicesTab extends ConsumerWidget {
                           onChanged: (v) => ref
                               .read(appSettingsProvider.notifier)
                               .setAutoRefreshMinutes(v),
+                        ),
+                      ),
+                      const Divider(height: 24),
+                      Text(
+                        l10n.refreshConcurrency,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton<int>(
+                          value: appSettings.autoRefreshConcurrency,
+                          isExpanded: true,
+                          items: [
+                            for (final c in [1, 2, 4, 6])
+                              DropdownMenuItem(
+                                value: c,
+                                child: Text(c.toString()),
+                              ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) {
+                              ref
+                                  .read(appSettingsProvider.notifier)
+                                  .setAutoRefreshConcurrency(v);
+                            }
+                          },
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -1685,75 +1818,6 @@ class _AboutTab extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _CategorySection extends StatelessWidget {
-  const _CategorySection({
-    required this.categoryName,
-    required this.onRename,
-    required this.children,
-    required this.onDelete,
-  });
-
-  final String categoryName;
-  final VoidCallback? onRename;
-  final List<Widget> children;
-  final VoidCallback? onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: theme.dividerColor),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    categoryName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                if (onRename != null)
-                  IconButton(
-                    tooltip: AppLocalizations.of(context)!.rename,
-                    onPressed: onRename,
-                    icon: const Icon(Icons.edit_outlined),
-                  ),
-                if (onDelete != null)
-                  IconButton(
-                    tooltip: AppLocalizations.of(context)!.deleteCategory,
-                    onPressed: onDelete,
-                    icon: const Icon(Icons.delete_outline),
-                  ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          if (children.isEmpty)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(
-                AppLocalizations.of(context)!.notFound,
-                style: theme.textTheme.bodyMedium,
-              ),
-            )
-          else
-            ...children,
-        ],
       ),
     );
   }
@@ -1922,6 +1986,68 @@ class _SliderTile extends StatelessWidget {
           onChanged: onChanged,
         ),
       ],
+    );
+  }
+}
+
+sealed class _SubscriptionItem {}
+
+class _HeaderItem extends _SubscriptionItem {
+  final Category? category;
+  final String name;
+  _HeaderItem(this.category, this.name);
+}
+
+class _FeedItem extends _SubscriptionItem {
+  final Feed feed;
+  _FeedItem(this.feed);
+}
+
+class _CategoryHeaderWidget extends StatelessWidget {
+  const _CategoryHeaderWidget({
+    required this.name,
+    this.onRename,
+    this.onDelete,
+  });
+
+  final String name;
+  final VoidCallback? onRename;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              name,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+          if (onRename != null)
+            IconButton(
+              tooltip: AppLocalizations.of(context)!.rename,
+              onPressed: onRename,
+              icon: const Icon(Icons.edit_outlined),
+              iconSize: 20,
+              splashRadius: 20,
+            ),
+          if (onDelete != null)
+            IconButton(
+              tooltip: AppLocalizations.of(context)!.deleteCategory,
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline),
+              iconSize: 20,
+              splashRadius: 20,
+            ),
+        ],
+      ),
     );
   }
 }

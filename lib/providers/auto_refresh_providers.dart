@@ -35,10 +35,13 @@ class AutoRefreshController extends AutoDisposeNotifier<void> {
     if (_running) return;
     _running = true;
     try {
+      final settings = ref.read(appSettingsProvider).valueOrNull;
+      final concurrency = settings?.autoRefreshConcurrency ?? 2;
+
       final feeds = await ref.read(feedRepositoryProvider).getAll();
       await ref
           .read(syncServiceProvider)
-          .refreshFeedsSafe(feeds.map((f) => f.id));
+          .refreshFeedsSafe(feeds.map((f) => f.id), maxConcurrent: concurrency);
     } finally {
       _running = false;
     }

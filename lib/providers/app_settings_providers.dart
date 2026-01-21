@@ -39,6 +39,11 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     await save(cur.copyWith(autoRefreshMinutes: minutes));
   }
 
+  Future<void> setAutoRefreshConcurrency(int concurrency) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(autoRefreshConcurrency: concurrency));
+  }
+
   Future<void> setArticleGroupMode(ArticleGroupMode mode) async {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(articleGroupMode: mode));
