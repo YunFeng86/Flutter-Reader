@@ -4,6 +4,54 @@ import '../models/article.dart';
 import '../models/rule.dart';
 import '../models/tag.dart';
 
+class ArticleQuery {
+  const ArticleQuery({
+    this.feedId,
+    this.categoryId,
+    this.unreadOnly = false,
+    this.starredOnly = false,
+    this.readLaterOnly = false,
+    this.tagId,
+    this.searchQuery = '',
+    this.sortAscending = false,
+    this.searchInContent = true,
+  });
+
+  final int? feedId;
+  final int? categoryId;
+  final bool unreadOnly;
+  final bool starredOnly;
+  final bool readLaterOnly;
+  final int? tagId;
+  final String searchQuery;
+  final bool sortAscending;
+  final bool searchInContent;
+
+  ArticleQuery copyWith({
+    int? feedId,
+    int? categoryId,
+    bool? unreadOnly,
+    bool? starredOnly,
+    bool? readLaterOnly,
+    int? tagId,
+    String? searchQuery,
+    bool? sortAscending,
+    bool? searchInContent,
+  }) {
+    return ArticleQuery(
+      feedId: feedId ?? this.feedId,
+      categoryId: categoryId ?? this.categoryId,
+      unreadOnly: unreadOnly ?? this.unreadOnly,
+      starredOnly: starredOnly ?? this.starredOnly,
+      readLaterOnly: readLaterOnly ?? this.readLaterOnly,
+      tagId: tagId ?? this.tagId,
+      searchQuery: searchQuery ?? this.searchQuery,
+      sortAscending: sortAscending ?? this.sortAscending,
+      searchInContent: searchInContent ?? this.searchInContent,
+    );
+  }
+}
+
 class ArticleRepository {
   ArticleRepository(this._isar);
 
@@ -11,33 +59,26 @@ class ArticleRepository {
 
   static const int defaultPageSize = 50;
 
-  QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery({
-    int? feedId,
-    int? categoryId,
-    bool unreadOnly = false,
-    bool starredOnly = false,
-    bool readLaterOnly = false,
-    int? tagId,
-    String searchQuery = '',
-    bool searchInContent = true,
-  }) {
-    final cid = categoryId;
-    final tid = tagId;
-    final q = searchQuery.trim();
+  QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery(
+    ArticleQuery query,
+  ) {
+    final cid = query.categoryId;
+    final tid = query.tagId;
+    final q = query.searchQuery.trim();
     final hasQuery = q.isNotEmpty;
     return _isar.articles
         .filter()
-        .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
+        .optional(query.feedId != null, (q) => q.feedIdEqualTo(query.feedId!))
         .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
         .optional(cid != null && cid >= 0, (q) => q.categoryIdEqualTo(cid!))
         .optional(tid != null, (q) => q.tags((t) => t.idEqualTo(tid!)))
-        .optional(unreadOnly, (q) => q.isReadEqualTo(false))
-        .optional(starredOnly, (q) => q.isStarredEqualTo(true))
-        .optional(readLaterOnly, (q) => q.isReadLaterEqualTo(true))
+        .optional(query.unreadOnly, (q) => q.isReadEqualTo(false))
+        .optional(query.starredOnly, (q) => q.isStarredEqualTo(true))
+        .optional(query.readLaterOnly, (q) => q.isReadLaterEqualTo(true))
         .optional(
           hasQuery,
           (q0) => q0.group(
-            (q1) => searchInContent
+            (q1) => query.searchInContent
                 ? q1
                       .titleContains(q, caseSensitive: false)
                       .or()
@@ -81,55 +122,19 @@ class ArticleRepository {
     return filtered.watch(fireImmediately: true);
   }
 
-  Future<List<Article>> fetchPage({
+  Future<List<Article>> fetchPage(
+    ArticleQuery query, {
     required int offset,
     required int limit,
-    int? feedId,
-    int? categoryId,
-    bool unreadOnly = false,
-    bool starredOnly = false,
-    bool readLaterOnly = false,
-    int? tagId,
-    String searchQuery = '',
-    bool sortAscending = false,
-    bool searchInContent = true,
   }) {
-    final qb = _buildQuery(
-      feedId: feedId,
-      categoryId: categoryId,
-      unreadOnly: unreadOnly,
-      starredOnly: starredOnly,
-      readLaterOnly: readLaterOnly,
-      tagId: tagId,
-      searchQuery: searchQuery,
-      searchInContent: searchInContent,
-    );
-    final sorted = _applySort(qb, sortAscending: sortAscending);
+    final qb = _buildQuery(query);
+    final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).findAll();
   }
 
-  Stream<void> watchQueryChanges({
-    int? feedId,
-    int? categoryId,
-    bool unreadOnly = false,
-    bool starredOnly = false,
-    bool readLaterOnly = false,
-    int? tagId,
-    String searchQuery = '',
-    bool sortAscending = false,
-    bool searchInContent = true,
-  }) {
-    final qb = _buildQuery(
-      feedId: feedId,
-      categoryId: categoryId,
-      unreadOnly: unreadOnly,
-      starredOnly: starredOnly,
-      readLaterOnly: readLaterOnly,
-      tagId: tagId,
-      searchQuery: searchQuery,
-      searchInContent: searchInContent,
-    );
-    final sorted = _applySort(qb, sortAscending: sortAscending);
+  Stream<void> watchQueryChanges(ArticleQuery query) {
+    final qb = _buildQuery(query);
+    final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.watchLazy();
   }
 

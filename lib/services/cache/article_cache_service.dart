@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:html/parser.dart' as html_parser;
+import 'package:pool/pool.dart';
 import '../../models/article.dart';
 
 class ArticleCacheService {
@@ -24,22 +25,22 @@ class ArticleCacheService {
     );
     if (urls.isEmpty) return;
 
-    // Small bounded concurrency: keeps memory/FD usage low.
-    final sem = _Semaphore(maxConcurrent);
+    // 并发上限：避免内存/文件句柄占用过高。
+    final pool = Pool(maxConcurrent);
     final futures = <Future<void>>[];
     for (final u in urls) {
-      futures.add(() async {
-        await sem.acquire();
-        try {
-          await _cacheManager.downloadFile(u);
-        } catch (_) {
-          // Best-effort cache warming; failures are ignored.
-        } finally {
-          sem.release();
-        }
-      }());
+      futures.add(
+        pool.withResource(() async {
+          try {
+            await _cacheManager.downloadFile(u);
+          } catch (_) {
+            // 预热缓存是尽力而为，失败忽略。
+          }
+        }),
+      );
     }
     await Future.wait(futures);
+    await pool.close();
   }
 
   Future<int> cacheArticles(
@@ -129,31 +130,6 @@ class ArticleCacheService {
       if (urls.length >= maxImages) break;
     }
     return urls;
-  }
-}
-
-class _Semaphore {
-  _Semaphore(this._max);
-  final int _max;
-  int _cur = 0;
-  final _waiters = <Completer<void>>[];
-
-  Future<void> acquire() {
-    if (_cur < _max) {
-      _cur++;
-      return Future.value();
-    }
-    final c = Completer<void>();
-    _waiters.add(c);
-    return c.future;
-  }
-
-  void release() {
-    if (_cur > 0) _cur--;
-    if (_waiters.isNotEmpty && _cur < _max) {
-      _cur++;
-      _waiters.removeAt(0).complete();
-    }
   }
 }
 

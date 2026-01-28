@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/article.dart';
+import '../repositories/article_repository.dart';
 import 'repository_providers.dart';
 import 'query_providers.dart';
 import 'unread_providers.dart';
@@ -47,6 +48,20 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   bool _sortAscending = false;
   bool _searchInContent = true;
 
+  ArticleQuery _currentQuery() {
+    return ArticleQuery(
+      feedId: _feedId,
+      categoryId: _categoryId,
+      tagId: _tagId,
+      unreadOnly: _unreadOnly,
+      starredOnly: _starredOnly,
+      readLaterOnly: _readLaterOnly,
+      searchQuery: _searchQuery,
+      sortAscending: _sortAscending,
+      searchInContent: _searchInContent,
+    );
+  }
+
   @override
   Future<ArticleListState> build() async {
     _feedId = ref.watch(selectedFeedIdProvider);
@@ -66,55 +81,21 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     // 读/星标通过单条流更新，避免全量刷新。
     _sub?.cancel();
     final repo = ref.watch(articleRepositoryProvider);
-    // Watch only the current query to avoid collection-wide refreshes.
-    _sub = repo
-        .watchQueryChanges(
-          feedId: _feedId,
-          categoryId: _categoryId,
-          tagId: _tagId,
-          unreadOnly: _unreadOnly,
-          starredOnly: _starredOnly,
-          readLaterOnly: _readLaterOnly,
-          searchQuery: _searchQuery,
-          sortAscending: _sortAscending,
-          searchInContent: _searchInContent,
-        )
-        .listen((_) {
-          unawaited(refresh());
-        });
+    // 仅监听当前查询，避免全表刷新。
+    final query = _currentQuery();
+    _sub = repo.watchQueryChanges(query).listen((_) {
+      unawaited(refresh());
+    });
     ref.onDispose(() => _sub?.cancel());
 
-    final items = await repo.fetchPage(
-      offset: 0,
-      limit: _pageSize,
-      feedId: _feedId,
-      categoryId: _categoryId,
-      tagId: _tagId,
-      unreadOnly: _unreadOnly,
-      starredOnly: _starredOnly,
-      readLaterOnly: _readLaterOnly,
-      searchQuery: _searchQuery,
-      sortAscending: _sortAscending,
-      searchInContent: _searchInContent,
-    );
+    final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
     return ArticleListState(items: items, hasMore: items.length == _pageSize);
   }
 
   Future<void> refresh() async {
     final repo = ref.read(articleRepositoryProvider);
-    final items = await repo.fetchPage(
-      offset: 0,
-      limit: _pageSize,
-      feedId: _feedId,
-      categoryId: _categoryId,
-      tagId: _tagId,
-      unreadOnly: _unreadOnly,
-      starredOnly: _starredOnly,
-      readLaterOnly: _readLaterOnly,
-      searchQuery: _searchQuery,
-      sortAscending: _sortAscending,
-      searchInContent: _searchInContent,
-    );
+    final query = _currentQuery();
+    final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
     final current = state.valueOrNull;
     if (current == null) {
       state = AsyncValue.data(
@@ -134,18 +115,11 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     state = AsyncValue.data(current.copyWith(isLoadingMore: true));
     try {
       final repo = ref.read(articleRepositoryProvider);
+      final query = _currentQuery();
       final more = await repo.fetchPage(
+        query,
         offset: current.items.length,
         limit: _pageSize,
-        feedId: _feedId,
-        categoryId: _categoryId,
-        tagId: _tagId,
-        unreadOnly: _unreadOnly,
-        starredOnly: _starredOnly,
-        readLaterOnly: _readLaterOnly,
-        searchQuery: _searchQuery,
-        sortAscending: _sortAscending,
-        searchInContent: _searchInContent,
       );
       state = AsyncValue.data(
         current.copyWith(

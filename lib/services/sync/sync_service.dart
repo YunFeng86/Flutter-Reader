@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:pool/pool.dart';
 
 import '../../models/article.dart';
 import '../../repositories/article_repository.dart';
@@ -232,7 +233,7 @@ class SyncService {
     final total = ids.length;
     var completed = 0;
 
-    // Split into batches to avoid creating too many futures at once
+    // 分批处理，避免一次性创建过多 Future。
     const batchSize = 10;
     final results = <FeedRefreshResult>[];
 
@@ -240,13 +241,12 @@ class SyncService {
       final end = (i + batchSize < total) ? i + batchSize : total;
       final batchIds = ids.sublist(i, end);
 
-      final sem = _Semaphore(maxConcurrent < 1 ? 1 : maxConcurrent);
+      final pool = Pool(maxConcurrent < 1 ? 1 : maxConcurrent);
       final futures = <Future<void>>[];
 
       for (final id in batchIds) {
-        futures.add(() async {
-          await sem.acquire();
-          try {
+        futures.add(
+          pool.withResource(() async {
             final r = await refreshFeedSafe(
               id,
               maxAttempts: maxAttemptsPerFeed,
@@ -254,15 +254,14 @@ class SyncService {
             results.add(r);
             completed++;
             onProgress?.call(completed, total);
-          } finally {
-            sem.release();
-          }
-        }());
+          }),
+        );
       }
 
       await Future.wait(futures);
+      await pool.close();
 
-      // Small pause between batches to let the event loop process other events
+      // 批次间小暂停，给事件循环留出处理时间。
       if (end < total) {
         await Future<void>.delayed(const Duration(milliseconds: 50));
       }
@@ -286,29 +285,4 @@ class _RefreshOutcome {
   final int incomingCount;
   final String? etag;
   final String? lastModified;
-}
-
-class _Semaphore {
-  _Semaphore(this._max);
-  final int _max;
-  int _cur = 0;
-  final _waiters = <Completer<void>>[];
-
-  Future<void> acquire() {
-    if (_cur < _max) {
-      _cur++;
-      return Future.value();
-    }
-    final c = Completer<void>();
-    _waiters.add(c);
-    return c.future;
-  }
-
-  void release() {
-    if (_cur > 0) _cur--;
-    if (_waiters.isNotEmpty && _cur < _max) {
-      _cur++;
-      _waiters.removeAt(0).complete();
-    }
-  }
 }
