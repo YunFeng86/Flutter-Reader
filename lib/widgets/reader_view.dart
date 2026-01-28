@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
@@ -44,6 +46,19 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   ProviderSubscription<AsyncValue<Article?>>? _articleSub;
   ProviderSubscription<AsyncValue<void>>? _fullTextSub;
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey<SelectionAreaState> _selectionAreaKey =
+      GlobalKey<SelectionAreaState>();
+  final ContextMenuController _contextMenuController = ContextMenuController();
+  final ContextMenuController _quickMenuController = ContextMenuController();
+  Timer? _quickMenuTimer;
+  String _pendingQuickMenuText = '';
+  OverlayEntry? _autoScrollOverlay;
+  Timer? _autoScrollTimer;
+  Offset? _autoScrollAnchor;
+  Offset? _autoScrollPointer;
+  bool _suppressNextContextMenu = false;
+  static const double _autoScrollDeadZone = 6;
+  static const double _autoScrollSpeedFactor = 0.12;
 
   @override
   void initState() {
@@ -117,6 +132,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _articleSub?.close();
     _fullTextSub?.close();
     _scrollController.dispose();
+    _quickMenuTimer?.cancel();
+    ContextMenuController.removeAny();
+    _autoScrollTimer?.cancel();
+    _autoScrollOverlay?.remove();
     super.dispose();
   }
 
@@ -264,11 +283,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     const chunkThreshold = 50000;
     if (html.length < chunkThreshold) {
       return SelectionArea(
+        key: _selectionAreaKey,
+        onSelectionChanged: _handleSelectionChanged,
         contextMenuBuilder: _buildContextMenu,
-        child: Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: isDesktop,
-          interactive: true,
+        child: _wrapScrollable(
           child: SingleChildScrollView(
             controller: _scrollController,
             child: Align(
@@ -316,16 +334,15 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     // Lazy load long articles
     final chunks = _splitHtmlIntoChunks(html);
     return SelectionArea(
+      key: _selectionAreaKey,
+      onSelectionChanged: _handleSelectionChanged,
       contextMenuBuilder: _buildContextMenu,
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(
             maxWidth: ReaderView.maxReadingWidth,
           ),
-          child: Scrollbar(
-            controller: _scrollController,
-            thumbVisibility: isDesktop,
-            interactive: true,
+          child: _wrapScrollable(
             child: ListView.builder(
               controller: _scrollController,
               padding: EdgeInsets.fromLTRB(
@@ -360,14 +377,386 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     );
   }
 
+  Widget _wrapScrollable({required Widget child}) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onSecondaryTapDown: (details) {
+        if (!isDesktop) return;
+        _suppressContextMenuOnce();
+        _showFullContextMenu(details.globalPosition);
+      },
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: _handlePointerDown,
+        onPointerMove: _handlePointerMove,
+        onPointerHover: _handlePointerHover,
+        onPointerCancel: _handlePointerCancel,
+        onPointerSignal: _handlePointerSignal,
+        child: Scrollbar(
+          controller: _scrollController,
+          thumbVisibility: isDesktop,
+          interactive: true,
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (!isDesktop || event.kind != PointerDeviceKind.mouse) return;
+    if ((event.buttons & kSecondaryMouseButton) != 0) {
+      _suppressContextMenuOnce();
+      _showFullContextMenu(event.position);
+      return;
+    }
+    if ((event.buttons & kMiddleMouseButton) != 0) {
+      if (_autoScrollTimer == null) {
+        _startAutoScroll(event.position);
+      } else {
+        _stopAutoScroll();
+      }
+      return;
+    }
+    if (_autoScrollTimer != null) {
+      _stopAutoScroll();
+    }
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event.kind != PointerDeviceKind.mouse) return;
+    _autoScrollPointer = event.position;
+  }
+
+  void _handlePointerHover(PointerHoverEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event.kind != PointerDeviceKind.mouse) return;
+    _autoScrollPointer = event.position;
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_autoScrollTimer == null) return;
+    _stopAutoScroll();
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event is PointerScrollEvent) {
+      _stopAutoScroll();
+    }
+  }
+
+  void _startAutoScroll(Offset position) {
+    if (!_scrollController.hasClients) return;
+    _autoScrollAnchor = position;
+    _autoScrollPointer = position;
+    _autoScrollTimer?.cancel();
+    _showAutoScrollIndicator(position);
+    _autoScrollTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _autoScrollTick(),
+    );
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+    _autoScrollAnchor = null;
+    _autoScrollPointer = null;
+    _autoScrollOverlay?.remove();
+    _autoScrollOverlay = null;
+  }
+
+  void _autoScrollTick() {
+    if (!_scrollController.hasClients) return;
+    final anchor = _autoScrollAnchor;
+    final pointer = _autoScrollPointer;
+    if (anchor == null || pointer == null) return;
+    final delta = pointer.dy - anchor.dy;
+    if (delta.abs() < _autoScrollDeadZone) return;
+    final position = _scrollController.position;
+    final next = (position.pixels + delta * _autoScrollSpeedFactor).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
+    );
+    if (next != position.pixels) {
+      _scrollController.jumpTo(next);
+    }
+  }
+
+  void _showAutoScrollIndicator(Offset position) {
+    _autoScrollOverlay?.remove();
+    _autoScrollOverlay = null;
+    if (!mounted) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final overlayBox = overlay.context.findRenderObject();
+    if (overlayBox is! RenderBox) return;
+    final local = overlayBox.globalToLocal(position);
+    final theme = Theme.of(context);
+    _autoScrollOverlay = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          left: local.dx - 14,
+          top: local.dy - 14,
+          child: IgnorePointer(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  border: Border.all(
+                    color: theme.colorScheme.outlineVariant,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.shadowColor.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.unfold_more,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    overlay.insert(_autoScrollOverlay!);
+  }
+
+  // ignore: deprecated_member_use
+  String? _getSelectedText(SelectableRegionState selectableRegionState) {
+    // 注意：textEditingValue 已弃用，但目前没有更好的替代 API
+    // 未来应该使用 contextMenuBuilder 相关的新 API
+    // ignore: deprecated_member_use
+    final value = selectableRegionState.textEditingValue;
+    final selection = value.selection;
+    if (!selection.isValid || selection.isCollapsed) return null;
+    if (selection.start < 0 || selection.end < 0) return null;
+    if (selection.start >= selection.end) return null;
+    if (selection.end > value.text.length) return null;
+    final selected = value.text
+        .substring(selection.start, selection.end)
+        .trim();
+    return selected.isEmpty ? null : selected;
+  }
+
+  void _searchSelectedText(String text) {
+    final query = Uri.encodeQueryComponent(text);
+    final uri = Uri.parse('https://duckduckgo.com/?q=$query');
+    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
+  }
+
+  void _handleSelectionChanged(SelectedContent? selection) {
+    if (!isDesktop) return;
+    _quickMenuTimer?.cancel();
+    final text = selection?.plainText.trim() ?? '';
+    _pendingQuickMenuText = text;
+    if (text.isEmpty) {
+      ContextMenuController.removeAny();
+      return;
+    }
+    _quickMenuTimer = Timer(const Duration(milliseconds: 180), () {
+      if (!mounted) return;
+      if (_pendingQuickMenuText != text) return;
+      _showQuickMenu(text);
+    });
+  }
+
+  void _suppressContextMenuOnce() {
+    _suppressNextContextMenu = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _suppressNextContextMenu = false;
+    });
+  }
+
+  List<ContextMenuButtonItem> _buildContextMenuItems(
+    SelectableRegionState selectableRegionState,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final buttonItems = List<ContextMenuButtonItem>.of(
+      selectableRegionState.contextMenuButtonItems,
+    );
+    final selectedText = _getSelectedText(selectableRegionState);
+    if (selectedText != null) {
+      buttonItems.insert(
+        0,
+        ContextMenuButtonItem(
+          label: l10n.search,
+          onPressed: () {
+            selectableRegionState.hideToolbar();
+            _searchSelectedText(selectedText);
+          },
+          type: ContextMenuButtonType.custom,
+        ),
+      );
+    }
+    final hasSelectAll = buttonItems.any(
+      (item) => item.type == ContextMenuButtonType.selectAll,
+    );
+    if (!hasSelectAll) {
+      buttonItems.add(
+        ContextMenuButtonItem(
+          onPressed: () =>
+              selectableRegionState.selectAll(SelectionChangedCause.toolbar),
+          type: ContextMenuButtonType.selectAll,
+        ),
+      );
+    }
+    return buttonItems;
+  }
+
+  void _showFullContextMenu(Offset globalPosition) {
+    final selectionArea = _selectionAreaKey.currentState;
+    final selectableRegion = selectionArea?.selectableRegion;
+    if (selectableRegion == null) return;
+    _showFullContextMenuWithAnchors(
+      selectableRegion,
+      TextSelectionToolbarAnchors(primaryAnchor: globalPosition),
+    );
+  }
+
+  void _showFullContextMenuWithAnchors(
+    SelectableRegionState selectableRegionState,
+    TextSelectionToolbarAnchors anchors,
+  ) {
+    final items = _buildContextMenuItems(selectableRegionState);
+    if (items.isEmpty) return;
+    _quickMenuController.remove();
+    _contextMenuController.remove();
+    _contextMenuController.show(
+      context: context,
+      contextMenuBuilder: (overlayContext) {
+        return AdaptiveTextSelectionToolbar.buttonItems(
+          anchors: anchors,
+          buttonItems: items,
+        );
+      },
+      debugRequiredFor: widget,
+    );
+  }
+
+  void _showQuickMenu(String text) {
+    final selectionArea = _selectionAreaKey.currentState;
+    final selectableRegion = selectionArea?.selectableRegion;
+    if (selectableRegion == null) return;
+    final anchors = selectableRegion.contextMenuAnchors;
+    final items = selectableRegion.contextMenuButtonItems;
+    final l10n = AppLocalizations.of(context)!;
+    final copyItem = items.cast<ContextMenuButtonItem?>().firstWhere(
+      (item) => item?.type == ContextMenuButtonType.copy,
+      orElse: () => null,
+    );
+    final actions = <_QuickAction>[];
+    if (copyItem != null) {
+      actions.add(
+        _QuickAction(
+          icon: Icons.content_copy,
+          label: AdaptiveTextSelectionToolbar.getButtonLabel(context, copyItem),
+          onPressed: () {
+            copyItem.onPressed?.call();
+            ContextMenuController.removeAny();
+          },
+        ),
+      );
+    }
+    actions.add(
+      _QuickAction(
+        icon: Icons.search,
+        label: l10n.search,
+        onPressed: () {
+          _searchSelectedText(text);
+          ContextMenuController.removeAny();
+        },
+      ),
+    );
+    actions.add(
+      _QuickAction(
+        icon: Icons.keyboard_arrow_up,
+        label: l10n.more,
+        onPressed: () {
+          _suppressContextMenuOnce();
+          _showFullContextMenuWithAnchors(selectableRegion, anchors);
+        },
+      ),
+    );
+    if (actions.isEmpty) return;
+    _quickMenuController.show(
+      context: context,
+      contextMenuBuilder: (overlayContext) {
+        return _buildQuickActionMenu(overlayContext, anchors, actions);
+      },
+      debugRequiredFor: widget,
+    );
+  }
+
   /// 构建自定义上下文菜单，使用 Material Design 风格
   Widget _buildContextMenu(
     BuildContext context,
     SelectableRegionState selectableRegionState,
   ) {
+    if (isDesktop && _suppressNextContextMenu) {
+      return const SizedBox.shrink();
+    }
+    _quickMenuController.remove();
+    _contextMenuController.remove();
+    final buttonItems = _buildContextMenuItems(selectableRegionState);
     return AdaptiveTextSelectionToolbar.buttonItems(
       anchors: selectableRegionState.contextMenuAnchors,
-      buttonItems: selectableRegionState.contextMenuButtonItems,
+      buttonItems: buttonItems,
+    );
+  }
+
+  Widget _buildQuickActionMenu(
+    BuildContext context,
+    TextSelectionToolbarAnchors anchors,
+    List<_QuickAction> actions,
+  ) {
+    final theme = Theme.of(context);
+    final children = actions
+        .map(
+          (action) => IconButton(
+            onPressed: action.onPressed,
+            icon: Icon(action.icon, size: 18),
+            tooltip: action.label,
+          ),
+        )
+        .toList();
+    return Listener(
+      onPointerDown: (event) {
+        if (!isDesktop || event.kind != PointerDeviceKind.mouse) return;
+        if ((event.buttons & kSecondaryMouseButton) == 0) return;
+        _suppressContextMenuOnce();
+        _showFullContextMenu(event.position);
+      },
+      child: TextSelectionToolbar(
+        anchorAbove: anchors.primaryAnchor,
+        anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
+        toolbarBuilder: (context, child) {
+          return Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(999),
+            color: theme.colorScheme.surfaceContainerHigh,
+            shadowColor: theme.shadowColor.withValues(alpha: 0.2),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: child,
+            ),
+          );
+        },
+        children: children,
+      ),
     );
   }
 
@@ -559,4 +948,16 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
       ],
     );
   }
+}
+
+class _QuickAction {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
 }
