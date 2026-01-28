@@ -11,25 +11,7 @@ class ArticleRepository {
 
   static const int defaultPageSize = 50;
 
-  Stream<List<Article>> watchLatest({int? feedId, bool unreadOnly = false}) {
-    var q = _isar.articles.where().sortByPublishedAtDesc();
-
-    // Isar's `where()` doesn't support filtering by arbitrary fields; use filter().
-    // We keep a separate branch to preserve sorting.
-    if (feedId == null && !unreadOnly) {
-      return q.watch(fireImmediately: true);
-    }
-
-    final f = _isar.articles.filter();
-    final filtered = (feedId == null ? f : f.feedIdEqualTo(feedId))
-        .optional(unreadOnly, (q) => q.isReadEqualTo(false))
-        .sortByPublishedAtDesc();
-    return filtered.watch(fireImmediately: true);
-  }
-
-  Future<List<Article>> fetchPage({
-    required int offset,
-    required int limit,
+  QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery({
     int? feedId,
     int? categoryId,
     bool unreadOnly = false,
@@ -37,14 +19,13 @@ class ArticleRepository {
     bool readLaterOnly = false,
     int? tagId,
     String searchQuery = '',
-    bool sortAscending = false,
     bool searchInContent = true,
   }) {
     final cid = categoryId;
     final tid = tagId;
     final q = searchQuery.trim();
     final hasQuery = q.isNotEmpty;
-    final qb = _isar.articles
+    return _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
         .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
@@ -75,11 +56,81 @@ class ArticleRepository {
                       .linkContains(q, caseSensitive: false),
           ),
         );
+  }
 
-    final sorted = sortAscending
-        ? qb.sortByPublishedAt()
-        : qb.sortByPublishedAtDesc();
+  QueryBuilder<Article, Article, QAfterSortBy> _applySort(
+    QueryBuilder<Article, Article, QAfterFilterCondition> qb, {
+    required bool sortAscending,
+  }) {
+    return sortAscending ? qb.sortByPublishedAt() : qb.sortByPublishedAtDesc();
+  }
+
+  Stream<List<Article>> watchLatest({int? feedId, bool unreadOnly = false}) {
+    var q = _isar.articles.where().sortByPublishedAtDesc();
+
+    // Isar's `where()` doesn't support filtering by arbitrary fields; use filter().
+    // We keep a separate branch to preserve sorting.
+    if (feedId == null && !unreadOnly) {
+      return q.watch(fireImmediately: true);
+    }
+
+    final f = _isar.articles.filter();
+    final filtered = (feedId == null ? f : f.feedIdEqualTo(feedId))
+        .optional(unreadOnly, (q) => q.isReadEqualTo(false))
+        .sortByPublishedAtDesc();
+    return filtered.watch(fireImmediately: true);
+  }
+
+  Future<List<Article>> fetchPage({
+    required int offset,
+    required int limit,
+    int? feedId,
+    int? categoryId,
+    bool unreadOnly = false,
+    bool starredOnly = false,
+    bool readLaterOnly = false,
+    int? tagId,
+    String searchQuery = '',
+    bool sortAscending = false,
+    bool searchInContent = true,
+  }) {
+    final qb = _buildQuery(
+      feedId: feedId,
+      categoryId: categoryId,
+      unreadOnly: unreadOnly,
+      starredOnly: starredOnly,
+      readLaterOnly: readLaterOnly,
+      tagId: tagId,
+      searchQuery: searchQuery,
+      searchInContent: searchInContent,
+    );
+    final sorted = _applySort(qb, sortAscending: sortAscending);
     return sorted.offset(offset).limit(limit).findAll();
+  }
+
+  Stream<void> watchQueryChanges({
+    int? feedId,
+    int? categoryId,
+    bool unreadOnly = false,
+    bool starredOnly = false,
+    bool readLaterOnly = false,
+    int? tagId,
+    String searchQuery = '',
+    bool sortAscending = false,
+    bool searchInContent = true,
+  }) {
+    final qb = _buildQuery(
+      feedId: feedId,
+      categoryId: categoryId,
+      unreadOnly: unreadOnly,
+      starredOnly: starredOnly,
+      readLaterOnly: readLaterOnly,
+      tagId: tagId,
+      searchQuery: searchQuery,
+      searchInContent: searchInContent,
+    );
+    final sorted = _applySort(qb, sortAscending: sortAscending);
+    return sorted.watchLazy();
   }
 
   Stream<Article?> watchById(int id) {

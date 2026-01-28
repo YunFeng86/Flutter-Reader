@@ -132,62 +132,68 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                   );
                 }
 
-                final a = (entry as _ArticleEntry).article;
-                Widget child = ArticleListItem(
-                  article: a,
-                  selected: a.id == widget.selectedArticleId,
-                  onTap: () {
-                    final width = MediaQuery.sizeOf(context).width;
+                final seed = (entry as _ArticleEntry).article;
+                return Consumer(
+                  builder: (context, ref, _) {
+                    final live =
+                        ref.watch(articleProvider(seed.id)).valueOrNull ?? seed;
+                    Widget child = ArticleListItem(
+                      article: live,
+                      selected: live.id == widget.selectedArticleId,
+                      onTap: () {
+                        final width = MediaQuery.sizeOf(context).width;
 
-                    final openAsSecondaryPage = isDesktop
-                        ? !desktopReaderEmbedded(desktopModeForWidth(width))
-                        : width < 600;
+                        final openAsSecondaryPage = isDesktop
+                            ? !desktopReaderEmbedded(desktopModeForWidth(width))
+                            : width < 600;
 
-                    if (openAsSecondaryPage) {
-                      context.push('/article/${a.id}');
-                    } else {
-                      context.go('/article/${a.id}');
+                        if (openAsSecondaryPage) {
+                          context.push('/article/${live.id}');
+                        } else {
+                          context.go('/article/${live.id}');
+                        }
+                      },
+                    );
+
+                    if (narrow) {
+                      child = Dismissible(
+                        key: ValueKey(live.id),
+                        background: Container(
+                          color: Colors.green.shade700,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Icon(
+                            live.isRead
+                                ? Icons.mark_email_unread
+                                : Icons.mark_email_read,
+                            color: Colors.white,
+                          ),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.amber.shade800,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Icon(
+                            live.isStarred ? Icons.star_border : Icons.star,
+                            color: Colors.white,
+                          ),
+                        ),
+                        confirmDismiss: (direction) async {
+                          final repo = ref.read(articleRepositoryProvider);
+                          if (direction == DismissDirection.startToEnd) {
+                            await repo.markRead(live.id, !live.isRead);
+                          } else {
+                            await repo.toggleStar(live.id);
+                          }
+                          return false; // keep item in list
+                        },
+                        child: child,
+                      );
                     }
+
+                    return child;
                   },
                 );
-
-                if (narrow) {
-                  child = Dismissible(
-                    key: ValueKey(a.id),
-                    background: Container(
-                      color: Colors.green.shade700,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Icon(
-                        a.isRead
-                            ? Icons.mark_email_unread
-                            : Icons.mark_email_read,
-                        color: Colors.white,
-                      ),
-                    ),
-                    secondaryBackground: Container(
-                      color: Colors.amber.shade800,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Icon(
-                        a.isStarred ? Icons.star_border : Icons.star,
-                        color: Colors.white,
-                      ),
-                    ),
-                    confirmDismiss: (direction) async {
-                      final repo = ref.read(articleRepositoryProvider);
-                      if (direction == DismissDirection.startToEnd) {
-                        await repo.markRead(a.id, !a.isRead);
-                      } else {
-                        await repo.toggleStar(a.id);
-                      }
-                      return false; // keep item in list
-                    },
-                    child: child,
-                  );
-                }
-
-                return child;
               },
             ),
           ),

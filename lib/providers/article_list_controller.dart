@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/article.dart';
-import 'core_providers.dart';
 import 'repository_providers.dart';
 import 'query_providers.dart';
 import 'unread_providers.dart';
@@ -63,18 +62,28 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
         ArticleSortOrder.oldestFirst;
     _searchInContent = settings?.searchInContent ?? true;
 
-    // Refresh the list when the underlying query changes (new items from sync,
-    // read/star toggles, etc.). For MVP we simply reload the first page.
+    // Refresh the list when the underlying query changes (new items, filters).
+    // Per-item streams cover read/star toggles without full refresh.
     _sub?.cancel();
-    final isar = ref.watch(isarProvider);
-    // Watch the whole collection so we refresh even when toggling read/star on
-    // a query that doesn't filter/sort by those fields (e.g. "All articles").
-    _sub = isar.articles.watchLazy().listen((_) {
-      unawaited(refresh());
-    });
+    final repo = ref.watch(articleRepositoryProvider);
+    // Watch only the current query to avoid collection-wide refreshes.
+    _sub = repo
+        .watchQueryChanges(
+          feedId: _feedId,
+          categoryId: _categoryId,
+          tagId: _tagId,
+          unreadOnly: _unreadOnly,
+          starredOnly: _starredOnly,
+          readLaterOnly: _readLaterOnly,
+          searchQuery: _searchQuery,
+          sortAscending: _sortAscending,
+          searchInContent: _searchInContent,
+        )
+        .listen((_) {
+          unawaited(refresh());
+        });
     ref.onDispose(() => _sub?.cancel());
 
-    final repo = ref.watch(articleRepositoryProvider);
     final items = await repo.fetchPage(
       offset: 0,
       limit: _pageSize,
