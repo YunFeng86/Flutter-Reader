@@ -112,9 +112,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
         // Prefetch images when content changes.
         final prevA = prev?.valueOrNull;
-        final prevHtml = (prevA?.fullContentHtml ?? prevA?.contentHtml ?? '')
-            .trim();
-        final html = (a?.fullContentHtml ?? a?.contentHtml ?? '').trim();
+        final prevHtml =
+            (prevA?.extractedContentHtml ?? prevA?.contentHtml ?? '').trim();
+        final html =
+            (a?.extractedContentHtml ?? a?.contentHtml ?? '').trim();
         if (a == null || html.isEmpty) return;
         if (prevA != null && prevA.id == a.id && prevHtml == html) return;
         unawaited(
@@ -163,10 +164,11 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         }
 
         final settings = settingsAsync.valueOrNull ?? const ReaderSettings();
-        final hasFull = (article.fullContentHtml ?? '').trim().isNotEmpty;
-        final showFull = hasFull && useFullText;
+        final hasExtracted =
+            (article.extractedContentHtml ?? '').trim().isNotEmpty;
+        final showExtracted = hasExtracted && useFullText;
         final html =
-            ((showFull ? article.fullContentHtml : null) ??
+            ((showExtracted ? article.extractedContentHtml : null) ??
                     article.contentHtml ??
                     '')
                 .trim();

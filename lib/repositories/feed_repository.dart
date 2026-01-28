@@ -45,34 +45,6 @@ class FeedRepository {
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);
     });
-
-    // Keep articles denormalized categoryId in sync for fast filtering.
-    final ids = await _isar.articles
-        .filter()
-        .feedIdEqualTo(feedId)
-        .idProperty()
-        .findAll();
-    if (ids.isEmpty) return;
-
-    const batchSize = 200;
-    for (var i = 0; i < ids.length; i += batchSize) {
-      final end = i + batchSize > ids.length ? ids.length : i + batchSize;
-      final batchIds = ids.sublist(i, end);
-      await _isar.writeTxn(() async {
-        final articles = await _isar.articles.getAll(batchIds);
-        final now = DateTime.now();
-        final updates = <Article>[];
-        for (final a in articles) {
-          if (a == null) continue;
-          a.categoryId = categoryId;
-          a.updatedAt = now;
-          updates.add(a);
-        }
-        if (updates.isNotEmpty) {
-          await _isar.articles.putAll(updates);
-        }
-      });
-    }
   }
 
   Future<void> setUserTitle({required int feedId, String? userTitle}) {

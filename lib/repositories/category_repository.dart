@@ -1,6 +1,5 @@
 import 'package:isar/isar.dart';
 
-import '../models/article.dart';
 import '../models/category.dart';
 import '../models/feed.dart';
 
@@ -53,35 +52,6 @@ class CategoryRepository {
           }
           if (updates.isNotEmpty) {
             await _isar.feeds.putAll(updates);
-          }
-        });
-      }
-    }
-
-    final articleIds = await _isar.articles
-        .filter()
-        .categoryIdEqualTo(id)
-        .idProperty()
-        .findAll();
-    if (articleIds.isNotEmpty) {
-      const batchSize = 200;
-      for (var i = 0; i < articleIds.length; i += batchSize) {
-        final end = i + batchSize > articleIds.length
-            ? articleIds.length
-            : i + batchSize;
-        final batchIds = articleIds.sublist(i, end);
-        await _isar.writeTxn(() async {
-          final articles = await _isar.articles.getAll(batchIds);
-          final now = DateTime.now();
-          final updates = <Article>[];
-          for (final a in articles) {
-            if (a == null) continue;
-            a.categoryId = null;
-            a.updatedAt = now;
-            updates.add(a);
-          }
-          if (updates.isNotEmpty) {
-            await _isar.articles.putAll(updates);
           }
         });
       }

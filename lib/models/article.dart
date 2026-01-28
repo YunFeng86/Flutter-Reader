@@ -4,15 +4,18 @@ import 'tag.dart';
 
 part 'article.g.dart';
 
+enum ContentSource {
+  feed,
+  extracted,
+  extractionFailed,
+}
+
 @collection
 class Article {
   Id id = Isar.autoIncrement;
 
   @Index()
   late int feedId;
-
-  @Index()
-  int? categoryId;
 
   /// Best-effort remote identifier (guid/id/link). Not guaranteed to be present.
   @Index(composite: [CompositeIndex('feedId')])
@@ -24,11 +27,15 @@ class Article {
   String? title;
   String? author;
 
-  /// HTML from the feed itself (description/content).
+  /// 来自 Feed 的 HTML 内容。
   String? contentHtml;
 
-  /// Full content extracted locally (Smart Reader View).
-  String? fullContentHtml;
+  /// 提取后的 HTML 内容。
+  String? extractedContentHtml;
+
+  /// 内容来源状态。
+  @enumerated
+  ContentSource contentSource = ContentSource.feed;
 
   /// Key for pagination/sorting.
   @Index()

@@ -145,16 +145,15 @@ class ReaderBottomBar extends ConsumerWidget {
                         : null,
                   ),
                 ),
-                // Full Text / Reader Mode Toggle
+                // 原文/提取切换
                 Consumer(
                   builder: (context, ref, _) {
-                    final hasFull = (article.fullContentHtml ?? '')
-                        .trim()
-                        .isNotEmpty;
                     final useFullText = ref.watch(
                       fullTextViewEnabledProvider(article.id),
                     );
                     final controller = ref.watch(fullTextControllerProvider);
+                    final hasFull =
+                        (article.extractedContentHtml ?? '').trim().isNotEmpty;
                     final showFull = hasFull && useFullText;
 
                     return IconButton(
@@ -175,7 +174,7 @@ class ReaderBottomBar extends ConsumerWidget {
                                   !useFullText;
                             }
                           : () {
-                              // Fetch and show
+                              // 先切换为提取视图，再触发提取。
                               ref
                                       .read(
                                         fullTextViewEnabledProvider(

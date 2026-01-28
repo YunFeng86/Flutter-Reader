@@ -114,7 +114,6 @@ class SyncService {
             ..title = it.title
             ..author = it.author
             ..contentHtml = it.contentHtml
-            ..categoryId = feed.categoryId
             ..publishedAt = (it.publishedAt ?? DateTime.now()).toUtc();
           return a;
         })

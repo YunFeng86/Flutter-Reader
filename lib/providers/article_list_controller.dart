@@ -15,27 +15,36 @@ class ArticleListState {
     required this.items,
     required this.hasMore,
     this.isLoadingMore = false,
+    this.startOffset = 0,
+    required this.nextOffset,
   });
 
   final List<Article> items;
   final bool hasMore;
   final bool isLoadingMore;
+  final int startOffset;
+  final int nextOffset;
 
   ArticleListState copyWith({
     List<Article>? items,
     bool? hasMore,
     bool? isLoadingMore,
+    int? startOffset,
+    int? nextOffset,
   }) {
     return ArticleListState(
       items: items ?? this.items,
       hasMore: hasMore ?? this.hasMore,
       isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      startOffset: startOffset ?? this.startOffset,
+      nextOffset: nextOffset ?? this.nextOffset,
     );
   }
 }
 
 class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   static const _pageSize = 50;
+  static const _maxItems = 500;
 
   StreamSubscription<void>? _sub;
   int? _feedId;
@@ -89,7 +98,11 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     ref.onDispose(() => _sub?.cancel());
 
     final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
-    return ArticleListState(items: items, hasMore: items.length == _pageSize);
+    return ArticleListState(
+      items: items,
+      hasMore: items.length == _pageSize,
+      nextOffset: items.length,
+    );
   }
 
   Future<void> refresh() async {
@@ -99,12 +112,21 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
     final current = state.valueOrNull;
     if (current == null) {
       state = AsyncValue.data(
-        ArticleListState(items: items, hasMore: items.length == _pageSize),
+        ArticleListState(
+          items: items,
+          hasMore: items.length == _pageSize,
+          nextOffset: items.length,
+        ),
       );
       return;
     }
     state = AsyncValue.data(
-      current.copyWith(items: items, hasMore: items.length == _pageSize),
+      current.copyWith(
+        items: items,
+        hasMore: items.length == _pageSize,
+        startOffset: 0,
+        nextOffset: items.length,
+      ),
     );
   }
 
@@ -118,14 +140,25 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
       final query = _currentQuery();
       final more = await repo.fetchPage(
         query,
-        offset: current.items.length,
+        offset: current.nextOffset,
         limit: _pageSize,
       );
+      final nextOffset = current.nextOffset + more.length;
+      var merged = [...current.items, ...more];
+      var startOffset = current.startOffset;
+      if (merged.length > _maxItems) {
+        final drop = merged.length - _maxItems;
+        // 只保留最近加载的窗口，避免列表无限增长占内存。
+        merged = merged.sublist(drop);
+        startOffset += drop;
+      }
       state = AsyncValue.data(
         current.copyWith(
-          items: [...current.items, ...more],
+          items: merged,
           hasMore: more.length == _pageSize,
           isLoadingMore: false,
+          startOffset: startOffset,
+          nextOffset: nextOffset,
         ),
       );
     } catch (e, st) {

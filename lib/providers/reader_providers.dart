@@ -13,14 +13,18 @@ class FullTextController extends AutoDisposeAsyncNotifier<void> {
       final repo = ref.read(articleRepositoryProvider);
       final article = await repo.getById(articleId);
       if (article == null) return;
-      if (article.fullContentHtml != null &&
-          article.fullContentHtml!.trim().isNotEmpty) {
+      if (article.extractedContentHtml != null &&
+          article.extractedContentHtml!.trim().isNotEmpty) {
         return;
       }
       final extracted = await ref
           .read(articleExtractorProvider)
           .extract(article.link);
-      await repo.setFullContent(articleId, extracted.contentHtml);
+      if (extracted.contentHtml.trim().isEmpty) {
+        await repo.markExtractionFailed(articleId);
+        return;
+      }
+      await repo.setExtractedContent(articleId, extracted.contentHtml);
       await ref
           .read(articleCacheServiceProvider)
           .prefetchImagesFromHtml(
@@ -36,8 +40,7 @@ final fullTextControllerProvider =
       FullTextController.new,
     );
 
-/// Whether the reader should show full text (when available) for a given
-/// article. This is purely a view concern and is not persisted.
+/// 是否显示提取内容（仅视图层，不持久化）。
 final fullTextViewEnabledProvider = StateProvider.autoDispose.family<bool, int>(
   (ref, articleId) => false,
 );

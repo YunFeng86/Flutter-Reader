@@ -52,7 +52,10 @@ class ArticleCacheService {
     final batch = <Future<void>>[];
 
     for (final article in articles) {
-      final content = article.fullContentHtml ?? article.contentHtml;
+      final content =
+          article.extractedContentHtml?.trim().isNotEmpty == true
+              ? article.extractedContentHtml
+              : article.contentHtml;
       if (content == null || content.trim().isEmpty) continue;
       batch.add(
         prefetchImagesFromHtml(

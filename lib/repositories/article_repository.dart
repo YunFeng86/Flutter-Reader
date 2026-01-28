@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:isar/isar.dart';
 
 import '../models/article.dart';
+import '../models/feed.dart';
 import '../models/rule.dart';
 import '../models/tag.dart';
 
@@ -59,18 +62,31 @@ class ArticleRepository {
 
   static const int defaultPageSize = 50;
 
+  Future<List<int>?> _resolveCategoryFeedIds(ArticleQuery query) async {
+    if (query.feedId != null || query.categoryId == null) return null;
+    final cid = query.categoryId!;
+    final qb = _isar.feeds.filter();
+    final filtered = cid < 0 ? qb.categoryIdIsNull() : qb.categoryIdEqualTo(cid);
+    return filtered.idProperty().findAll();
+  }
+
   QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery(
-    ArticleQuery query,
-  ) {
-    final cid = query.categoryId;
+    ArticleQuery query, {
+    List<int>? categoryFeedIds,
+  }) {
     final tid = query.tagId;
     final q = query.searchQuery.trim();
     final hasQuery = q.isNotEmpty;
     return _isar.articles
         .filter()
         .optional(query.feedId != null, (q) => q.feedIdEqualTo(query.feedId!))
-        .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
-        .optional(cid != null && cid >= 0, (q) => q.categoryIdEqualTo(cid!))
+        .optional(
+          query.feedId == null && categoryFeedIds != null,
+          (q) => q.anyOf(
+            categoryFeedIds!,
+            (q, id) => q.feedIdEqualTo(id),
+          ),
+        )
         .optional(tid != null, (q) => q.tags((t) => t.idEqualTo(tid!)))
         .optional(query.unreadOnly, (q) => q.isReadEqualTo(false))
         .optional(query.starredOnly, (q) => q.isStarredEqualTo(true))
@@ -88,7 +104,7 @@ class ArticleRepository {
                       .or()
                       .contentHtmlContains(q, caseSensitive: false)
                       .or()
-                      .fullContentHtmlContains(q, caseSensitive: false)
+                      .extractedContentHtmlContains(q, caseSensitive: false)
                 : q1
                       .titleContains(q, caseSensitive: false)
                       .or()
@@ -126,16 +142,52 @@ class ArticleRepository {
     ArticleQuery query, {
     required int offset,
     required int limit,
-  }) {
-    final qb = _buildQuery(query);
+  }) async {
+    final feedIds = await _resolveCategoryFeedIds(query);
+    if (feedIds != null && feedIds.isEmpty) return [];
+    final qb = _buildQuery(query, categoryFeedIds: feedIds);
     final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).findAll();
   }
 
   Stream<void> watchQueryChanges(ArticleQuery query) {
-    final qb = _buildQuery(query);
-    final sorted = _applySort(qb, sortAscending: query.sortAscending);
-    return sorted.watchLazy();
+    final controller = StreamController<void>.broadcast();
+    StreamSubscription<void>? articleSub;
+    StreamSubscription<void>? feedSub;
+
+    Future<void> watchArticles() async {
+      await articleSub?.cancel();
+      final feedIds = await _resolveCategoryFeedIds(query);
+      if (feedIds != null && feedIds.isEmpty) {
+        if (!controller.isClosed) controller.add(null);
+        return;
+      }
+      final qb = _buildQuery(query, categoryFeedIds: feedIds);
+      final sorted = _applySort(qb, sortAscending: query.sortAscending);
+      articleSub = sorted.watchLazy().listen((_) {
+        if (!controller.isClosed) controller.add(null);
+      });
+    }
+
+    if (query.feedId == null && query.categoryId != null) {
+      final cid = query.categoryId!;
+      final qb = _isar.feeds.filter();
+      final feedsQuery =
+          cid < 0 ? qb.categoryIdIsNull() : qb.categoryIdEqualTo(cid);
+      feedSub = feedsQuery.watchLazy().listen((_) async {
+        await watchArticles();
+        if (!controller.isClosed) controller.add(null);
+      });
+    }
+
+    unawaited(watchArticles());
+
+    controller.onCancel = () async {
+      await articleSub?.cancel();
+      await feedSub?.cancel();
+      await controller.close();
+    };
+    return controller.stream;
   }
 
   Stream<Article?> watchById(int id) {
@@ -176,11 +228,22 @@ class ArticleRepository {
     });
   }
 
-  Future<void> setFullContent(int id, String html) {
+  Future<void> setExtractedContent(int id, String html) {
     return _isar.writeTxn(() async {
       final a = await _isar.articles.get(id);
       if (a == null) return;
-      a.fullContentHtml = html;
+      a.extractedContentHtml = html;
+      a.contentSource = ContentSource.extracted;
+      a.updatedAt = DateTime.now();
+      await _isar.articles.put(a);
+    });
+  }
+
+  Future<void> markExtractionFailed(int id) {
+    return _isar.writeTxn(() async {
+      final a = await _isar.articles.get(id);
+      if (a == null) return;
+      a.contentSource = ContentSource.extractionFailed;
       a.updatedAt = DateTime.now();
       await _isar.articles.put(a);
     });
@@ -224,12 +287,20 @@ class ArticleRepository {
   }
 
   Future<int> _markAllReadBatched({int? feedId, int? categoryId}) async {
-    final cid = categoryId;
+    final query = ArticleQuery(
+      feedId: feedId,
+      categoryId: categoryId,
+      unreadOnly: true,
+    );
+    final feedIds = await _resolveCategoryFeedIds(query);
+    if (feedIds != null && feedIds.isEmpty) return 0;
     final qb = _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
-        .optional(cid != null && cid < 0, (q) => q.categoryIdIsNull())
-        .optional(cid != null && cid >= 0, (q) => q.categoryIdEqualTo(cid!))
+        .optional(
+          feedId == null && feedIds != null,
+          (q) => q.anyOf(feedIds!, (q, id) => q.feedIdEqualTo(id)),
+        )
         .isReadEqualTo(false);
 
     // 先取出 ID，避免单次事务加载过多数据。
@@ -296,7 +367,11 @@ class ArticleRepository {
           a.isRead = existing.isRead;
           a.isStarred = existing.isStarred;
           a.isReadLater = existing.isReadLater;
-          a.fullContentHtml = existing.fullContentHtml;
+          a.contentSource = existing.contentSource;
+          a.extractedContentHtml = existing.extractedContentHtml;
+          if (a.contentHtml == null || a.contentHtml!.trim().isEmpty) {
+            a.contentHtml = existing.contentHtml;
+          }
           if (a.publishedAt.millisecondsSinceEpoch == 0) {
             a.publishedAt = existing.publishedAt;
           }
@@ -346,10 +421,10 @@ class ArticleRepository {
       if (r.matchTitle && contains(a.title)) return true;
       if (r.matchAuthor && contains(a.author)) return true;
       if (r.matchLink && contains(a.link)) return true;
-      if (r.matchContent &&
-          (contains(a.contentHtml) || contains(a.fullContentHtml))) {
-        return true;
-      }
+        if (r.matchContent &&
+            (contains(a.contentHtml) || contains(a.extractedContentHtml))) {
+          return true;
+        }
       return false;
     }
 
