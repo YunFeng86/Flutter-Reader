@@ -38,31 +38,30 @@ class FeedRepository {
   }
 
   Future<void> setCategory({required int feedId, int? categoryId}) async {
-    // Step 1: Update Feed first (UI optimistic update will reflect immediately)
+    // Single transaction to prevent race conditions
+    // This ensures Feed and Articles are updated atomically
     await _isar.writeTxn(() async {
       final feed = await _isar.feeds.get(feedId);
       if (feed == null) return;
+
       feed.categoryId = categoryId;
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);
-    });
 
-    // Step 2: Batch update Articles (async background, user won't notice)
-    // [BUGFIX] Use batched processing to prevent OOM on feeds with many articles
-    const batchSize = 200;
+      // Batch update Articles to prevent OOM on feeds with many articles
+      // Only fetch IDs first (50000 ints = ~200KB vs 50000 objects = 100+ MB)
+      final ids = await _isar.articles
+          .filter()
+          .feedIdEqualTo(feedId)
+          .idProperty()
+          .findAll();
 
-    // Only fetch IDs, not full objects (50000 ints = ~200KB vs 50000 objects = 100+ MB)
-    final ids = await _isar.articles
-        .filter()
-        .feedIdEqualTo(feedId)
-        .idProperty()
-        .findAll();
+      if (ids.isEmpty) return;
 
-    if (ids.isEmpty) return;
+      const batchSize = 200;
+      final now = DateTime.now();
 
-    final now = DateTime.now();
-    for (var i = 0; i < ids.length; i += batchSize) {
-      await _isar.writeTxn(() async {
+      for (var i = 0; i < ids.length; i += batchSize) {
         final end = (i + batchSize > ids.length) ? ids.length : i + batchSize;
         final batchIds = ids.sublist(i, end);
 
@@ -78,8 +77,8 @@ class FeedRepository {
         if (updates.isNotEmpty) {
           await _isar.articles.putAll(updates);
         }
-      });
-    }
+      }
+    });
   }
 
   Future<void> setUserTitle({required int feedId, String? userTitle}) {

@@ -154,9 +154,11 @@ class ArticleRepository {
   }
 
   Stream<void> watchQueryChanges(ArticleQuery query) {
+    // Since setCategory now updates Feed and Articles atomically in a single
+    // transaction, we no longer need to watch the Feed table separately.
+    // Article table changes alone are sufficient to detect all updates.
     final controller = StreamController<void>.broadcast();
     StreamSubscription<void>? articleSub;
-    StreamSubscription<void>? feedSub;
 
     Future<void> watchArticles() async {
       await articleSub?.cancel();
@@ -172,22 +174,10 @@ class ArticleRepository {
       });
     }
 
-    if (query.feedId == null && query.categoryId != null) {
-      final cid = query.categoryId!;
-      final qb = _isar.feeds.filter();
-      final feedsQuery =
-          cid < 0 ? qb.categoryIdIsNull() : qb.categoryIdEqualTo(cid);
-      feedSub = feedsQuery.watchLazy().listen((_) async {
-        await watchArticles();
-        if (!controller.isClosed) controller.add(null);
-      });
-    }
-
     unawaited(watchArticles());
 
     controller.onCancel = () async {
       await articleSub?.cancel();
-      await feedSub?.cancel();
       await controller.close();
     };
     return controller.stream;
@@ -354,6 +344,14 @@ class ArticleRepository {
       final newArticles = <Article>[];
       final keywordArticles = <Article>[];
 
+      // Get Feed's categoryId once before the loop (prevents N+1 query problem)
+      // Within a transaction, feedId and categoryId won't change
+      final feed = await _isar.feeds.get(feedId);
+      if (feed == null) {
+        throw ArgumentError('Feed $feedId not found');
+      }
+      final categoryId = feed.categoryId;
+
       for (final a in incoming) {
         // [V2.0] Normalize link for deduplication
         a.link = LinkNormalizer.normalize(a.link);
@@ -365,11 +363,6 @@ class ArticleRepository {
             .where()
             .linkFeedIdEqualTo(a.link, feedId)
             .findFirst();
-
-        // [BUGFIX] Get Feed's categoryId within the loop to ensure consistency
-        // This prevents race conditions when Feed.categoryId is updated concurrently
-        final feed = await _isar.feeds.get(feedId);
-        final categoryId = feed?.categoryId;
 
         a.feedId = feedId;
         a.categoryId = categoryId; // [V2.0] Denormalize categoryId
