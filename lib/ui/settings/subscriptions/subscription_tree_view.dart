@@ -60,27 +60,25 @@ class SubscriptionTreeView extends ConsumerWidget {
                   // Let's use an ExpansionTile labeled "Uncategorized" for consistency
                   ExpansionTile(
                     initiallyExpanded: true,
-                    title: Text(l10n.uncategorized),
-                    leading: const Icon(Icons.rss_feed),
-                    // If we tap Uncategorized, do we select it as a "category"?
-                    // Our SelectionModel supports selecting Uncategorized (activeCategoryId == null, but logic might vary).
-                    // Let's assume we can select the "Uncategorized" faux-category.
-                    // Actually SubscriptionSelectionModel: selectUncategorized() -> activeCategoryId = null, selectedFeedId = null.
-                    // But wait! activeCategoryId = null usually means "No category selected" (Global mode).
-                    // How did we handle this in CategoryListComponent?
-                    // `selectUncategorized()` sets a special state?
-                    // Let's check SubscriptionSelectionModel.
-                    // Ideally "Uncategorized" is just a filter.
-                    // In Tree View, "Global Settings" is shown when NOTHING is selected.
-                    // Tapping "Uncategorized" header could show "Uncategorized" filter settings? (None really).
-                    // Let's just allow expanding it.
+                    controlAffinity: ListTileControlAffinity.leading,
+                    title: Text(
+                      l10n.uncategorized,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      '${uncategorized.length} 订阅源',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    leading: null,
+                    shape: const Border(),
+                    collapsedShape: const Border(),
                     children: [
                       for (final feed in uncategorized)
                         ListTile(
                           title: Text(feed.userTitle ?? feed.title ?? feed.url),
                           selected: selection.selectedFeedId == feed.id,
                           contentPadding: const EdgeInsets.only(
-                            left: 32,
+                            left: 56,
                             right: 16,
                           ),
                           onTap: () => notifier.selectFeed(feed.id, null),
@@ -117,32 +115,24 @@ class _CategoryExpansionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // We want the Title Row to be selectable AND expandable.
-    // Standard ExpansionTile expands on title tap.
-    // To support "Select Category", we might need a custom layout or trailing button.
-    // User asked for "Folder folding but can expand".
-    // Usually: Click Arrow to Expand, Click Text to Select.
-    // OR: Click anywhere -> Selects AND Expands.
-    // Let's do: Click anywhere -> Selects AND (Toggle Expansion).
-    // But if I want to just select without toggling?
-    // Let's try standard ExpansionTile.
-    // If I tap it, it toggles. I can ALSO trigger `onCategoryTap`.
-
     return ExpansionTile(
-      key: PageStorageKey(category.id), // Persist expansion state
-      initiallyExpanded: isSelected, // Expand if active
-      leading: const Icon(Icons.folder_outlined),
-      title: Text(category.name),
-      // To visually show selection of the category itself:
-      backgroundColor: isSelected
-          ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.1)
-          : null,
-      collapsedBackgroundColor: isSelected
-          ? Theme.of(context).colorScheme.primaryContainer
-          : null,
+      key: PageStorageKey(category.id),
+      initiallyExpanded: isSelected,
+      controlAffinity: ListTileControlAffinity.leading,
+      title: Text(
+        category.name,
+        style: const TextStyle(fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        '${feeds.length} 订阅源',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      // Remove default leading icon as arrow is now leading
+      leading: null,
+      shape: const Border(), // Remove default borders
+      collapsedShape: const Border(),
 
       onExpansionChanged: (expanded) {
-        // When interacting with the folder, we select it.
         onCategoryTap();
       },
       children: [
@@ -150,8 +140,7 @@ class _CategoryExpansionTile extends StatelessWidget {
           ListTile(
             title: Text(feed.userTitle ?? feed.title ?? feed.url),
             selected: selectedFeedId == feed.id,
-            // Indent for hierarchy
-            contentPadding: const EdgeInsets.only(left: 32, right: 16),
+            contentPadding: const EdgeInsets.only(left: 56, right: 16),
             onTap: () => onFeedTap(feed.id),
             dense: true,
           ),
@@ -161,7 +150,7 @@ class _CategoryExpansionTile extends StatelessWidget {
               'No subscriptions',
               style: TextStyle(color: Theme.of(context).disabledColor),
             ),
-            contentPadding: const EdgeInsets.only(left: 32, right: 16),
+            contentPadding: const EdgeInsets.only(left: 56, right: 16),
             dense: true,
           ),
       ],
