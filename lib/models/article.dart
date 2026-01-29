@@ -19,7 +19,8 @@ class Article {
 
   /// Denormalized categoryId from Feed for fast filtering without JOIN.
   /// Updated when Feed.categoryId changes.
-  @Index()
+  /// Composite index with publishedAt for optimized category-based queries.
+  @Index(composite: [CompositeIndex('publishedAt')])
   int? categoryId;
 
   /// Best-effort remote identifier (guid/id/link). Not guaranteed to be present.
@@ -47,6 +48,7 @@ class Article {
   ContentSource contentSource = ContentSource.feed;
 
   /// Key for pagination/sorting.
+  /// Composite index with categoryId for optimized time-based queries per category.
   @Index()
   DateTime publishedAt = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 

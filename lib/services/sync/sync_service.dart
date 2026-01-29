@@ -233,6 +233,7 @@ class SyncService {
     var completed = 0;
 
     // 分批处理，避免一次性创建过多 Future。
+    // Batch size to prevent creating too many concurrent Futures (memory optimization)
     const batchSize = 10;
     final results = <FeedRefreshResult>[];
 
@@ -240,6 +241,7 @@ class SyncService {
       final end = (i + batchSize < total) ? i + batchSize : total;
       final batchIds = ids.sublist(i, end);
 
+      // Limit concurrent HTTP connections to prevent resource exhaustion
       final pool = Pool(maxConcurrent < 1 ? 1 : maxConcurrent);
       final futures = <Future<void>>[];
 

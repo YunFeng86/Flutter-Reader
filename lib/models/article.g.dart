@@ -118,14 +118,19 @@ const ArticleSchema = CollectionSchema(
         )
       ],
     ),
-    r'categoryId': IndexSchema(
-      id: -8798048739239305339,
-      name: r'categoryId',
+    r'categoryId_publishedAt': IndexSchema(
+      id: -2059243936447605521,
+      name: r'categoryId_publishedAt',
       unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
           name: r'categoryId',
+          type: IndexType.value,
+          caseSensitive: false,
+        ),
+        IndexPropertySchema(
+          name: r'publishedAt',
           type: IndexType.value,
           caseSensitive: false,
         )
@@ -506,10 +511,10 @@ extension ArticleQueryWhereSort on QueryBuilder<Article, Article, QWhere> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhere> anyCategoryId() {
+  QueryBuilder<Article, Article, QAfterWhere> anyCategoryIdPublishedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
-        const IndexWhereClause.any(indexName: r'categoryId'),
+        const IndexWhereClause.any(indexName: r'categoryId_publishedAt'),
       );
     });
   }
@@ -702,19 +707,21 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdIsNull() {
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdIsNullAnyPublishedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         value: [null],
       ));
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdIsNotNull() {
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdIsNotNullAnyPublishedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         lower: [null],
         includeLower: false,
         upper: [],
@@ -722,29 +729,29 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdEqualTo(
-      int? categoryId) {
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdEqualToAnyPublishedAt(int? categoryId) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.equalTo(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         value: [categoryId],
       ));
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdNotEqualTo(
-      int? categoryId) {
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdNotEqualToAnyPublishedAt(int? categoryId) {
     return QueryBuilder.apply(this, (query) {
       if (query.whereSort == Sort.asc) {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'categoryId',
+              indexName: r'categoryId_publishedAt',
               lower: [],
               upper: [categoryId],
               includeUpper: false,
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'categoryId',
+              indexName: r'categoryId_publishedAt',
               lower: [categoryId],
               includeLower: false,
               upper: [],
@@ -752,13 +759,13 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
       } else {
         return query
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'categoryId',
+              indexName: r'categoryId_publishedAt',
               lower: [categoryId],
               includeLower: false,
               upper: [],
             ))
             .addWhereClause(IndexWhereClause.between(
-              indexName: r'categoryId',
+              indexName: r'categoryId_publishedAt',
               lower: [],
               upper: [categoryId],
               includeUpper: false,
@@ -767,13 +774,14 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdGreaterThan(
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdGreaterThanAnyPublishedAt(
     int? categoryId, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         lower: [categoryId],
         includeLower: include,
         upper: [],
@@ -781,13 +789,14 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdLessThan(
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdLessThanAnyPublishedAt(
     int? categoryId, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         lower: [],
         upper: [categoryId],
         includeUpper: include,
@@ -795,7 +804,8 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
     });
   }
 
-  QueryBuilder<Article, Article, QAfterWhereClause> categoryIdBetween(
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdBetweenAnyPublishedAt(
     int? lowerCategoryId,
     int? upperCategoryId, {
     bool includeLower = true,
@@ -803,10 +813,107 @@ extension ArticleQueryWhere on QueryBuilder<Article, Article, QWhereClause> {
   }) {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(IndexWhereClause.between(
-        indexName: r'categoryId',
+        indexName: r'categoryId_publishedAt',
         lower: [lowerCategoryId],
         includeLower: includeLower,
         upper: [upperCategoryId],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdPublishedAtEqualTo(int? categoryId, DateTime publishedAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'categoryId_publishedAt',
+        value: [categoryId, publishedAt],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdEqualToPublishedAtNotEqualTo(
+          int? categoryId, DateTime publishedAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId_publishedAt',
+              lower: [categoryId],
+              upper: [categoryId, publishedAt],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId_publishedAt',
+              lower: [categoryId, publishedAt],
+              includeLower: false,
+              upper: [categoryId],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId_publishedAt',
+              lower: [categoryId, publishedAt],
+              includeLower: false,
+              upper: [categoryId],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'categoryId_publishedAt',
+              lower: [categoryId],
+              upper: [categoryId, publishedAt],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdEqualToPublishedAtGreaterThan(
+    int? categoryId,
+    DateTime publishedAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId_publishedAt',
+        lower: [categoryId, publishedAt],
+        includeLower: include,
+        upper: [categoryId],
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdEqualToPublishedAtLessThan(
+    int? categoryId,
+    DateTime publishedAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId_publishedAt',
+        lower: [categoryId],
+        upper: [categoryId, publishedAt],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Article, Article, QAfterWhereClause>
+      categoryIdEqualToPublishedAtBetween(
+    int? categoryId,
+    DateTime lowerPublishedAt,
+    DateTime upperPublishedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'categoryId_publishedAt',
+        lower: [categoryId, lowerPublishedAt],
+        includeLower: includeLower,
+        upper: [categoryId, upperPublishedAt],
         includeUpper: includeUpper,
       ));
     });

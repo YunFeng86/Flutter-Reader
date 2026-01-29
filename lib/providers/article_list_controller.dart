@@ -43,7 +43,9 @@ class ArticleListState {
 }
 
 class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
+  // Number of articles loaded per page (balances UX responsiveness and data transfer)
   static const _pageSize = 50;
+  // Maximum articles kept in memory (prevents memory overflow on infinite scroll)
   static const _maxItems = 500;
 
   StreamSubscription<void>? _sub;

@@ -301,6 +301,7 @@ class ArticleRepository {
     final ids = await qb.idProperty().findAll();
     if (ids.isEmpty) return 0;
 
+    // Batch size optimized for Isar write performance (balance between memory usage and transaction overhead)
     const batchSize = 200;
     for (var i = 0; i < ids.length; i += batchSize) {
       final end = i + batchSize > ids.length ? ids.length : i + batchSize;
@@ -337,6 +338,8 @@ class ArticleRepository {
     List<Rule> rules = const [],
   }) {
     return _isar.writeTxn(() async {
+      if (incoming.isEmpty) return (<Article>[], <Article>[]);
+
       final enabledRules = rules
           .where((r) => r.enabled)
           .toList(growable: false);
@@ -352,22 +355,41 @@ class ArticleRepository {
       }
       final categoryId = feed.categoryId;
 
+      // [FIX] Batch query all existing articles by links (eliminates N+1 query)
+      // Normalize links first to ensure consistent matching
+      final normalizedLinks = <String>[];
       for (final a in incoming) {
-        // [V2.0] Normalize link for deduplication
         a.link = LinkNormalizer.normalize(a.link);
+        normalizedLinks.add(a.link);
+      }
+
+      // Single batch query to fetch all potentially existing articles
+      final existingArticles = await _isar.articles
+          .filter()
+          .feedIdEqualTo(feedId)
+          .anyOf(normalizedLinks, (q, link) => q.linkEqualTo(link))
+          .findAll();
+
+      // Build link -> Article lookup map for O(1) access
+      final existingMap = <String, Article>{
+        for (var article in existingArticles) article.link: article,
+      };
+
+      final now = DateTime.now();
+
+      for (final a in incoming) {
+        // Link already normalized above
 
         // [V2.0] Compute content hash for change detection
         final newHash = ContentHash.compute(a.contentHtml);
 
-        final existing = await _isar.articles
-            .where()
-            .linkFeedIdEqualTo(a.link, feedId)
-            .findFirst();
+        // O(1) lookup instead of N database queries
+        final existing = existingMap[a.link];
 
         a.feedId = feedId;
         a.categoryId = categoryId; // [V2.0] Denormalize categoryId
-        a.updatedAt = DateTime.now();
-        a.fetchedAt = DateTime.now();
+        a.updatedAt = now;
+        a.fetchedAt = now;
 
         bool isNew = false;
 
@@ -408,11 +430,14 @@ class ArticleRepository {
           }
         }
 
-        await _isar.articles.put(a);
         if (isNew) {
           newArticles.add(a);
         }
       }
+
+      // Batch write all articles at once (more efficient than individual puts)
+      await _isar.articles.putAll(incoming);
+
       return (newArticles, keywordArticles);
     });
   }
