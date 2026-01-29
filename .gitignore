@@ -29,6 +29,7 @@ migrate_working_dir/
 .vscode/settings.json
 .vscode/tasks.json
 .claude/
+docs/
 
 # Flutter/Dart/Pub related
 **/doc/api/

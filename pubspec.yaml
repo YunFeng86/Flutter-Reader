@@ -50,6 +50,7 @@ dependencies:
   pool: ^1.5.2
   path_provider: ^2.1.5
   rss_dart: ^1.0.14
+  shared_preferences: ^2.3.4
   url_launcher: ^6.3.2
   xml: ^6.6.1
   timeago: ^3.6.1
