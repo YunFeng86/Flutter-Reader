@@ -130,6 +130,7 @@ class _CategoryExpansionTile extends StatelessWidget {
 
     return ExpansionTile(
       key: PageStorageKey(category.id), // Persist expansion state
+      initiallyExpanded: isSelected, // Expand if active
       leading: const Icon(Icons.folder_outlined),
       title: Text(category.name),
       // To visually show selection of the category itself:

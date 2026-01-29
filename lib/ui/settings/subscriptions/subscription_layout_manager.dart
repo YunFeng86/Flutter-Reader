@@ -5,6 +5,7 @@ import 'category_list_component.dart';
 import 'feed_list_component.dart';
 import 'settings_detail_panel.dart';
 import 'subscription_tree_view.dart';
+import 'subscription_toolbar.dart';
 
 class SubscriptionLayoutManager extends ConsumerWidget {
   const SubscriptionLayoutManager({super.key});
@@ -47,23 +48,50 @@ class SubscriptionLayoutManager extends ConsumerWidget {
             builder: (context) {
               if (width >= 1000) {
                 // 3 Columns
-                return Row(
+                return Column(
                   children: [
-                    const SizedBox(width: 280, child: CategoryListComponent()),
-                    const VerticalDivider(width: 1),
-                    const SizedBox(width: 320, child: FeedListComponent()),
-                    const VerticalDivider(width: 1),
-                    const Expanded(child: SettingsDetailPanel()),
+                    const SubscriptionToolbar(),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 280,
+                            child: CategoryListComponent(),
+                          ),
+                          const VerticalDivider(width: 1),
+                          const SizedBox(
+                            width: 320,
+                            child: FeedListComponent(),
+                          ),
+                          const VerticalDivider(width: 1),
+                          const Expanded(child: SettingsDetailPanel()),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               } else if (width >= 600) {
                 // 2 Columns: Nav (Tree) | Details
                 // User requested Tree View for Medium
-                return Row(
+                // 2 Columns: Nav (Tree) | Details
+                // User requested Tree View for Medium
+                return Column(
                   children: [
-                    const SizedBox(width: 320, child: SubscriptionTreeView()),
-                    const VerticalDivider(width: 1),
-                    const Expanded(child: SettingsDetailPanel()),
+                    const SubscriptionToolbar(),
+                    const Divider(height: 1),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 320,
+                            child: SubscriptionTreeView(),
+                          ),
+                          const VerticalDivider(width: 1),
+                          const Expanded(child: SettingsDetailPanel()),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               } else {

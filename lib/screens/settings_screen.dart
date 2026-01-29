@@ -28,7 +28,10 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  int _selectedIndex = 0;
+  // Nullable index: null means "List View" (Narrow) or "Default" (Wide, usually 0).
+  // In Wide mode, if null, we treat it as 0.
+  // In Narrow mode, if null, we show List.
+  int? _selectedIndex;
 
   List<_SettingsPageItem> _buildItems(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -82,8 +85,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: theme.colorScheme.surface,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          if (constraints.maxWidth < 700) {
+          final isNarrow = constraints.maxWidth < 700;
+
+          if (isNarrow) {
             // Mobile / Narrow Layout
+            // State-driven: If selection exists, show Detail. Else show List.
+            if (_selectedIndex != null) {
+              final item = items[_selectedIndex!];
+              return PopScope(
+                canPop: false,
+                onPopInvoked: (didPop) {
+                  if (didPop) return;
+                  setState(() => _selectedIndex = null);
+                },
+                child: Scaffold(
+                  appBar: AppBar(
+                    leading: BackButton(
+                      onPressed: () => setState(() => _selectedIndex = null),
+                    ),
+                    title: Text(item.label),
+                  ),
+                  body: item.content,
+                ),
+              );
+            }
+
             return Scaffold(
               appBar: AppBar(
                 leading: const BackButton(),
@@ -97,7 +123,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final item = items[index];
-                  // Match desktop sidebar style
                   return Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -116,14 +141,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       title: Text(item.label),
                       trailing: const Icon(Icons.chevron_right, size: 20),
                       onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => Scaffold(
-                              appBar: AppBar(title: Text(item.label)),
-                              body: item.content,
-                            ),
-                          ),
-                        );
+                        setState(() => _selectedIndex = index);
                       },
                     ),
                   );
@@ -132,10 +150,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             );
           } else {
             // Desktop / Wide Layout
-            if (_selectedIndex >= items.length) {
-              _selectedIndex = 0;
-            }
-            final selectedItem = items[_selectedIndex];
+            // Ensure valid selection
+            final currentIndex = _selectedIndex ?? 0;
+            final selectedItem = items[currentIndex];
 
             return Column(
               children: [
@@ -164,9 +181,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 const SizedBox(height: 4),
                             itemBuilder: (context, index) {
                               final item = items[index];
-                              final isSelected = index == _selectedIndex;
+                              final isSelected = index == currentIndex;
 
-                              // Mimic existing Sidebar style
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -210,9 +226,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               );
                             },
                             child: KeyedSubtree(
-                              key: ValueKey(_selectedIndex),
+                              key: ValueKey(currentIndex),
                               child: Scaffold(
-                                // Inner Scaffold for scrolling body
                                 backgroundColor: Colors.transparent,
                                 body: selectedItem.content,
                               ),
