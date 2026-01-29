@@ -17,12 +17,21 @@ class Article {
   @Index()
   late int feedId;
 
+  /// Denormalized categoryId from Feed for fast filtering without JOIN.
+  /// Updated when Feed.categoryId changes.
+  @Index()
+  int? categoryId;
+
   /// Best-effort remote identifier (guid/id/link). Not guaranteed to be present.
   @Index(composite: [CompositeIndex('feedId')])
   String? remoteId;
 
   @Index(composite: [CompositeIndex('feedId')], unique: true, replace: true)
   late String link;
+
+  /// Content hash (MD5/SHA256) for detecting article updates.
+  /// Computed from contentHtml during sync.
+  String? contentHash;
 
   String? title;
   String? author;

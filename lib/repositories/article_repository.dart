@@ -6,6 +6,9 @@ import '../models/article.dart';
 import '../models/feed.dart';
 import '../models/rule.dart';
 import '../models/tag.dart';
+import '../services/html_sanitizer.dart';
+import '../utils/content_hash.dart';
+import '../utils/link_normalizer.dart';
 
 class ArticleQuery {
   const ArticleQuery({
@@ -232,7 +235,8 @@ class ArticleRepository {
     return _isar.writeTxn(() async {
       final a = await _isar.articles.get(id);
       if (a == null) return;
-      a.extractedContentHtml = html;
+      // [V2.0] Sanitize HTML to prevent XSS attacks
+      a.extractedContentHtml = HtmlSanitizer.sanitize(html);
       a.contentSource = ContentSource.extracted;
       a.updatedAt = DateTime.now();
       await _isar.articles.put(a);
@@ -343,6 +347,10 @@ class ArticleRepository {
     List<Rule> rules = const [],
   }) {
     return _isar.writeTxn(() async {
+      // Get Feed's categoryId for denormalization
+      final feed = await _isar.feeds.get(feedId);
+      final categoryId = feed?.categoryId;
+
       final enabledRules = rules
           .where((r) => r.enabled)
           .toList(growable: false);
@@ -351,12 +359,19 @@ class ArticleRepository {
       final keywordArticles = <Article>[];
 
       for (final a in incoming) {
+        // [V2.0] Normalize link for deduplication
+        a.link = LinkNormalizer.normalize(a.link);
+
+        // [V2.0] Compute content hash for change detection
+        final newHash = ContentHash.compute(a.contentHtml);
+
         final existing = await _isar.articles
             .where()
             .linkFeedIdEqualTo(a.link, feedId)
             .findFirst();
 
         a.feedId = feedId;
+        a.categoryId = categoryId; // [V2.0] Denormalize categoryId
         a.updatedAt = DateTime.now();
         a.fetchedAt = DateTime.now();
 
@@ -364,7 +379,17 @@ class ArticleRepository {
 
         if (existing != null) {
           a.id = existing.id;
-          a.isRead = existing.isRead;
+
+          // [V2.0] Only update if content changed
+          if (existing.contentHash != newHash) {
+            a.contentHash = newHash;
+            a.isRead = false; // Content changed -> mark unread
+          } else {
+            // Content unchanged -> preserve user state
+            a.isRead = existing.isRead;
+            a.contentHash = existing.contentHash;
+          }
+
           a.isStarred = existing.isStarred;
           a.isReadLater = existing.isReadLater;
           a.contentSource = existing.contentSource;
@@ -377,6 +402,8 @@ class ArticleRepository {
           }
         } else {
           isNew = true;
+          a.contentHash = newHash;
+
           // Apply automation rules only on first insert so we don't override
           // user actions on subsequent refreshes.
           if (enabledRules.isNotEmpty) {

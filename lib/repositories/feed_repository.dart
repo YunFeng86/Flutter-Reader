@@ -44,6 +44,17 @@ class FeedRepository {
       feed.categoryId = categoryId;
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);
+
+      // [V2.0] Sync categoryId to all articles in this feed (denormalization)
+      final articles = await _isar.articles.filter().feedIdEqualTo(feedId).findAll();
+      if (articles.isNotEmpty) {
+        final now = DateTime.now();
+        for (final a in articles) {
+          a.categoryId = categoryId;
+          a.updatedAt = now;
+        }
+        await _isar.articles.putAll(articles);
+      }
     });
   }
 
