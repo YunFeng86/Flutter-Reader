@@ -420,4 +420,76 @@ class SubscriptionActions {
       context,
     ).showSnackBar(SnackBar(content: Text(l10n.exportedOpml)));
   }
+
+  static Future<void> updateFeedSettings(
+    BuildContext context,
+    WidgetRef ref, {
+    required int feedId,
+    bool? filterEnabled,
+    bool updateFilterEnabled = false,
+    String? filterKeywords,
+    bool updateFilterKeywords = false,
+    bool? syncEnabled,
+    bool updateSyncEnabled = false,
+    bool? syncImages,
+    bool updateSyncImages = false,
+    bool? syncWebPages,
+    bool updateSyncWebPages = false,
+    bool? showAiSummary,
+    bool updateShowAiSummary = false,
+  }) async {
+    await ref
+        .read(feedRepositoryProvider)
+        .updateSettings(
+          id: feedId,
+          filterEnabled: filterEnabled,
+          updateFilterEnabled: updateFilterEnabled,
+          filterKeywords: filterKeywords,
+          updateFilterKeywords: updateFilterKeywords,
+          syncEnabled: syncEnabled,
+          updateSyncEnabled: updateSyncEnabled,
+          syncImages: syncImages,
+          updateSyncImages: updateSyncImages,
+          syncWebPages: syncWebPages,
+          updateSyncWebPages: updateSyncWebPages,
+          showAiSummary: showAiSummary,
+          updateShowAiSummary: updateShowAiSummary,
+        );
+  }
+
+  static Future<void> updateCategorySettings(
+    BuildContext context,
+    WidgetRef ref, {
+    required int categoryId,
+    bool? filterEnabled,
+    bool updateFilterEnabled = false,
+    String? filterKeywords,
+    bool updateFilterKeywords = false,
+    bool? syncEnabled,
+    bool updateSyncEnabled = false,
+    bool? syncImages,
+    bool updateSyncImages = false,
+    bool? syncWebPages,
+    bool updateSyncWebPages = false,
+    bool? showAiSummary,
+    bool updateShowAiSummary = false,
+  }) async {
+    await ref
+        .read(categoryRepositoryProvider)
+        .updateSettings(
+          id: categoryId,
+          filterEnabled: filterEnabled,
+          updateFilterEnabled: updateFilterEnabled,
+          filterKeywords: filterKeywords,
+          updateFilterKeywords: updateFilterKeywords,
+          syncEnabled: syncEnabled,
+          updateSyncEnabled: updateSyncEnabled,
+          syncImages: syncImages,
+          updateSyncImages: updateSyncImages,
+          syncWebPages: syncWebPages,
+          updateSyncWebPages: updateSyncWebPages,
+          showAiSummary: showAiSummary,
+          updateShowAiSummary: updateShowAiSummary,
+        );
+  }
 }

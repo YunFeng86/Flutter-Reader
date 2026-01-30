@@ -420,4 +420,57 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get keyboardShortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get filter => 'Filter';
+
+  @override
+  String get filterKeywordsHint =>
+      'Add reserved keywords (separate with \";\", connect multiple with \"+\")';
+
+  @override
+  String get sync => 'Sync';
+
+  @override
+  String get enableSync => 'Enable Sync';
+
+  @override
+  String get syncAlwaysEnabled =>
+      'Always enabled (Settings - Sync - Sync Mode is \"All\")';
+
+  @override
+  String get syncImages => 'Download Images during Sync';
+
+  @override
+  String get syncWebPages => 'Download Web Pages during Sync';
+
+  @override
+  String get showAiSummary => 'Show AI Summary';
+
+  @override
+  String get showImageTitle => 'Show Image Title';
+
+  @override
+  String get showAttachedImage => 'Show Attached Image';
+
+  @override
+  String get htmlDecoding => 'HTML Decoding';
+
+  @override
+  String get mobilizer => 'Mobilizer';
+
+  @override
+  String get inherit => 'Inherit';
+
+  @override
+  String get auto => 'Auto';
+
+  @override
+  String get autoOn => 'Auto (On)';
+
+  @override
+  String get autoOff => 'Off';
+
+  @override
+  String get defaultValue => 'Default Value';
 }

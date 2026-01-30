@@ -9,7 +9,22 @@ class Category {
   @Index(unique: true, replace: true)
   late String name;
 
+  // Filter Settings
+  bool? filterEnabled;
+  String? filterKeywords;
+
+  // Sync Settings
+  bool? syncEnabled;
+
+  /// Whether to download images during sync
+  bool? syncImages;
+
+  /// Whether to download full web pages (Readability) during sync
+  bool? syncWebPages;
+
+  /// Whether to show AI summary
+  bool? showAiSummary;
+
   DateTime createdAt = DateTime.now();
   DateTime updatedAt = DateTime.now();
 }
-

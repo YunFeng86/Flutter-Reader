@@ -22,7 +22,8 @@ class CategoryRepository {
 
     final existing = await _isar.categorys.filter().nameEqualTo(n).findFirst();
     final now = DateTime.now();
-    final c = existing ?? Category()..name = n;
+    final c = existing ?? Category()
+      ..name = n;
     if (existing == null) c.createdAt = now;
     c.updatedAt = now;
     return _isar.writeTxn(() async => _isar.categorys.put(c));
@@ -37,8 +38,9 @@ class CategoryRepository {
     if (feedIds.isNotEmpty) {
       const batchSize = 200;
       for (var i = 0; i < feedIds.length; i += batchSize) {
-        final end =
-            i + batchSize > feedIds.length ? feedIds.length : i + batchSize;
+        final end = i + batchSize > feedIds.length
+            ? feedIds.length
+            : i + batchSize;
         final batchIds = feedIds.sublist(i, end);
         await _isar.writeTxn(() async {
           final feeds = await _isar.feeds.getAll(batchIds);
@@ -75,6 +77,37 @@ class CategoryRepository {
       final c = await _isar.categorys.get(id);
       if (c == null) return;
       c.name = n;
+      c.updatedAt = DateTime.now();
+      await _isar.categorys.put(c);
+    });
+  }
+
+  Future<void> updateSettings({
+    required int id,
+    bool? filterEnabled,
+    bool updateFilterEnabled = false,
+    String? filterKeywords,
+    bool updateFilterKeywords = false,
+    bool? syncEnabled,
+    bool updateSyncEnabled = false,
+    bool? syncImages,
+    bool updateSyncImages = false,
+    bool? syncWebPages,
+    bool updateSyncWebPages = false,
+    bool? showAiSummary,
+    bool updateShowAiSummary = false,
+  }) {
+    return _isar.writeTxn(() async {
+      final c = await _isar.categorys.get(id);
+      if (c == null) return;
+
+      if (updateFilterEnabled) c.filterEnabled = filterEnabled;
+      if (updateFilterKeywords) c.filterKeywords = filterKeywords;
+      if (updateSyncEnabled) c.syncEnabled = syncEnabled;
+      if (updateSyncImages) c.syncImages = syncImages;
+      if (updateSyncWebPages) c.syncWebPages = syncWebPages;
+      if (updateShowAiSummary) c.showAiSummary = showAiSummary;
+
       c.updatedAt = DateTime.now();
       await _isar.categorys.put(c);
     });

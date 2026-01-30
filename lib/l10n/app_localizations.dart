@@ -884,6 +884,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Keyboard shortcuts'**
   String get keyboardShortcuts;
+
+  /// filter
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filter;
+
+  /// filterKeywordsHint
+  ///
+  /// In en, this message translates to:
+  /// **'Add reserved keywords (separate with \";\", connect multiple with \"+\")'**
+  String get filterKeywordsHint;
+
+  /// sync
+  ///
+  /// In en, this message translates to:
+  /// **'Sync'**
+  String get sync;
+
+  /// enableSync
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Sync'**
+  String get enableSync;
+
+  /// syncAlwaysEnabled
+  ///
+  /// In en, this message translates to:
+  /// **'Always enabled (Settings - Sync - Sync Mode is \"All\")'**
+  String get syncAlwaysEnabled;
+
+  /// syncImages
+  ///
+  /// In en, this message translates to:
+  /// **'Download Images during Sync'**
+  String get syncImages;
+
+  /// syncWebPages
+  ///
+  /// In en, this message translates to:
+  /// **'Download Web Pages during Sync'**
+  String get syncWebPages;
+
+  /// showAiSummary
+  ///
+  /// In en, this message translates to:
+  /// **'Show AI Summary'**
+  String get showAiSummary;
+
+  /// showImageTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Show Image Title'**
+  String get showImageTitle;
+
+  /// showAttachedImage
+  ///
+  /// In en, this message translates to:
+  /// **'Show Attached Image'**
+  String get showAttachedImage;
+
+  /// htmlDecoding
+  ///
+  /// In en, this message translates to:
+  /// **'HTML Decoding'**
+  String get htmlDecoding;
+
+  /// mobilizer
+  ///
+  /// In en, this message translates to:
+  /// **'Mobilizer'**
+  String get mobilizer;
+
+  /// inherit
+  ///
+  /// In en, this message translates to:
+  /// **'Inherit'**
+  String get inherit;
+
+  /// auto
+  ///
+  /// In en, this message translates to:
+  /// **'Auto'**
+  String get auto;
+
+  /// autoOn
+  ///
+  /// In en, this message translates to:
+  /// **'Auto (On)'**
+  String get autoOn;
+
+  /// autoOff
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get autoOff;
+
+  /// defaultValue
+  ///
+  /// In en, this message translates to:
+  /// **'Default Value'**
+  String get defaultValue;
 }
 
 class _AppLocalizationsDelegate

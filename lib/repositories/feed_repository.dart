@@ -26,9 +26,13 @@ class FeedRepository {
       throw ArgumentError('Feed url is empty');
     }
 
-    final existing = await _isar.feeds.filter().urlEqualTo(normalized).findFirst();
+    final existing = await _isar.feeds
+        .filter()
+        .urlEqualTo(normalized)
+        .findFirst();
     final now = DateTime.now();
-    final feed = existing ?? Feed()..url = normalized;
+    final feed = existing ?? Feed()
+      ..url = normalized;
     feed.updatedAt = now;
     if (existing == null) {
       feed.createdAt = now;
@@ -141,6 +145,37 @@ class FeedRepository {
         feed.lastError = lastError ?? feed.lastError;
         feed.lastErrorAt = lastErrorAt ?? feed.lastErrorAt;
       }
+
+      feed.updatedAt = DateTime.now();
+      await _isar.feeds.put(feed);
+    });
+  }
+
+  Future<void> updateSettings({
+    required int id,
+    bool? filterEnabled,
+    bool updateFilterEnabled = false,
+    String? filterKeywords,
+    bool updateFilterKeywords = false,
+    bool? syncEnabled,
+    bool updateSyncEnabled = false,
+    bool? syncImages,
+    bool updateSyncImages = false,
+    bool? syncWebPages,
+    bool updateSyncWebPages = false,
+    bool? showAiSummary,
+    bool updateShowAiSummary = false,
+  }) {
+    return _isar.writeTxn(() async {
+      final feed = await _isar.feeds.get(id);
+      if (feed == null) return;
+
+      if (updateFilterEnabled) feed.filterEnabled = filterEnabled;
+      if (updateFilterKeywords) feed.filterKeywords = filterKeywords;
+      if (updateSyncEnabled) feed.syncEnabled = syncEnabled;
+      if (updateSyncImages) feed.syncImages = syncImages;
+      if (updateSyncWebPages) feed.syncWebPages = syncWebPages;
+      if (updateShowAiSummary) feed.showAiSummary = showAiSummary;
 
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);

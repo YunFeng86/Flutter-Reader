@@ -554,5 +554,73 @@
   "keyboardShortcuts": "快捷键",
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
+  },
+  "filter": "过滤",
+  "@filter": {
+    "description": "filter"
+  },
+  "filterKeywordsHint": "添加保留关键字（不同的关键字用“;”分隔，多重条件使用“+”连接）",
+  "@filterKeywordsHint": {
+    "description": "filterKeywordsHint"
+  },
+  "sync": "同步",
+  "@sync": {
+    "description": "sync"
+  },
+  "enableSync": "启用同步",
+  "@enableSync": {
+    "description": "enableSync"
+  },
+  "syncAlwaysEnabled": "总是启用，因为设置 - 同步 - 同步模式为\"全部\"",
+  "@syncAlwaysEnabled": {
+    "description": "syncAlwaysEnabled"
+  },
+  "syncImages": "同步时下载图片",
+  "@syncImages": {
+    "description": "syncImages"
+  },
+  "syncWebPages": "同步时下载 Web 页面",
+  "@syncWebPages": {
+    "description": "syncWebPages"
+  },
+  "showAiSummary": "Show AI Summary",
+  "@showAiSummary": {
+    "description": "showAiSummary"
+  },
+  "showImageTitle": "显示图片标题",
+  "@showImageTitle": {
+    "description": "showImageTitle"
+  },
+  "showAttachedImage": "显示附文图像",
+  "@showAttachedImage": {
+    "description": "showAttachedImage"
+  },
+  "htmlDecoding": "HTML 转码",
+  "@htmlDecoding": {
+    "description": "htmlDecoding"
+  },
+  "mobilizer": "Mobilizer",
+  "@mobilizer": {
+    "description": "mobilizer"
+  },
+  "inherit": "继承",
+  "@inherit": {
+    "description": "inherit"
+  },
+  "auto": "自动",
+  "@auto": {
+    "description": "auto"
+  },
+  "autoOn": "开",
+  "@autoOn": {
+    "description": "autoOn"
+  },
+  "autoOff": "关",
+  "@autoOff": {
+    "description": "autoOff"
+  },
+  "defaultValue": "默认值",
+  "@defaultValue": {
+    "description": "defaultValue"
   }
 }

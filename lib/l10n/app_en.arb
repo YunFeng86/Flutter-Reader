@@ -569,5 +569,73 @@
   "keyboardShortcuts": "Keyboard shortcuts",
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
+  },
+  "filter": "Filter",
+  "@filter": {
+    "description": "filter"
+  },
+  "filterKeywordsHint": "Add reserved keywords (separate with \";\", connect multiple with \"+\")",
+  "@filterKeywordsHint": {
+    "description": "filterKeywordsHint"
+  },
+  "sync": "Sync",
+  "@sync": {
+    "description": "sync"
+  },
+  "enableSync": "Enable Sync",
+  "@enableSync": {
+    "description": "enableSync"
+  },
+  "syncAlwaysEnabled": "Always enabled (Settings - Sync - Sync Mode is \"All\")",
+  "@syncAlwaysEnabled": {
+    "description": "syncAlwaysEnabled"
+  },
+  "syncImages": "Download Images during Sync",
+  "@syncImages": {
+    "description": "syncImages"
+  },
+  "syncWebPages": "Download Web Pages during Sync",
+  "@syncWebPages": {
+    "description": "syncWebPages"
+  },
+  "showAiSummary": "Show AI Summary",
+  "@showAiSummary": {
+    "description": "showAiSummary"
+  },
+  "showImageTitle": "Show Image Title",
+  "@showImageTitle": {
+    "description": "showImageTitle"
+  },
+  "showAttachedImage": "Show Attached Image",
+  "@showAttachedImage": {
+    "description": "showAttachedImage"
+  },
+  "htmlDecoding": "HTML Decoding",
+  "@htmlDecoding": {
+    "description": "htmlDecoding"
+  },
+  "mobilizer": "Mobilizer",
+  "@mobilizer": {
+    "description": "mobilizer"
+  },
+  "inherit": "Inherit",
+  "@inherit": {
+    "description": "inherit"
+  },
+  "auto": "Auto",
+  "@auto": {
+    "description": "auto"
+  },
+  "autoOn": "Auto (On)",
+  "@autoOn": {
+    "description": "autoOn"
+  },
+  "autoOff": "Off",
+  "@autoOff": {
+    "description": "autoOff"
+  },
+  "defaultValue": "Default Value",
+  "@defaultValue": {
+    "description": "defaultValue"
   }
 }

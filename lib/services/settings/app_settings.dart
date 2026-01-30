@@ -17,6 +17,12 @@ class AppSettings {
     this.articleSortOrder = ArticleSortOrder.newestFirst,
     this.searchInContent = true,
     this.cleanupReadOlderThanDays,
+    this.filterEnabled = false,
+    this.filterKeywords = '',
+    this.syncEnabled = true,
+    this.syncImages = true,
+    this.syncWebPages = false,
+    this.showAiSummary = false,
   });
 
   final ThemeMode themeMode;
@@ -46,6 +52,14 @@ class AppSettings {
   /// `null` means disabled.
   final int? cleanupReadOlderThanDays;
 
+  // --- Global Defaults ---
+  final bool filterEnabled;
+  final String filterKeywords;
+  final bool syncEnabled;
+  final bool syncImages;
+  final bool syncWebPages;
+  final bool showAiSummary;
+
   AppSettings copyWith({
     ThemeMode? themeMode,
     Object? localeTag = _unset,
@@ -56,6 +70,12 @@ class AppSettings {
     ArticleSortOrder? articleSortOrder,
     bool? searchInContent,
     Object? cleanupReadOlderThanDays = _unset,
+    bool? filterEnabled,
+    String? filterKeywords,
+    bool? syncEnabled,
+    bool? syncImages,
+    bool? syncWebPages,
+    bool? showAiSummary,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -72,6 +92,12 @@ class AppSettings {
       cleanupReadOlderThanDays: cleanupReadOlderThanDays == _unset
           ? this.cleanupReadOlderThanDays
           : cleanupReadOlderThanDays as int?,
+      filterEnabled: filterEnabled ?? this.filterEnabled,
+      filterKeywords: filterKeywords ?? this.filterKeywords,
+      syncEnabled: syncEnabled ?? this.syncEnabled,
+      syncImages: syncImages ?? this.syncImages,
+      syncWebPages: syncWebPages ?? this.syncWebPages,
+      showAiSummary: showAiSummary ?? this.showAiSummary,
     );
   }
 
@@ -85,6 +111,12 @@ class AppSettings {
     'articleSortOrder': articleSortOrder.name,
     'searchInContent': searchInContent,
     'cleanupReadOlderThanDays': cleanupReadOlderThanDays,
+    'filterEnabled': filterEnabled,
+    'filterKeywords': filterKeywords,
+    'syncEnabled': syncEnabled,
+    'syncImages': syncImages,
+    'syncWebPages': syncWebPages,
+    'showAiSummary': showAiSummary,
   };
 
   static AppSettings fromJson(Map<String, Object?> json) {
@@ -102,6 +134,14 @@ class AppSettings {
     final autoRefreshConcurrency = json['autoRefreshConcurrency'];
     final searchInContent = json['searchInContent'];
     final cleanupReadOlderThanDays = json['cleanupReadOlderThanDays'];
+
+    // Global defaults
+    final filterEnabled = json['filterEnabled'];
+    final filterKeywords = json['filterKeywords'];
+    final syncEnabled = json['syncEnabled'];
+    final syncImages = json['syncImages'];
+    final syncWebPages = json['syncWebPages'];
+    final showAiSummary = json['showAiSummary'];
 
     ArticleGroupMode parseGroupMode(Object? v) {
       final s = v is String ? v : '';
@@ -137,6 +177,12 @@ class AppSettings {
       cleanupReadOlderThanDays: cleanupReadOlderThanDays is num
           ? cleanupReadOlderThanDays.toInt()
           : null,
+      filterEnabled: filterEnabled is bool ? filterEnabled : false,
+      filterKeywords: filterKeywords is String ? filterKeywords : '',
+      syncEnabled: syncEnabled is bool ? syncEnabled : true,
+      syncImages: syncImages is bool ? syncImages : true,
+      syncWebPages: syncWebPages is bool ? syncWebPages : false,
+      showAiSummary: showAiSummary is bool ? showAiSummary : false,
     );
   }
 }

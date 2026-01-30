@@ -63,6 +63,36 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(cleanupReadOlderThanDays: days));
   }
+
+  Future<void> setFilterEnabled(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(filterEnabled: value));
+  }
+
+  Future<void> setFilterKeywords(String value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(filterKeywords: value));
+  }
+
+  Future<void> setSyncEnabled(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(syncEnabled: value));
+  }
+
+  Future<void> setSyncImages(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(syncImages: value));
+  }
+
+  Future<void> setSyncWebPages(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(syncWebPages: value));
+  }
+
+  Future<void> setShowAiSummary(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(showAiSummary: value));
+  }
 }
 
 final appSettingsProvider =

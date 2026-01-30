@@ -418,6 +418,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get keyboardShortcuts => '快捷键';
+
+  @override
+  String get filter => '过滤';
+
+  @override
+  String get filterKeywordsHint => '添加保留关键字（不同的关键字用“;”分隔，多重条件使用“+”连接）';
+
+  @override
+  String get sync => '同步';
+
+  @override
+  String get enableSync => '启用同步';
+
+  @override
+  String get syncAlwaysEnabled => '总是启用，因为设置 - 同步 - 同步模式为\"全部\"';
+
+  @override
+  String get syncImages => '同步时下载图片';
+
+  @override
+  String get syncWebPages => '同步时下载 Web 页面';
+
+  @override
+  String get showAiSummary => 'Show AI Summary';
+
+  @override
+  String get showImageTitle => '显示图片标题';
+
+  @override
+  String get showAttachedImage => '显示附文图像';
+
+  @override
+  String get htmlDecoding => 'HTML 转码';
+
+  @override
+  String get mobilizer => 'Mobilizer';
+
+  @override
+  String get inherit => '继承';
+
+  @override
+  String get auto => '自动';
+
+  @override
+  String get autoOn => '开';
+
+  @override
+  String get autoOff => '关';
+
+  @override
+  String get defaultValue => '默认值';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

@@ -119,3 +119,5 @@ packages/
 !packages/*/lib/
 !packages/*/assets/
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
+
+.codeartsdoer
