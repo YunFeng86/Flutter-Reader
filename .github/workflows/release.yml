@@ -1,0 +1,192 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'  # 触发条件: 所有v开头的tag (v0.0.1, v1.0.0-alpha, v1.2.3-beta.1, v2.0.0-rc.2等)
+  workflow_dispatch:  # 允许手动触发（测试CI用）
+
+jobs:
+  # 跨平台构建（使用矩阵策略消除重复代码）
+  build:
+    timeout-minutes: 30  # 防止构建卡死浪费Actions分钟数
+    strategy:
+      fail-fast: false  # 一个平台失败不影响其他平台继续构建
+      matrix:
+        include:
+          # Windows构建（正式支持，已测试）
+          - os: windows-latest
+            platform: windows
+            build-cmd: flutter build windows --release
+            artifact-path: build/windows/x64/runner/Release
+            artifact-name: flutter_reader-windows-x64.zip
+            archive-cmd: |
+              cd build/windows/x64/runner/Release
+              rm -f *.pdb
+              7z a -tzip "${{ github.workspace }}/flutter_reader-windows-x64.zip" *
+
+          # macOS构建（实验性，未测试）
+          - os: macos-latest
+            platform: macos
+            build-cmd: flutter build macos --release
+            artifact-path: build/macos/Build/Products/Release
+            artifact-name: flutter_reader-macos.zip
+            archive-cmd: |
+              cd build/macos/Build/Products/Release
+              zip -r "${{ github.workspace }}/flutter_reader-macos.zip" flutter_reader.app
+
+          # Linux构建（实验性，未测试）
+          - os: ubuntu-latest
+            platform: linux
+            build-cmd: flutter build linux --release
+            artifact-path: build/linux/x64/release/bundle
+            artifact-name: flutter_reader-linux-x64.tar.gz
+            archive-cmd: |
+              cd build/linux/x64/release/bundle
+              tar -czf "${{ github.workspace }}/flutter_reader-linux-x64.tar.gz" *
+            deps-cmd: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Linux平台需要额外安装依赖
+      - name: Install platform dependencies
+        if: matrix.deps-cmd
+        run: ${{ matrix.deps-cmd }}
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true  # 启用Flutter SDK缓存，加速后续构建
+
+      # 缓存pub依赖，避免每次重新下载
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.PUB_CACHE }}
+            ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # 自动同步版本号：从Git Tag更新pubspec.yaml
+      - name: Update version from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          VERSION=${{ github.ref_name }}
+          VERSION=${VERSION#v}  # 移除v前缀 (v1.2.3 -> 1.2.3)
+
+          # 使用sed替换pubspec.yaml中的版本号
+          if [[ "$RUNNER_OS" == "macOS" ]]; then
+            sed -i '' "s/^version: .*/version: $VERSION/" pubspec.yaml
+          else
+            sed -i "s/^version: .*/version: $VERSION/" pubspec.yaml
+          fi
+
+          echo "✅ Updated pubspec.yaml version to $VERSION"
+          grep "^version:" pubspec.yaml
+
+      - name: Generate Isar code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # 运行测试（可选：如果测试失败则不发布）
+      - name: Run tests
+        run: flutter test
+        continue-on-error: true  # 测试失败不阻塞构建（Alpha版本容忍测试失败）
+
+      - name: Build ${{ matrix.platform }} release
+        run: ${{ matrix.build-cmd }}
+
+      - name: Archive build artifacts
+        shell: bash
+        run: ${{ matrix.archive-cmd }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-release
+          path: ${{ matrix.artifact-name }}
+          retention-days: 90  # 保留90天
+
+  # 创建GitHub Release并上传所有构建产物
+  create-release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Determine if prerelease
+        id: prerelease
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ -alpha|-beta|-rc ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "version_type=预发布版本" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "version_type=正式版本" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
+          generate_release_notes: true
+          body: |
+            ## 支持平台
+
+            ### ✅ 正式支持（已测试）
+            - **Windows 10/11 (x64)** - 经过充分测试，稳定可用
+
+            ### 🔄 实验性支持（未经测试，风险自负）
+            - **macOS 11+** - 理论上可用，但未在真机验证
+            - **Linux (x64)** - 需要 GTK 3.0+，可能需要手动安装依赖
+
+            ## 已知问题
+            - 删除大订阅源（>1万篇文章）时可能卡顿
+            - 数据库迁移逻辑未经过实际Schema变更测试
+            - macOS/Linux的窗口管理和通知系统未验证
+
+            ## 安装说明
+
+            **Windows:**
+            1. 下载 `flutter_reader-windows-x64.zip`
+            2. 解压到任意目录
+            3. 运行 `flutter_reader.exe`
+
+            **macOS:**
+            1. 下载 `flutter_reader-macos.zip`
+            2. 解压后拖动 `flutter_reader.app` 到应用程序文件夹
+            3. 首次运行需右键 → 打开（绕过Gatekeeper）
+
+            **Linux:**
+            1. 下载 `flutter_reader-linux-x64.tar.gz`
+            2. 解压: `tar -xzf flutter_reader-linux-x64.tar.gz`
+            3. 运行: `./flutter_reader`
+            4. 如果缺少依赖: `sudo apt install libgtk-3-0` (Debian/Ubuntu)
+
+            ---
+
+            **如遇到问题请提交 [Issue](https://github.com/${{ github.repository }}/issues)**
+          files: |
+            artifacts/windows-release/flutter_reader-windows-x64.zip
+            artifacts/macos-release/flutter_reader-macos.zip
+            artifacts/linux-release/flutter_reader-linux-x64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
