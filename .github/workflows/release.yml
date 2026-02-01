@@ -252,12 +252,12 @@ jobs:
           # 使用 Chocolatey 安装 Inno Setup (更可靠)
           choco install innosetup -y
           
-          # 验证安装
+          # 验证安装 (不检查退出代码，因为帮助命令会返回1)
           if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
             Write-Host "✅ Inno Setup installed successfully"
-            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /?
+            Write-Host "📍 ISCC.exe found at: C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           } else {
-            Write-Error "❌ Inno Setup installation failed"
+            Write-Error "❌ Inno Setup installation failed - ISCC.exe not found"
             exit 1
           }
 
@@ -271,17 +271,30 @@ jobs:
             exit 1
           }
           
-          Write-Host "🔨 Compiling installer..."
-          & $isccPath "installer.iss"
+          Write-Host "🔨 Compiling installer with Inno Setup..."
           
-          if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ Installer compiled successfully"
-            Get-ChildItem -Path "installer-output" -File | ForEach-Object {
-              Write-Host "📦 Generated: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+          # 创建输出目录
+          if (-not (Test-Path "installer-output")) {
+            New-Item -ItemType Directory -Path "installer-output" -Force
+          }
+          
+          try {
+            # 执行 Inno Setup 编译，使用安静模式显示进度
+            & $isccPath "/Qp" "installer.iss"
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "✅ Installer compiled successfully"
+              Get-ChildItem -Path "installer-output" -File | ForEach-Object {
+                Write-Host "📦 Generated: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+              }
+            } else {
+              Write-Error "❌ Installer compilation failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
             }
-          } else {
-            Write-Error "❌ Installer compilation failed with exit code $LASTEXITCODE"
-            exit $LASTEXITCODE
+          }
+          catch {
+            Write-Error "❌ Exception during compilation: $($_.Exception.Message)"
+            exit 1
           }
 
       - name: Upload Windows Installer
