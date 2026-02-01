@@ -7,12 +7,45 @@ import 'parsed_feed.dart';
 
 class FeedParser {
   ParsedFeed parse(String xml) {
-    // Try RSS first; fall back to Atom.
-    try {
-      return _parseRss(xml);
-    } catch (_) {
-      return _parseAtom(xml);
+    final trimmed = xml.trim();
+
+    // Detect feed format by root element and namespace (not by exception throwing)
+    // RSS 2.0: <rss version="2.0">
+    // RSS 1.0: <rdf:RDF xmlns:rdf="..." xmlns="http://purl.org/rss/1.0/">
+    // Atom: <feed xmlns="http://www.w3.org/2005/Atom">
+
+    if (_isAtomFeed(trimmed)) {
+      try {
+        return _parseAtom(trimmed);
+      } catch (e) {
+        throw FormatException('Failed to parse Atom feed: $e');
+      }
+    } else if (_isRssFeed(trimmed)) {
+      try {
+        return _parseRss(trimmed);
+      } catch (e) {
+        throw FormatException('Failed to parse RSS feed: $e');
+      }
+    } else {
+      throw FormatException(
+        'Unknown feed format. Expected RSS 1.0/2.0 or Atom feed.',
+      );
     }
+  }
+
+  bool _isAtomFeed(String xml) {
+    // Atom must have <feed> root and xmlns="http://www.w3.org/2005/Atom"
+    return xml.contains('<feed') &&
+           xml.contains('http://www.w3.org/2005/Atom');
+  }
+
+  bool _isRssFeed(String xml) {
+    // RSS 2.0: <rss version="2.0">
+    // RSS 1.0: <rdf:RDF> with RSS 1.0 namespace
+    // Also accept <channel> as RSS indicator (some feeds omit version)
+    return xml.contains('<rss') ||
+           xml.contains('<channel>') ||
+           (xml.contains('<rdf:RDF') && xml.contains('http://purl.org/rss/1.0/'));
   }
 
   ParsedFeed _parseRss(String xml) {
