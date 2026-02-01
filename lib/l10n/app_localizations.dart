@@ -986,6 +986,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Default Value'**
   String get defaultValue;
+
+  /// userAgent
+  ///
+  /// In en, this message translates to:
+  /// **'User-Agent'**
+  String get userAgent;
+
+  /// rssUserAgent
+  ///
+  /// In en, this message translates to:
+  /// **'RSS/Atom User-Agent'**
+  String get rssUserAgent;
+
+  /// webUserAgent
+  ///
+  /// In en, this message translates to:
+  /// **'Web Page User-Agent'**
+  String get webUserAgent;
+
+  /// userAgentRssHint
+  ///
+  /// In en, this message translates to:
+  /// **'Used when fetching RSS/Atom feeds.'**
+  String get userAgentRssHint;
+
+  /// userAgentWebHint
+  ///
+  /// In en, this message translates to:
+  /// **'Used when fetching full web pages (Readability).'**
+  String get userAgentWebHint;
+
+  /// resetToDefault
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get resetToDefault;
 }
 
 class _AppLocalizationsDelegate

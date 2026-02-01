@@ -469,6 +469,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get defaultValue => '默认值';
+
+  @override
+  String get userAgent => 'User-Agent';
+
+  @override
+  String get rssUserAgent => 'RSS/Atom User-Agent';
+
+  @override
+  String get webUserAgent => '网页 User-Agent';
+
+  @override
+  String get userAgentRssHint => '用于抓取 RSS/Atom 订阅源。';
+
+  @override
+  String get userAgentWebHint => '用于抓取网页全文（阅读模式）。';
+
+  @override
+  String get resetToDefault => '恢复默认';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).

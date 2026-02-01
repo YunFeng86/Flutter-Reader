@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../network/user_agents.dart';
+
 enum ArticleGroupMode { none, day }
 
 enum ArticleSortOrder { newestFirst, oldestFirst }
@@ -23,6 +25,8 @@ class AppSettings {
     this.syncImages = true,
     this.syncWebPages = false,
     this.showAiSummary = false,
+    this.rssUserAgent = UserAgents.rss,
+    this.webUserAgent = UserAgents.web,
   });
 
   final ThemeMode themeMode;
@@ -60,6 +64,12 @@ class AppSettings {
   final bool syncWebPages;
   final bool showAiSummary;
 
+  /// User-Agent for RSS/Atom fetches.
+  final String rssUserAgent;
+
+  /// User-Agent for full web page (readability) fetches.
+  final String webUserAgent;
+
   AppSettings copyWith({
     ThemeMode? themeMode,
     Object? localeTag = _unset,
@@ -76,6 +86,8 @@ class AppSettings {
     bool? syncImages,
     bool? syncWebPages,
     bool? showAiSummary,
+    String? rssUserAgent,
+    String? webUserAgent,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -98,6 +110,8 @@ class AppSettings {
       syncImages: syncImages ?? this.syncImages,
       syncWebPages: syncWebPages ?? this.syncWebPages,
       showAiSummary: showAiSummary ?? this.showAiSummary,
+      rssUserAgent: rssUserAgent ?? this.rssUserAgent,
+      webUserAgent: webUserAgent ?? this.webUserAgent,
     );
   }
 
@@ -117,6 +131,8 @@ class AppSettings {
     'syncImages': syncImages,
     'syncWebPages': syncWebPages,
     'showAiSummary': showAiSummary,
+    'rssUserAgent': rssUserAgent,
+    'webUserAgent': webUserAgent,
   };
 
   static AppSettings fromJson(Map<String, Object?> json) {
@@ -142,6 +158,8 @@ class AppSettings {
     final syncImages = json['syncImages'];
     final syncWebPages = json['syncWebPages'];
     final showAiSummary = json['showAiSummary'];
+    final rssUserAgent = json['rssUserAgent'];
+    final webUserAgent = json['webUserAgent'];
 
     ArticleGroupMode parseGroupMode(Object? v) {
       final s = v is String ? v : '';
@@ -183,6 +201,12 @@ class AppSettings {
       syncImages: syncImages is bool ? syncImages : true,
       syncWebPages: syncWebPages is bool ? syncWebPages : false,
       showAiSummary: showAiSummary is bool ? showAiSummary : false,
+      rssUserAgent: rssUserAgent is String && rssUserAgent.trim().isNotEmpty
+          ? rssUserAgent
+          : UserAgents.rss,
+      webUserAgent: webUserAgent is String && webUserAgent.trim().isNotEmpty
+          ? webUserAgent
+          : UserAgents.web,
     );
   }
 }

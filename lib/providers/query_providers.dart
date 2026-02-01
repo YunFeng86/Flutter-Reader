@@ -10,8 +10,16 @@ final feedsProvider = StreamProvider<List<Feed>>((ref) {
   return ref.watch(feedRepositoryProvider).watchAll();
 });
 
+final feedProvider = StreamProvider.family<Feed?, int>((ref, id) {
+  return ref.watch(feedRepositoryProvider).watchById(id);
+});
+
 final categoriesProvider = StreamProvider<List<Category>>((ref) {
   return ref.watch(categoryRepositoryProvider).watchAll();
+});
+
+final categoryProvider = StreamProvider.family<Category?, int>((ref, id) {
+  return ref.watch(categoryRepositoryProvider).watchById(id);
 });
 
 final tagsProvider = StreamProvider<List<Tag>>((ref) {

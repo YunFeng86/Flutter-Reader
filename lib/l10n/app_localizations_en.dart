@@ -473,4 +473,23 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get defaultValue => 'Default Value';
+
+  @override
+  String get userAgent => 'User-Agent';
+
+  @override
+  String get rssUserAgent => 'RSS/Atom User-Agent';
+
+  @override
+  String get webUserAgent => 'Web Page User-Agent';
+
+  @override
+  String get userAgentRssHint => 'Used when fetching RSS/Atom feeds.';
+
+  @override
+  String get userAgentWebHint =>
+      'Used when fetching full web pages (Readability).';
+
+  @override
+  String get resetToDefault => 'Reset to default';
 }

@@ -12,6 +12,10 @@ class CategoryRepository {
     return _isar.categorys.get(id);
   }
 
+  Stream<Category?> watchById(int id) {
+    return _isar.categorys.watchObject(id, fireImmediately: true);
+  }
+
   Stream<List<Category>> watchAll() {
     return _isar.categorys.where().watch(fireImmediately: true);
   }

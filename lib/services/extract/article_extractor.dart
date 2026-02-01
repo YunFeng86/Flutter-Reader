@@ -17,21 +17,31 @@ class ArticleExtractor {
 
   final Dio _dio;
 
-  Future<ExtractedArticle> extract(String url) async {
-    final html = await _fetchHtml(url);
+  Future<ExtractedArticle> extract(
+    String url, {
+    String? userAgent,
+  }) async {
+    final html = await _fetchHtml(url, userAgent: userAgent);
     // Use compute to parse HTML in a separate isolate to avoid blocking the UI thread.
     return compute(_extractInIsolate, _ExtractParams(html: html, url: url));
   }
 
-  Future<String> _fetchHtml(String url) async {
+  Future<String> _fetchHtml(
+    String url, {
+    String? userAgent,
+  }) async {
+    final ua =
+        (userAgent != null && userAgent.trim().isNotEmpty)
+            ? userAgent.trim()
+            : UserAgents.web;
     final res = await _dio.get<String>(
       url,
       options: Options(
         responseType: ResponseType.plain,
-        headers: const {
+        headers: {
           'Accept':
               'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent': UserAgents.web,
+          'User-Agent': ua,
         },
       ),
     );

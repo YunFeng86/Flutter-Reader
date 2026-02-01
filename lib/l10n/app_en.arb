@@ -637,5 +637,29 @@
   "defaultValue": "Default Value",
   "@defaultValue": {
     "description": "defaultValue"
+  },
+  "userAgent": "User-Agent",
+  "@userAgent": {
+    "description": "userAgent"
+  },
+  "rssUserAgent": "RSS/Atom User-Agent",
+  "@rssUserAgent": {
+    "description": "rssUserAgent"
+  },
+  "webUserAgent": "Web Page User-Agent",
+  "@webUserAgent": {
+    "description": "webUserAgent"
+  },
+  "userAgentRssHint": "Used when fetching RSS/Atom feeds.",
+  "@userAgentRssHint": {
+    "description": "userAgentRssHint"
+  },
+  "userAgentWebHint": "Used when fetching full web pages (Readability).",
+  "@userAgentWebHint": {
+    "description": "userAgentWebHint"
+  },
+  "resetToDefault": "Reset to default",
+  "@resetToDefault": {
+    "description": "resetToDefault"
   }
 }

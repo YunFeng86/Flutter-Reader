@@ -622,5 +622,29 @@
   "defaultValue": "默认值",
   "@defaultValue": {
     "description": "defaultValue"
+  },
+  "userAgent": "User-Agent",
+  "@userAgent": {
+    "description": "userAgent"
+  },
+  "rssUserAgent": "RSS/Atom User-Agent",
+  "@rssUserAgent": {
+    "description": "rssUserAgent"
+  },
+  "webUserAgent": "网页 User-Agent",
+  "@webUserAgent": {
+    "description": "webUserAgent"
+  },
+  "userAgentRssHint": "用于抓取 RSS/Atom 订阅源。",
+  "@userAgentRssHint": {
+    "description": "userAgentRssHint"
+  },
+  "userAgentWebHint": "用于抓取网页全文（阅读模式）。",
+  "@userAgentWebHint": {
+    "description": "userAgentWebHint"
+  },
+  "resetToDefault": "恢复默认",
+  "@resetToDefault": {
+    "description": "resetToDefault"
   }
 }

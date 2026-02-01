@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../models/article.dart';
 import '../providers/query_providers.dart';
+import '../utils/timeago_locale.dart';
 
 class ArticleListItem extends ConsumerWidget {
   const ArticleListItem({
@@ -39,7 +40,7 @@ class ArticleListItem extends ConsumerWidget {
     final title = (article.title ?? '').trim();
     final timeStr = timeago.format(
       article.publishedAt.toLocal(),
-      locale: _timeagoLocale(context),
+      locale: timeagoLocale(context),
     );
 
     // Prefer description/contentHtml for the thumbnail
@@ -202,15 +203,4 @@ class ArticleListItem extends ConsumerWidget {
       ),
     );
   }
-}
-
-String _timeagoLocale(BuildContext context) {
-  final locale = Localizations.localeOf(context);
-  if (locale.languageCode == 'zh') {
-    // Our app supports 'zh' (Simplified) and 'zh-Hant' (Traditional).
-    final script = locale.scriptCode?.toLowerCase();
-    if (script == 'hant') return 'zh';
-    return 'zh_CN';
-  }
-  return 'en';
 }

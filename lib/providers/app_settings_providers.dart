@@ -93,6 +93,16 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(showAiSummary: value));
   }
+
+  Future<void> setRssUserAgent(String value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(rssUserAgent: value));
+  }
+
+  Future<void> setWebUserAgent(String value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(webUserAgent: value));
+  }
 }
 
 final appSettingsProvider =

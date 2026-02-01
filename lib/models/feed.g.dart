@@ -37,68 +37,98 @@ const FeedSchema = CollectionSchema(
       name: r'etag',
       type: IsarType.string,
     ),
-    r'lastCheckedAt': PropertySchema(
+    r'filterEnabled': PropertySchema(
       id: 4,
+      name: r'filterEnabled',
+      type: IsarType.bool,
+    ),
+    r'filterKeywords': PropertySchema(
+      id: 5,
+      name: r'filterKeywords',
+      type: IsarType.string,
+    ),
+    r'lastCheckedAt': PropertySchema(
+      id: 6,
       name: r'lastCheckedAt',
       type: IsarType.dateTime,
     ),
     r'lastDurationMs': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'lastDurationMs',
       type: IsarType.long,
     ),
     r'lastError': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'lastError',
       type: IsarType.string,
     ),
     r'lastErrorAt': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'lastErrorAt',
       type: IsarType.dateTime,
     ),
     r'lastIncomingCount': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'lastIncomingCount',
       type: IsarType.long,
     ),
     r'lastModified': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'lastModified',
       type: IsarType.string,
     ),
     r'lastStatusCode': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'lastStatusCode',
       type: IsarType.long,
     ),
     r'lastSyncedAt': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'lastSyncedAt',
       type: IsarType.dateTime,
     ),
+    r'showAiSummary': PropertySchema(
+      id: 14,
+      name: r'showAiSummary',
+      type: IsarType.bool,
+    ),
     r'siteUrl': PropertySchema(
-      id: 12,
+      id: 15,
       name: r'siteUrl',
       type: IsarType.string,
     ),
+    r'syncEnabled': PropertySchema(
+      id: 16,
+      name: r'syncEnabled',
+      type: IsarType.bool,
+    ),
+    r'syncImages': PropertySchema(
+      id: 17,
+      name: r'syncImages',
+      type: IsarType.bool,
+    ),
+    r'syncWebPages': PropertySchema(
+      id: 18,
+      name: r'syncWebPages',
+      type: IsarType.bool,
+    ),
     r'title': PropertySchema(
-      id: 13,
+      id: 19,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 14,
+      id: 20,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'url': PropertySchema(
-      id: 15,
+      id: 21,
       name: r'url',
       type: IsarType.string,
     ),
     r'userTitle': PropertySchema(
-      id: 16,
+      id: 22,
       name: r'userTitle',
       type: IsarType.string,
     )
@@ -163,6 +193,12 @@ int _feedEstimateSize(
     }
   }
   {
+    final value = object.filterKeywords;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.lastError;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -206,19 +242,25 @@ void _feedSerialize(
   writer.writeDateTime(offsets[1], object.createdAt);
   writer.writeString(offsets[2], object.description);
   writer.writeString(offsets[3], object.etag);
-  writer.writeDateTime(offsets[4], object.lastCheckedAt);
-  writer.writeLong(offsets[5], object.lastDurationMs);
-  writer.writeString(offsets[6], object.lastError);
-  writer.writeDateTime(offsets[7], object.lastErrorAt);
-  writer.writeLong(offsets[8], object.lastIncomingCount);
-  writer.writeString(offsets[9], object.lastModified);
-  writer.writeLong(offsets[10], object.lastStatusCode);
-  writer.writeDateTime(offsets[11], object.lastSyncedAt);
-  writer.writeString(offsets[12], object.siteUrl);
-  writer.writeString(offsets[13], object.title);
-  writer.writeDateTime(offsets[14], object.updatedAt);
-  writer.writeString(offsets[15], object.url);
-  writer.writeString(offsets[16], object.userTitle);
+  writer.writeBool(offsets[4], object.filterEnabled);
+  writer.writeString(offsets[5], object.filterKeywords);
+  writer.writeDateTime(offsets[6], object.lastCheckedAt);
+  writer.writeLong(offsets[7], object.lastDurationMs);
+  writer.writeString(offsets[8], object.lastError);
+  writer.writeDateTime(offsets[9], object.lastErrorAt);
+  writer.writeLong(offsets[10], object.lastIncomingCount);
+  writer.writeString(offsets[11], object.lastModified);
+  writer.writeLong(offsets[12], object.lastStatusCode);
+  writer.writeDateTime(offsets[13], object.lastSyncedAt);
+  writer.writeBool(offsets[14], object.showAiSummary);
+  writer.writeString(offsets[15], object.siteUrl);
+  writer.writeBool(offsets[16], object.syncEnabled);
+  writer.writeBool(offsets[17], object.syncImages);
+  writer.writeBool(offsets[18], object.syncWebPages);
+  writer.writeString(offsets[19], object.title);
+  writer.writeDateTime(offsets[20], object.updatedAt);
+  writer.writeString(offsets[21], object.url);
+  writer.writeString(offsets[22], object.userTitle);
 }
 
 Feed _feedDeserialize(
@@ -232,20 +274,26 @@ Feed _feedDeserialize(
   object.createdAt = reader.readDateTime(offsets[1]);
   object.description = reader.readStringOrNull(offsets[2]);
   object.etag = reader.readStringOrNull(offsets[3]);
+  object.filterEnabled = reader.readBoolOrNull(offsets[4]);
+  object.filterKeywords = reader.readStringOrNull(offsets[5]);
   object.id = id;
-  object.lastCheckedAt = reader.readDateTimeOrNull(offsets[4]);
-  object.lastDurationMs = reader.readLongOrNull(offsets[5]);
-  object.lastError = reader.readStringOrNull(offsets[6]);
-  object.lastErrorAt = reader.readDateTimeOrNull(offsets[7]);
-  object.lastIncomingCount = reader.readLongOrNull(offsets[8]);
-  object.lastModified = reader.readStringOrNull(offsets[9]);
-  object.lastStatusCode = reader.readLongOrNull(offsets[10]);
-  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[11]);
-  object.siteUrl = reader.readStringOrNull(offsets[12]);
-  object.title = reader.readStringOrNull(offsets[13]);
-  object.updatedAt = reader.readDateTime(offsets[14]);
-  object.url = reader.readString(offsets[15]);
-  object.userTitle = reader.readStringOrNull(offsets[16]);
+  object.lastCheckedAt = reader.readDateTimeOrNull(offsets[6]);
+  object.lastDurationMs = reader.readLongOrNull(offsets[7]);
+  object.lastError = reader.readStringOrNull(offsets[8]);
+  object.lastErrorAt = reader.readDateTimeOrNull(offsets[9]);
+  object.lastIncomingCount = reader.readLongOrNull(offsets[10]);
+  object.lastModified = reader.readStringOrNull(offsets[11]);
+  object.lastStatusCode = reader.readLongOrNull(offsets[12]);
+  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[13]);
+  object.showAiSummary = reader.readBoolOrNull(offsets[14]);
+  object.siteUrl = reader.readStringOrNull(offsets[15]);
+  object.syncEnabled = reader.readBoolOrNull(offsets[16]);
+  object.syncImages = reader.readBoolOrNull(offsets[17]);
+  object.syncWebPages = reader.readBoolOrNull(offsets[18]);
+  object.title = reader.readStringOrNull(offsets[19]);
+  object.updatedAt = reader.readDateTime(offsets[20]);
+  object.url = reader.readString(offsets[21]);
+  object.userTitle = reader.readStringOrNull(offsets[22]);
   return object;
 }
 
@@ -265,30 +313,42 @@ P _feedDeserializeProp<P>(
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
-    case 7:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 8:
+    case 7:
       return (reader.readLongOrNull(offset)) as P;
-    case 9:
+    case 8:
       return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 10:
       return (reader.readLongOrNull(offset)) as P;
     case 11:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 13:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 15:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 16:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 17:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 18:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 19:
+      return (reader.readStringOrNull(offset)) as P;
+    case 20:
+      return (reader.readDateTime(offset)) as P;
+    case 21:
+      return (reader.readString(offset)) as P;
+    case 22:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1005,6 +1065,178 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'etag',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterEnabledIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'filterEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterEnabledIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'filterEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterEnabledEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'filterKeywords',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'filterKeywords',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'filterKeywords',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'filterKeywords',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterKeywords',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> filterKeywordsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'filterKeywords',
         value: '',
       ));
     });
@@ -1768,6 +2000,32 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> showAiSummaryIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'showAiSummary',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> showAiSummaryIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'showAiSummary',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> showAiSummaryEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showAiSummary',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterFilterCondition> siteUrlIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1908,6 +2166,84 @@ extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'siteUrl',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncEnabledIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncEnabledIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncEnabledEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncImagesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncImages',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncImagesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncImages',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncImagesEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncImages',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncWebPagesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncWebPages',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncWebPagesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncWebPages',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> syncWebPagesEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncWebPages',
+        value: value,
       ));
     });
   }
@@ -2437,6 +2773,30 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByFilterEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByFilterKeywords() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByFilterKeywordsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> sortByLastCheckedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastCheckedAt', Sort.asc);
@@ -2533,6 +2893,18 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByShowAiSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> sortBySiteUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'siteUrl', Sort.asc);
@@ -2542,6 +2914,42 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
   QueryBuilder<Feed, Feed, QAfterSortBy> sortBySiteUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'siteUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncImagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortBySyncWebPagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.desc);
     });
   }
 
@@ -2640,6 +3048,30 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
   QueryBuilder<Feed, Feed, QAfterSortBy> thenByEtagDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'etag', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByFilterEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByFilterKeywords() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByFilterKeywordsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.desc);
     });
   }
 
@@ -2751,6 +3183,18 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByShowAiSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> thenBySiteUrl() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'siteUrl', Sort.asc);
@@ -2760,6 +3204,42 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
   QueryBuilder<Feed, Feed, QAfterSortBy> thenBySiteUrlDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'siteUrl', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncImagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenBySyncWebPagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.desc);
     });
   }
 
@@ -2839,6 +3319,20 @@ extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QDistinct> distinctByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'filterEnabled');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctByFilterKeywords(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'filterKeywords',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QDistinct> distinctByLastCheckedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastCheckedAt');
@@ -2889,10 +3383,34 @@ extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
     });
   }
 
+  QueryBuilder<Feed, Feed, QDistinct> distinctByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showAiSummary');
+    });
+  }
+
   QueryBuilder<Feed, Feed, QDistinct> distinctBySiteUrl(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'siteUrl', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncEnabled');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncImages');
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QDistinct> distinctBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncWebPages');
     });
   }
 
@@ -2955,6 +3473,18 @@ extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Feed, bool?, QQueryOperations> filterEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'filterEnabled');
+    });
+  }
+
+  QueryBuilder<Feed, String?, QQueryOperations> filterKeywordsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'filterKeywords');
+    });
+  }
+
   QueryBuilder<Feed, DateTime?, QQueryOperations> lastCheckedAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastCheckedAt');
@@ -3003,9 +3533,33 @@ extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Feed, bool?, QQueryOperations> showAiSummaryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showAiSummary');
+    });
+  }
+
   QueryBuilder<Feed, String?, QQueryOperations> siteUrlProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'siteUrl');
+    });
+  }
+
+  QueryBuilder<Feed, bool?, QQueryOperations> syncEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncEnabled');
+    });
+  }
+
+  QueryBuilder<Feed, bool?, QQueryOperations> syncImagesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncImages');
+    });
+  }
+
+  QueryBuilder<Feed, bool?, QQueryOperations> syncWebPagesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncWebPages');
     });
   }
 

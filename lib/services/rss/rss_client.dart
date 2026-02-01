@@ -25,24 +25,26 @@ class RssClient {
     String url, {
     String? ifNoneMatch,
     String? ifModifiedSince,
+    String? userAgent,
   }) async {
+    final ua =
+        (userAgent != null && userAgent.trim().isNotEmpty)
+            ? userAgent.trim()
+            : UserAgents.rss;
     final res = await _dio.get<String>(
       url,
       options: Options(
         responseType: ResponseType.plain,
         // Accept 304 so callers can handle "not modified" without exceptions.
         validateStatus: (s) => s != null && s >= 200 && s < 400,
-        headers: const {
+        headers: <String, String>{
           'Accept': 'application/rss+xml, application/atom+xml, text/xml, */*',
-          'User-Agent': UserAgents.rss,
-        }
-            .map((k, v) => MapEntry(k, v))
-            ..addAll({
-              if (ifNoneMatch != null && ifNoneMatch.trim().isNotEmpty)
-                'If-None-Match': ifNoneMatch,
-              if (ifModifiedSince != null && ifModifiedSince.trim().isNotEmpty)
-                'If-Modified-Since': ifModifiedSince,
-            }),
+          'User-Agent': ua,
+          if (ifNoneMatch != null && ifNoneMatch.trim().isNotEmpty)
+            'If-None-Match': ifNoneMatch,
+          if (ifModifiedSince != null && ifModifiedSince.trim().isNotEmpty)
+            'If-Modified-Since': ifModifiedSince,
+        },
       ),
     );
     final status = res.statusCode ?? 0;

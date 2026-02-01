@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'repository_providers.dart';
+import 'app_settings_providers.dart';
 import 'service_providers.dart';
 
 class FullTextController extends AutoDisposeAsyncNotifier<void> {
@@ -17,9 +18,10 @@ class FullTextController extends AutoDisposeAsyncNotifier<void> {
           article.extractedContentHtml!.trim().isNotEmpty) {
         return;
       }
+      final settings = ref.read(appSettingsProvider).valueOrNull;
       final extracted = await ref
           .read(articleExtractorProvider)
-          .extract(article.link);
+          .extract(article.link, userAgent: settings?.webUserAgent);
       if (extracted.contentHtml.trim().isEmpty) {
         await repo.markExtractionFailed(articleId);
         return;

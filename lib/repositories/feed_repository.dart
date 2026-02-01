@@ -20,6 +20,10 @@ class FeedRepository {
     return _isar.feeds.get(id);
   }
 
+  Stream<Feed?> watchById(int id) {
+    return _isar.feeds.watchObject(id, fireImmediately: true);
+  }
+
   Future<int> upsertUrl(String url) async {
     final normalized = url.trim();
     if (normalized.isEmpty) {

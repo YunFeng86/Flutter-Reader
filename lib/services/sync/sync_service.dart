@@ -104,6 +104,7 @@ class SyncService {
       feed.url,
       ifNoneMatch: feed.etag,
       ifModifiedSince: feed.lastModified,
+      userAgent: settings.rssUserAgent,
     );
 
     final status = fetched.statusCode;
@@ -366,12 +367,14 @@ class _EffectiveFeedSettings {
     required this.filterEnabled,
     required this.filterKeywords,
     required this.syncImages,
+    required this.rssUserAgent,
   });
 
   final bool syncEnabled;
   final bool filterEnabled;
   final String filterKeywords;
   final bool syncImages;
+  final String rssUserAgent;
 
   static _EffectiveFeedSettings resolve(
     Feed feed,
@@ -413,6 +416,7 @@ class _EffectiveFeedSettings {
         category?.syncImages,
         appSettings.syncImages,
       ),
+      rssUserAgent: appSettings.rssUserAgent,
     );
   }
 }

@@ -22,13 +22,43 @@ const CategorySchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'name': PropertySchema(
+    r'filterEnabled': PropertySchema(
       id: 1,
+      name: r'filterEnabled',
+      type: IsarType.bool,
+    ),
+    r'filterKeywords': PropertySchema(
+      id: 2,
+      name: r'filterKeywords',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 3,
       name: r'name',
       type: IsarType.string,
     ),
+    r'showAiSummary': PropertySchema(
+      id: 4,
+      name: r'showAiSummary',
+      type: IsarType.bool,
+    ),
+    r'syncEnabled': PropertySchema(
+      id: 5,
+      name: r'syncEnabled',
+      type: IsarType.bool,
+    ),
+    r'syncImages': PropertySchema(
+      id: 6,
+      name: r'syncImages',
+      type: IsarType.bool,
+    ),
+    r'syncWebPages': PropertySchema(
+      id: 7,
+      name: r'syncWebPages',
+      type: IsarType.bool,
+    ),
     r'updatedAt': PropertySchema(
-      id: 2,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -67,6 +97,12 @@ int _categoryEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.filterKeywords;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
   return bytesCount;
 }
@@ -78,8 +114,14 @@ void _categorySerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeString(offsets[1], object.name);
-  writer.writeDateTime(offsets[2], object.updatedAt);
+  writer.writeBool(offsets[1], object.filterEnabled);
+  writer.writeString(offsets[2], object.filterKeywords);
+  writer.writeString(offsets[3], object.name);
+  writer.writeBool(offsets[4], object.showAiSummary);
+  writer.writeBool(offsets[5], object.syncEnabled);
+  writer.writeBool(offsets[6], object.syncImages);
+  writer.writeBool(offsets[7], object.syncWebPages);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 Category _categoryDeserialize(
@@ -90,9 +132,15 @@ Category _categoryDeserialize(
 ) {
   final object = Category();
   object.createdAt = reader.readDateTime(offsets[0]);
+  object.filterEnabled = reader.readBoolOrNull(offsets[1]);
+  object.filterKeywords = reader.readStringOrNull(offsets[2]);
   object.id = id;
-  object.name = reader.readString(offsets[1]);
-  object.updatedAt = reader.readDateTime(offsets[2]);
+  object.name = reader.readString(offsets[3]);
+  object.showAiSummary = reader.readBoolOrNull(offsets[4]);
+  object.syncEnabled = reader.readBoolOrNull(offsets[5]);
+  object.syncImages = reader.readBoolOrNull(offsets[6]);
+  object.syncWebPages = reader.readBoolOrNull(offsets[7]);
+  object.updatedAt = reader.readDateTime(offsets[8]);
   return object;
 }
 
@@ -106,8 +154,20 @@ P _categoryDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readString(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 2:
+      return (reader.readStringOrNull(offset)) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 5:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 6:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 7:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 8:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -354,6 +414,187 @@ extension CategoryQueryFilter
     });
   }
 
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterEnabledIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'filterEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterEnabledIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'filterEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> filterEnabledEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'filterKeywords',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'filterKeywords',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> filterKeywordsEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> filterKeywordsBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'filterKeywords',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'filterKeywords',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> filterKeywordsMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'filterKeywords',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'filterKeywords',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      filterKeywordsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'filterKeywords',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterFilterCondition> idEqualTo(Id value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -536,6 +777,115 @@ extension CategoryQueryFilter
     });
   }
 
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      showAiSummaryIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'showAiSummary',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      showAiSummaryIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'showAiSummary',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> showAiSummaryEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showAiSummary',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncEnabledIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      syncEnabledIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncEnabled',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncEnabledEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncImagesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncImages',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      syncImagesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncImages',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncImagesEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncImages',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncWebPagesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'syncWebPages',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      syncWebPagesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'syncWebPages',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> syncWebPagesEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'syncWebPages',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterFilterCondition> updatedAtEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -609,6 +959,30 @@ extension CategoryQuerySortBy on QueryBuilder<Category, Category, QSortBy> {
     });
   }
 
+  QueryBuilder<Category, Category, QAfterSortBy> sortByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByFilterEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByFilterKeywords() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByFilterKeywordsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.desc);
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -618,6 +992,54 @@ extension CategoryQuerySortBy on QueryBuilder<Category, Category, QSortBy> {
   QueryBuilder<Category, Category, QAfterSortBy> sortByNameDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByShowAiSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncImagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortBySyncWebPagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.desc);
     });
   }
 
@@ -648,6 +1070,30 @@ extension CategoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<Category, Category, QAfterSortBy> thenByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenByFilterEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenByFilterKeywords() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenByFilterKeywordsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'filterKeywords', Sort.desc);
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -672,6 +1118,54 @@ extension CategoryQuerySortThenBy
     });
   }
 
+  QueryBuilder<Category, Category, QAfterSortBy> thenByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenByShowAiSummaryDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showAiSummary', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncImagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncImages', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenBySyncWebPagesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'syncWebPages', Sort.desc);
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -693,10 +1187,48 @@ extension CategoryQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Category, Category, QDistinct> distinctByFilterEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'filterEnabled');
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctByFilterKeywords(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'filterKeywords',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Category, Category, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctByShowAiSummary() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showAiSummary');
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctBySyncEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncEnabled');
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctBySyncImages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncImages');
+    });
+  }
+
+  QueryBuilder<Category, Category, QDistinct> distinctBySyncWebPages() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'syncWebPages');
     });
   }
 
@@ -721,9 +1253,45 @@ extension CategoryQueryProperty
     });
   }
 
+  QueryBuilder<Category, bool?, QQueryOperations> filterEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'filterEnabled');
+    });
+  }
+
+  QueryBuilder<Category, String?, QQueryOperations> filterKeywordsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'filterKeywords');
+    });
+  }
+
   QueryBuilder<Category, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Category, bool?, QQueryOperations> showAiSummaryProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showAiSummary');
+    });
+  }
+
+  QueryBuilder<Category, bool?, QQueryOperations> syncEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncEnabled');
+    });
+  }
+
+  QueryBuilder<Category, bool?, QQueryOperations> syncImagesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncImages');
+    });
+  }
+
+  QueryBuilder<Category, bool?, QQueryOperations> syncWebPagesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'syncWebPages');
     });
   }
 
