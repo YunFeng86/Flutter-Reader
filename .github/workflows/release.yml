@@ -268,17 +268,43 @@ jobs:
       - name: Check generated installer
         shell: powershell
         run: |
-          Write-Host "Generated files:"
+          Write-Host "=== All files in current directory ==="
+          Get-ChildItem -Path "." -File | ForEach-Object {
+            Write-Host "File: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+          }
+          
+          Write-Host "`n=== Looking for EXE files ==="
           Get-ChildItem -Path "." -File -Filter "*.exe" | ForEach-Object {
-            Write-Host "Generated installer: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+            Write-Host "EXE: $($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+          }
+          
+          Write-Host "`n=== Looking for ISS files ==="
+          if (Test-Path "installer.iss") {
+            Write-Host "Found installer.iss, showing content:"
+            Get-Content "installer.iss" | ForEach-Object { Write-Host "  $_" }
+          } else {
+            Write-Host "installer.iss not found!"
+          }
+          
+          Write-Host "`n=== Checking if Output folder exists ==="
+          if (Test-Path "Output") {
+            Write-Host "Output folder exists:"
+            Get-ChildItem -Path "Output" -File | ForEach-Object {
+              Write-Host "  Output/$($_.Name) ($([math]::Round($_.Length / 1MB, 2)) MB)"
+            }
+          } else {
+            Write-Host "No Output folder found"
           }
 
       - name: Upload Windows Installer
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: flutter_reader-windows-x64-installer-*.exe
+          path: |
+            flutter_reader-windows-x64-installer-*.exe
+            Output/flutter_reader-windows-x64-installer-*.exe
           retention-days: 90
+          if-no-files-found: error
 
   # 创建GitHub Release并上传所有构建产物
   create-release:
