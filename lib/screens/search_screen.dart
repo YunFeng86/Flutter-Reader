@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
-import '../services/settings/app_settings.dart';
 import '../ui/layout.dart';
 import '../utils/platform.dart';
 import '../widgets/article_list.dart';
@@ -112,10 +111,51 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             children: [
               Text(l10n.search, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
+              if (width >= 600)
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        autofocus: widget.selectedArticleId == null,
+                        decoration: InputDecoration(
+                          hintText: l10n.search,
+                          prefixIcon: const Icon(Icons.search),
+                          filled: true,
+                          suffixIcon: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (query.trim().isNotEmpty)
+                                IconButton(
+                                  tooltip: l10n.delete,
+                                  onPressed: () => _applyQuery(''),
+                                  icon: const Icon(Icons.clear),
+                                ),
+                            ],
+                          ),
+                        ),
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: _applyQuery,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    FilterChip(
+                      label: Text(l10n.searchInContent),
+                      selected: searchInContent,
+                      onSelected: (v) async {
+                        await ref
+                            .read(appSettingsProvider.notifier)
+                            .setSearchInContent(v);
+                      },
+                    ),
+                  ],
+                )
+              else
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
                       controller: _controller,
                       focusNode: _focusNode,
                       autofocus: widget.selectedArticleId == null,
@@ -138,26 +178,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                       textInputAction: TextInputAction.search,
                       onSubmitted: _applyQuery,
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    tooltip: l10n.searchInContent,
-                    onPressed: () async {
-                      final cur =
-                          ref.read(appSettingsProvider).valueOrNull ??
-                          const AppSettings();
-                      await ref
-                          .read(appSettingsProvider.notifier)
-                          .setSearchInContent(!cur.searchInContent);
-                    },
-                    icon: Icon(
-                      searchInContent
-                          ? Icons.text_snippet_outlined
-                          : Icons.title_outlined,
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FilterChip(
+                        label: Text(l10n.searchInContent),
+                        selected: searchInContent,
+                        onSelected: (v) async {
+                          await ref
+                              .read(appSettingsProvider.notifier)
+                              .setSearchInContent(v);
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         );
