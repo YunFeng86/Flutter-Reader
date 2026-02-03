@@ -182,7 +182,7 @@ class AppSettings {
       localeTag: localeTag is String && localeTag.trim().isNotEmpty
           ? localeTag
           : null,
-      autoMarkRead: autoMarkRead is bool ? autoMarkRead : true,
+      autoMarkRead: autoMarkRead is! bool || autoMarkRead,
       autoRefreshMinutes: autoRefreshMinutes is num
           ? autoRefreshMinutes.toInt()
           : null,
@@ -191,16 +191,16 @@ class AppSettings {
           : 2,
       articleGroupMode: parseGroupMode(json['articleGroupMode']),
       articleSortOrder: parseSortOrder(json['articleSortOrder']),
-      searchInContent: searchInContent is bool ? searchInContent : true,
+      searchInContent: searchInContent is! bool || searchInContent,
       cleanupReadOlderThanDays: cleanupReadOlderThanDays is num
           ? cleanupReadOlderThanDays.toInt()
           : null,
-      filterEnabled: filterEnabled is bool ? filterEnabled : false,
+      filterEnabled: filterEnabled is bool && filterEnabled,
       filterKeywords: filterKeywords is String ? filterKeywords : '',
-      syncEnabled: syncEnabled is bool ? syncEnabled : true,
-      syncImages: syncImages is bool ? syncImages : true,
-      syncWebPages: syncWebPages is bool ? syncWebPages : false,
-      showAiSummary: showAiSummary is bool ? showAiSummary : false,
+      syncEnabled: syncEnabled is! bool || syncEnabled,
+      syncImages: syncImages is! bool || syncImages,
+      syncWebPages: syncWebPages is bool && syncWebPages,
+      showAiSummary: showAiSummary is bool && showAiSummary,
       rssUserAgent: rssUserAgent is String && rssUserAgent.trim().isNotEmpty
           ? rssUserAgent
           : UserAgents.rss,

@@ -33,7 +33,7 @@ class DataIntegrityService {
           .group((q) {
             return feed.categoryId == null
                 ? q.categoryIdIsNull()
-                : q.categoryIdEqualTo(feed.categoryId!);
+                : q.categoryIdEqualTo(feed.categoryId);
           })
           .idProperty()
           .findAll();
@@ -86,7 +86,7 @@ class DataIntegrityService {
           .group((q) {
             return feed.categoryId == null
                 ? q.categoryIdIsNull()
-                : q.categoryIdEqualTo(feed.categoryId!);
+                : q.categoryIdEqualTo(feed.categoryId);
           })
           .count();
 
