@@ -29,4 +29,3 @@ class ParsedItem {
   final DateTime? publishedAt;
   final String? contentHtml;
 }
-

@@ -57,4 +57,3 @@ class ReservedKeywordFilter {
     return !hasAnyValidGroup;
   }
 }
-

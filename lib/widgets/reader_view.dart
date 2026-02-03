@@ -116,8 +116,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final prevA = prev?.valueOrNull;
         final prevHtml =
             (prevA?.extractedContentHtml ?? prevA?.contentHtml ?? '').trim();
-        final html =
-            (a?.extractedContentHtml ?? a?.contentHtml ?? '').trim();
+        final html = (a?.extractedContentHtml ?? a?.contentHtml ?? '').trim();
         if (a == null || html.isEmpty) return;
         if (prevA != null && prevA.id == a.id && prevHtml == html) return;
         unawaited(
@@ -166,8 +165,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         }
 
         final settings = settingsAsync.valueOrNull ?? const ReaderSettings();
-        final hasExtracted =
-            (article.extractedContentHtml ?? '').trim().isNotEmpty;
+        final hasExtracted = (article.extractedContentHtml ?? '')
+            .trim()
+            .isNotEmpty;
         final showExtracted = hasExtracted && useFullText;
         final html =
             ((showExtracted ? article.extractedContentHtml : null) ??

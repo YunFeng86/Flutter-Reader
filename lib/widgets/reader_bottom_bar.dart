@@ -152,8 +152,9 @@ class ReaderBottomBar extends ConsumerWidget {
                       fullTextViewEnabledProvider(article.id),
                     );
                     final controller = ref.watch(fullTextControllerProvider);
-                    final hasFull =
-                        (article.extractedContentHtml ?? '').trim().isNotEmpty;
+                    final hasFull = (article.extractedContentHtml ?? '')
+                        .trim()
+                        .isNotEmpty;
                     final showFull = hasFull && useFullText;
 
                     return IconButton(

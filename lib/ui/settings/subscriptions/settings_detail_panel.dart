@@ -298,8 +298,9 @@ class _FilterSection extends ConsumerWidget {
           // IMPORTANT: keep `currentValue` as the explicit value at this level.
           // Do not fall back to parent (category/global), otherwise selecting
           // "Auto" will appear to do nothing.
-          currentValue:
-              feed != null ? feed!.filterEnabled : category?.filterEnabled,
+          currentValue: feed != null
+              ? feed!.filterEnabled
+              : category?.filterEnabled,
           effectiveValue: effectiveEnabled,
           isGlobal: feed == null && category == null,
           onChanged: (val) {
@@ -367,7 +368,9 @@ class _SyncSection extends ConsumerWidget {
         ),
         _TriStateSwitch(
           title: l10n.enableSync,
-          currentValue: feed != null ? feed!.syncEnabled : category?.syncEnabled,
+          currentValue: feed != null
+              ? feed!.syncEnabled
+              : category?.syncEnabled,
           effectiveValue: SettingsInheritanceHelper.resolveSyncEnabled(
             feed,
             category,
@@ -431,8 +434,9 @@ class _SyncSection extends ConsumerWidget {
         ),
         _TriStateSwitch(
           title: l10n.syncWebPages,
-          currentValue:
-              feed != null ? feed!.syncWebPages : category?.syncWebPages,
+          currentValue: feed != null
+              ? feed!.syncWebPages
+              : category?.syncWebPages,
           effectiveValue: SettingsInheritanceHelper.resolveSyncWebPages(
             feed,
             category,
@@ -592,10 +596,9 @@ class _FilterKeywordsInputState extends ConsumerState<_FilterKeywordsInput> {
   );
 
   // Explicit value at this level only (feed or category). No parent fallback.
-  String? get _currentValue =>
-      widget.feed != null
-          ? widget.feed!.filterKeywords
-          : widget.category?.filterKeywords;
+  String? get _currentValue => widget.feed != null
+      ? widget.feed!.filterKeywords
+      : widget.category?.filterKeywords;
 
   bool get _isGlobal => widget.feed == null && widget.category == null;
 
@@ -659,34 +662,32 @@ class _FilterKeywordsInputState extends ConsumerState<_FilterKeywordsInput> {
           decoration: InputDecoration(
             // When inheriting, don't show "inherit:" text; show effective value
             // directly (read-only) to match global/category-global behavior.
-            hintText:
-                _isInherit && _effectiveValue.trim().isEmpty
-                    ? l10n.defaultValue
-                    : null,
+            hintText: _isInherit && _effectiveValue.trim().isEmpty
+                ? l10n.defaultValue
+                : null,
             border: const OutlineInputBorder(),
             filled: true,
             helperText: l10n.filterKeywordsHint,
             helperMaxLines: 2,
-            suffixIcon:
-                _isGlobal
-                    ? null
-                    : (_isInherit
-                        ? IconButton(
-                            icon: const Icon(Icons.edit),
-                            tooltip: l10n.edit,
-                            onPressed: () {
-                              // Create an explicit override based on the current effective value,
-                              // then let user edit.
-                              final seed = _effectiveValue;
-                              _controller.text = seed;
-                              _save(seed);
-                              _focusNode.requestFocus();
-                              _controller.selection = TextSelection.fromPosition(
-                                TextPosition(offset: _controller.text.length),
-                              );
-                            },
-                          )
-                        : ((_currentValue != null &&
+            suffixIcon: _isGlobal
+                ? null
+                : (_isInherit
+                      ? IconButton(
+                          icon: const Icon(Icons.edit),
+                          tooltip: l10n.edit,
+                          onPressed: () {
+                            // Create an explicit override based on the current effective value,
+                            // then let user edit.
+                            final seed = _effectiveValue;
+                            _controller.text = seed;
+                            _save(seed);
+                            _focusNode.requestFocus();
+                            _controller.selection = TextSelection.fromPosition(
+                              TextPosition(offset: _controller.text.length),
+                            );
+                          },
+                        )
+                      : ((_currentValue != null &&
                                 _currentValue!.trim().isNotEmpty)
                             ? IconButton(
                                 icon: const Icon(Icons.undo),
@@ -747,8 +748,12 @@ class _UserAgentSectionState extends ConsumerState<_UserAgentSection> {
   @override
   void initState() {
     super.initState();
-    _rssController = TextEditingController(text: widget.appSettings.rssUserAgent);
-    _webController = TextEditingController(text: widget.appSettings.webUserAgent);
+    _rssController = TextEditingController(
+      text: widget.appSettings.rssUserAgent,
+    );
+    _webController = TextEditingController(
+      text: widget.appSettings.webUserAgent,
+    );
   }
 
   @override

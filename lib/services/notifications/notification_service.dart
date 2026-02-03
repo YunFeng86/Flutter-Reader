@@ -46,8 +46,7 @@ class NotificationService {
     } on MissingPluginException {
       _initFuture = null;
     } catch (e) {
-      if (e is Error &&
-          e.runtimeType.toString() == 'LateInitializationError') {
+      if (e is Error && e.runtimeType.toString() == 'LateInitializationError') {
         _initFuture = null;
         return;
       }
@@ -125,5 +124,4 @@ class NotificationService {
       );
     }
   }
-
 }

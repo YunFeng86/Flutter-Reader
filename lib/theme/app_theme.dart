@@ -30,50 +30,48 @@ class AppTheme {
 
     return switch (defaultTargetPlatform) {
       TargetPlatform.macOS || TargetPlatform.iOS => const [
-          'PingFang SC',
-          'PingFang TC',
-          'Heiti SC',
-          'Heiti TC',
-          'Songti SC',
-          'Hiragino Sans GB',
-          '.SF Pro Text',
-          '.SF UI Text',
-        ],
+        'PingFang SC',
+        'PingFang TC',
+        'Heiti SC',
+        'Heiti TC',
+        'Songti SC',
+        'Hiragino Sans GB',
+        '.SF Pro Text',
+        '.SF UI Text',
+      ],
       TargetPlatform.windows => const [
-          'Microsoft YaHei UI',
-          'Microsoft YaHei',
-          'SimHei',
-          'SimSun',
-          'Segoe UI',
-          'Noto Sans SC',
-          'Noto Sans CJK SC',
-          'Arial',
-        ],
+        'Microsoft YaHei UI',
+        'Microsoft YaHei',
+        'SimHei',
+        'SimSun',
+        'Segoe UI',
+        'Noto Sans SC',
+        'Noto Sans CJK SC',
+        'Arial',
+      ],
       TargetPlatform.linux => const [
-          'Noto Sans CJK SC',
-          'Noto Sans SC',
-          'Source Han Sans SC',
-          'WenQuanYi Micro Hei',
-          'Noto Sans',
-          'DejaVu Sans',
-        ],
+        'Noto Sans CJK SC',
+        'Noto Sans SC',
+        'Source Han Sans SC',
+        'WenQuanYi Micro Hei',
+        'Noto Sans',
+        'DejaVu Sans',
+      ],
       _ => const [
-          // Android/Fuchsia: keep Roboto as primary; provide CJK fallbacks.
-          'Roboto',
-          'Noto Sans CJK SC',
-          'Noto Sans SC',
-          'Noto Sans',
-          'Droid Sans Fallback',
-        ],
+        // Android/Fuchsia: keep Roboto as primary; provide CJK fallbacks.
+        'Roboto',
+        'Noto Sans CJK SC',
+        'Noto Sans SC',
+        'Noto Sans',
+        'Droid Sans Fallback',
+      ],
     };
   }
 
   static ThemeData _build(Brightness brightness, {ColorScheme? dynamicScheme}) {
-    final cs = dynamicScheme ??
-        ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: brightness,
-        );
+    final cs =
+        dynamicScheme ??
+        ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
 
     final base = ThemeData(
       useMaterial3: true,
@@ -144,8 +142,9 @@ class AppTheme {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: cs.inverseSurface,
-        contentTextStyle:
-            base.textTheme.bodyMedium?.copyWith(color: cs.onInverseSurface),
+        contentTextStyle: base.textTheme.bodyMedium?.copyWith(
+          color: cs.onInverseSurface,
+        ),
       ),
     );
   }

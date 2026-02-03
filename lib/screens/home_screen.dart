@@ -68,9 +68,9 @@ class HomeScreen extends ConsumerWidget {
             categoryId: selectedFeedId == null ? selectedCategoryId : null,
           );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.done)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.done)));
     }
 
     Widget markAllReadFab() {
@@ -174,8 +174,7 @@ class HomeScreen extends ConsumerWidget {
                       },
                     ),
                   ),
-            floatingActionButton:
-                useCompactTopBar ? markAllReadFab() : null,
+            floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
             body: ArticleList(selectedArticleId: selectedArticleId),
           );
         }
@@ -336,8 +335,9 @@ class HomeScreen extends ConsumerWidget {
                         ],
                       )
                     : null,
-                floatingActionButton:
-                    useCompactTopBar ? markAllReadFab() : null,
+                floatingActionButton: useCompactTopBar
+                    ? markAllReadFab()
+                    : null,
                 drawer: (!isDesktop && columns == 2)
                     ? Drawer(
                         child: Sidebar(

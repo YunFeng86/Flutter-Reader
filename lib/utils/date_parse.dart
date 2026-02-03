@@ -69,4 +69,3 @@ int? _parseTzOffsetMinutes(String tz) {
   final mm = int.tryParse(m.group(3)!) ?? 0;
   return sign * (hh * 60 + mm);
 }
-

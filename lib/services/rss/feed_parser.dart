@@ -94,7 +94,7 @@ class FeedParser {
   bool _isAtomFeed(String xmlHeader) {
     // Atom must have <feed> root and xmlns="http://www.w3.org/2005/Atom"
     return xmlHeader.contains('<feed') &&
-           xmlHeader.contains('http://www.w3.org/2005/Atom');
+        xmlHeader.contains('http://www.w3.org/2005/Atom');
   }
 
   bool _isRssFeed(String xmlHeader) {
@@ -102,8 +102,9 @@ class FeedParser {
     // RSS 1.0: <rdf:RDF> with RSS 1.0 namespace
     // Also accept <channel> as RSS indicator (some feeds omit version)
     return xmlHeader.contains('<rss') ||
-           xmlHeader.contains('<channel>') ||
-           (xmlHeader.contains('<rdf:RDF') && xmlHeader.contains('http://purl.org/rss/1.0/'));
+        xmlHeader.contains('<channel>') ||
+        (xmlHeader.contains('<rdf:RDF') &&
+            xmlHeader.contains('http://purl.org/rss/1.0/'));
   }
 
   ParsedFeed _parseRss(String xml) {
@@ -147,7 +148,8 @@ class FeedParser {
               title: it.title,
               author: it.authors.isNotEmpty ? it.authors.first.name : null,
               publishedAt:
-                  tryParseFeedDate(it.published) ?? tryParseFeedDate(it.updated),
+                  tryParseFeedDate(it.published) ??
+                  tryParseFeedDate(it.updated),
               contentHtml: it.content ?? it.summary,
             );
           })

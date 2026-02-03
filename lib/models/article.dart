@@ -4,11 +4,7 @@ import 'tag.dart';
 
 part 'article.g.dart';
 
-enum ContentSource {
-  feed,
-  extracted,
-  extractionFailed,
-}
+enum ContentSource { feed, extracted, extractionFailed }
 
 @collection
 class Article {

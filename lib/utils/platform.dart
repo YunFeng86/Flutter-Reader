@@ -7,4 +7,3 @@ bool get isDesktop =>
         defaultTargetPlatform == TargetPlatform.linux);
 
 bool get isMacOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-

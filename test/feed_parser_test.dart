@@ -51,4 +51,3 @@ void main() {
     expect(parsed.items.first.contentHtml, contains('<p>Hi</p>'));
   });
 }
-

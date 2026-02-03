@@ -22,10 +22,10 @@ class ReaderSettings {
   }
 
   Map<String, Object?> toJson() => {
-        'fontSize': fontSize,
-        'lineHeight': lineHeight,
-        'horizontalPadding': horizontalPadding,
-      };
+    'fontSize': fontSize,
+    'lineHeight': lineHeight,
+    'horizontalPadding': horizontalPadding,
+  };
 
   static ReaderSettings fromJson(Map<String, Object?> json) {
     double toDoubleOr(Object? v, double fallback) {

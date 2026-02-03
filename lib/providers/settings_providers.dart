@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/settings/reader_settings.dart';
 import '../services/settings/reader_settings_store.dart';
 
-final readerSettingsStoreProvider =
-    Provider<ReaderSettingsStore>((ref) => ReaderSettingsStore());
+final readerSettingsStoreProvider = Provider<ReaderSettingsStore>(
+  (ref) => ReaderSettingsStore(),
+);
 
 class ReaderSettingsController extends AsyncNotifier<ReaderSettings> {
   @override
@@ -20,5 +21,5 @@ class ReaderSettingsController extends AsyncNotifier<ReaderSettings> {
 
 final readerSettingsProvider =
     AsyncNotifierProvider<ReaderSettingsController, ReaderSettings>(
-  ReaderSettingsController.new,
-);
+      ReaderSettingsController.new,
+    );

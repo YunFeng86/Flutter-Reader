@@ -68,7 +68,9 @@ class ArticleRepository {
     if (query.feedId != null || query.categoryId == null) return null;
     final cid = query.categoryId!;
     final qb = _isar.feeds.filter();
-    final filtered = cid < 0 ? qb.categoryIdIsNull() : qb.categoryIdEqualTo(cid);
+    final filtered = cid < 0
+        ? qb.categoryIdIsNull()
+        : qb.categoryIdEqualTo(cid);
     return filtered.idProperty().findAll();
   }
 
@@ -84,10 +86,7 @@ class ArticleRepository {
         .optional(query.feedId != null, (q) => q.feedIdEqualTo(query.feedId!))
         .optional(
           query.feedId == null && categoryFeedIds != null,
-          (q) => q.anyOf(
-            categoryFeedIds!,
-            (q, id) => q.feedIdEqualTo(id),
-          ),
+          (q) => q.anyOf(categoryFeedIds!, (q, id) => q.feedIdEqualTo(id)),
         )
         .optional(tid != null, (q) => q.tags((t) => t.idEqualTo(tid!)))
         .optional(query.unreadOnly, (q) => q.isReadEqualTo(false))
@@ -362,13 +361,15 @@ class ArticleRepository {
       final existingArticles = await _isar.articles
           .filter()
           .feedIdEqualTo(feedId)
-          .group((q) => q
-              .anyOf(normalizedLinks, (q, link) => q.linkEqualTo(link))
-              .or()
-              .optional(
-                remoteIds.isNotEmpty,
-                (q) => q.anyOf(remoteIds, (q, rid) => q.remoteIdEqualTo(rid)),
-              ))
+          .group(
+            (q) => q
+                .anyOf(normalizedLinks, (q, link) => q.linkEqualTo(link))
+                .or()
+                .optional(
+                  remoteIds.isNotEmpty,
+                  (q) => q.anyOf(remoteIds, (q, rid) => q.remoteIdEqualTo(rid)),
+                ),
+          )
           .findAll();
 
       // Build dual lookup maps for O(1) access
@@ -433,7 +434,6 @@ class ArticleRepository {
             // Some feeds omit pubDate/updated; use fetchedAt for reasonable sorting.
             a.publishedAt = now.toUtc();
           }
-
         }
 
         if (isNew) {

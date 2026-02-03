@@ -17,13 +17,16 @@ class ArticleListItem extends ConsumerWidget {
   final Article article;
   final bool selected;
   final VoidCallback? onTap;
-  
+
   static const double _metaWidth = 96;
-  
+
   // Use a simple regex to find the first img src
   // Parsing full HTML is expensive in a list view
-  static final _imgSrcRegex = RegExp(r'<img[^>]+src="([^">]+)"', caseSensitive: false);
-  
+  static final _imgSrcRegex = RegExp(
+    r'<img[^>]+src="([^">]+)"',
+    caseSensitive: false,
+  );
+
   String? _extractFirstImage(String? html) {
     if (html == null || html.isEmpty) return null;
     final match = _imgSrcRegex.firstMatch(html);
@@ -76,8 +79,8 @@ class ArticleListItem extends ConsumerWidget {
                       imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (ctx, err, stack) => Icon(
-                        Icons.broken_image, 
-                        size: 24, 
+                        Icons.broken_image,
+                        size: 24,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -104,16 +107,16 @@ class ArticleListItem extends ConsumerWidget {
                                           true))) ...[
                                 // Feed Icon + Name
                                 Container(
-                                   padding: const EdgeInsets.all(2),
-                                   decoration: BoxDecoration(
-                                     color: theme.colorScheme.surfaceContainer,
-                                     shape: BoxShape.circle,
-                                   ),
-                                   child: Icon(
-                                     Icons.rss_feed,
-                                     size: 10,
-                                     color: theme.colorScheme.onSurfaceVariant,
-                                   ),
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surfaceContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.rss_feed,
+                                    size: 10,
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 const SizedBox(width: 6),
                                 Flexible(
@@ -123,8 +126,9 @@ class ArticleListItem extends ConsumerWidget {
                                         : (feed.title ?? ''),
                                     style: theme.textTheme.labelMedium
                                         ?.copyWith(
-                                          color:
-                                              theme.colorScheme.onSurfaceVariant,
+                                          color: theme
+                                              .colorScheme
+                                              .onSurfaceVariant,
                                           fontWeight: FontWeight.w500,
                                         ),
                                     maxLines: 1,
@@ -135,7 +139,7 @@ class ArticleListItem extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        
+
                         SizedBox(
                           width: _metaWidth,
                           child: Row(
@@ -147,7 +151,9 @@ class ArticleListItem extends ConsumerWidget {
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.primary, // Status Color
+                                    color: theme
+                                        .colorScheme
+                                        .primary, // Status Color
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -171,14 +177,15 @@ class ArticleListItem extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 6),
-                    
+
                     // Title
                     Text(
                       title.isEmpty ? article.link : title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w400, // Regular weight for M3 title
+                        fontWeight:
+                            FontWeight.w400, // Regular weight for M3 title
                         color: theme.colorScheme.onSurface,
                       ),
                       maxLines: 2,

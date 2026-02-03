@@ -73,9 +73,7 @@ class App extends ConsumerWidget {
     final appSettings = ref.watch(appSettingsProvider).valueOrNull;
     final localeTag = appSettings?.localeTag;
     ref.watch(autoRefreshControllerProvider);
-    unawaited(
-      ref.watch(notificationServiceProvider).init().catchError((_) {}),
-    );
+    unawaited(ref.watch(notificationServiceProvider).init().catchError((_) {}));
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
@@ -92,10 +90,8 @@ class App extends ConsumerWidget {
               initialEntries: [
                 OverlayEntry(
                   opaque: true,
-                  builder: (_) => _DesktopChrome(
-                    router: router,
-                    content: content,
-                  ),
+                  builder: (_) =>
+                      _DesktopChrome(router: router, content: content),
                 ),
               ],
             );
@@ -195,7 +191,9 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
           final feedId = ref.read(selectedFeedIdProvider);
           final categoryId = ref.read(selectedCategoryIdProvider);
           if (feedId != null) {
-            final r = await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
+            final r = await ref
+                .read(syncServiceProvider)
+                .refreshFeedSafe(feedId);
             return BatchRefreshResult([r]);
           }
 
@@ -238,10 +236,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
         return Scaffold(
           drawer: drawerEnabled
               ? Drawer(
-                  child: Sidebar(
-                    onSelectFeed: (_) {},
-                    router: widget.router,
-                  ),
+                  child: Sidebar(onSelectFeed: (_) {}, router: widget.router),
                 )
               : null,
           body: Column(
@@ -250,55 +245,53 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
                 title: title,
                 leading: leading,
                 actions: [
-                  if (!useCompactTopBar && isFeedsSection)
-                    ...[
-                      IconButton(
-                        tooltip: l10n.refreshAll,
-                        onPressed: () async {
-                          final batch = await refreshAll();
-                          if (!context.mounted) return;
-                          final err = batch.firstError?.error;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                err == null
-                                    ? l10n.refreshedAll
-                                    : l10n.errorMessage(err.toString()),
-                              ),
+                  if (!useCompactTopBar && isFeedsSection) ...[
+                    IconButton(
+                      tooltip: l10n.refreshAll,
+                      onPressed: () async {
+                        final batch = await refreshAll();
+                        if (!context.mounted) return;
+                        final err = batch.firstError?.error;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              err == null
+                                  ? l10n.refreshedAll
+                                  : l10n.errorMessage(err.toString()),
                             ),
-                          );
-                        },
-                        icon: const Icon(Icons.refresh),
-                      ),
-                      Consumer(
-                        builder: (context, ref, _) {
-                          final unreadOnly = ref.watch(unreadOnlyProvider);
-                          return IconButton(
-                            tooltip:
-                                unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                            onPressed: () =>
-                                ref.read(unreadOnlyProvider.notifier).state =
-                                    !unreadOnly,
-                            icon: Icon(
-                              unreadOnly
-                                  ? Icons.filter_alt
-                                  : Icons.filter_alt_outlined,
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        tooltip: l10n.markAllRead,
-                        onPressed: () async {
-                          await markAllRead();
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.done)),
-                          );
-                        },
-                        icon: const Icon(Icons.done_all),
-                      ),
-                    ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.refresh),
+                    ),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final unreadOnly = ref.watch(unreadOnlyProvider);
+                        return IconButton(
+                          tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
+                          onPressed: () =>
+                              ref.read(unreadOnlyProvider.notifier).state =
+                                  !unreadOnly,
+                          icon: Icon(
+                            unreadOnly
+                                ? Icons.filter_alt
+                                : Icons.filter_alt_outlined,
+                          ),
+                        );
+                      },
+                    ),
+                    IconButton(
+                      tooltip: l10n.markAllRead,
+                      onPressed: () async {
+                        await markAllRead();
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(l10n.done)));
+                      },
+                      icon: const Icon(Icons.done_all),
+                    ),
+                  ],
                 ],
               ),
               Expanded(child: widget.content),

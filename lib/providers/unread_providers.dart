@@ -59,8 +59,9 @@ Stream<int> _watchUnreadCountByCategoryId(Isar isar, int categoryId) {
 
   Future<List<int>> loadFeedIds() async {
     final qb = isar.feeds.filter();
-    final filtered =
-        categoryId < 0 ? qb.categoryIdIsNull() : qb.categoryIdEqualTo(categoryId);
+    final filtered = categoryId < 0
+        ? qb.categoryIdIsNull()
+        : qb.categoryIdEqualTo(categoryId);
     return filtered.idProperty().findAll();
   }
 

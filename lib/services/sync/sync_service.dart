@@ -127,17 +127,17 @@ class SyncService {
       lastSyncedAt: DateTime.now(),
     );
 
-    final filteredItems = (!settings.filterEnabled ||
-            settings.filterKeywords.trim().isEmpty)
+    final filteredItems =
+        (!settings.filterEnabled || settings.filterKeywords.trim().isEmpty)
         ? parsed.items
         : parsed.items
-            .where(
-              (it) => ReservedKeywordFilter.matches(
-                pattern: settings.filterKeywords,
-                fields: [it.title, it.author, it.link, it.contentHtml],
-              ),
-            )
-            .toList(growable: false);
+              .where(
+                (it) => ReservedKeywordFilter.matches(
+                  pattern: settings.filterKeywords,
+                  fields: [it.title, it.author, it.link, it.contentHtml],
+                ),
+              )
+              .toList(growable: false);
 
     final incoming = filteredItems
         .map((it) {
@@ -150,7 +150,8 @@ class SyncService {
             // Keep `publishedAt` at the model default (epoch) when missing so
             // upsert can preserve existing value; for brand-new items we will
             // fall back to fetchedAt during upsert.
-            ..publishedAt = it.publishedAt?.toUtc() ??
+            ..publishedAt =
+                it.publishedAt?.toUtc() ??
                 DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
           return a;
         })

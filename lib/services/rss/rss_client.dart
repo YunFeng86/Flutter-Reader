@@ -27,10 +27,9 @@ class RssClient {
     String? ifModifiedSince,
     String? userAgent,
   }) async {
-    final ua =
-        (userAgent != null && userAgent.trim().isNotEmpty)
-            ? userAgent.trim()
-            : UserAgents.rss;
+    final ua = (userAgent != null && userAgent.trim().isNotEmpty)
+        ? userAgent.trim()
+        : UserAgents.rss;
     final res = await _dio.get<String>(
       url,
       options: Options(

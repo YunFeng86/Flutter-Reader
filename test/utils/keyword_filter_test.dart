@@ -12,15 +12,24 @@ void main() {
 
   test('OR groups separated by ;', () {
     expect(
-      ReservedKeywordFilter.matches(pattern: 'dart;flutter', fields: const ['I like Dart']),
+      ReservedKeywordFilter.matches(
+        pattern: 'dart;flutter',
+        fields: const ['I like Dart'],
+      ),
       isTrue,
     );
     expect(
-      ReservedKeywordFilter.matches(pattern: 'dart;flutter', fields: const ['Flutter is great']),
+      ReservedKeywordFilter.matches(
+        pattern: 'dart;flutter',
+        fields: const ['Flutter is great'],
+      ),
       isTrue,
     );
     expect(
-      ReservedKeywordFilter.matches(pattern: 'dart;flutter', fields: const ['Riverpod']),
+      ReservedKeywordFilter.matches(
+        pattern: 'dart;flutter',
+        fields: const ['Riverpod'],
+      ),
       isFalse,
     );
   });
@@ -52,4 +61,3 @@ void main() {
     );
   });
 }
-

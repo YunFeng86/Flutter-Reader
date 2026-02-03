@@ -49,6 +49,5 @@ String ensureTagColor(String name, String? raw) {
 }
 
 Color resolveTagColor(String name, String? raw) {
-  return tagColorFromHex(raw) ??
-      tagColorFromHex(pickTagColorForName(name))!;
+  return tagColorFromHex(raw) ?? tagColorFromHex(pickTagColorForName(name))!;
 }

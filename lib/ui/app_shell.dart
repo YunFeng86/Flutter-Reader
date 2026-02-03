@@ -58,10 +58,7 @@ class AppShell extends StatelessWidget {
           children: [
             Expanded(child: child),
             const Divider(height: 1),
-            SafeArea(
-              top: false,
-              child: GlobalNavBar(currentUri: currentUri),
-            ),
+            SafeArea(top: false, child: GlobalNavBar(currentUri: currentUri)),
           ],
         ),
       ),

@@ -52,16 +52,12 @@ class ArticleCacheService {
     final batch = <Future<void>>[];
 
     for (final article in articles) {
-      final content =
-          article.extractedContentHtml?.trim().isNotEmpty == true
-              ? article.extractedContentHtml
-              : article.contentHtml;
+      final content = article.extractedContentHtml?.trim().isNotEmpty == true
+          ? article.extractedContentHtml
+          : article.contentHtml;
       if (content == null || content.trim().isEmpty) continue;
       batch.add(
-        prefetchImagesFromHtml(
-          content,
-          baseUrl: Uri.tryParse(article.link),
-        ),
+        prefetchImagesFromHtml(content, baseUrl: Uri.tryParse(article.link)),
       );
       if (batch.length >= maxConcurrent) {
         await Future.wait(batch);
@@ -85,11 +81,7 @@ class ArticleCacheService {
     final limit = maxImages < 1 ? 0 : maxImages;
     if (limit == 0) return const [];
     if (html.length < _asyncParseThreshold) {
-      return _extractImageUrlsSync(
-        html,
-        baseUrl: baseUrl,
-        maxImages: limit,
-      );
+      return _extractImageUrlsSync(html, baseUrl: baseUrl, maxImages: limit);
     }
     return compute(
       _extractImageUrlsIsolate,
@@ -101,9 +93,7 @@ class ArticleCacheService {
     );
   }
 
-  static List<String> _extractImageUrlsIsolate(
-    _ImageUrlExtractParams params,
-  ) {
+  static List<String> _extractImageUrlsIsolate(_ImageUrlExtractParams params) {
     return _extractImageUrlsSync(
       params.html,
       baseUrl: params.baseUrl == null ? null : Uri.tryParse(params.baseUrl!),

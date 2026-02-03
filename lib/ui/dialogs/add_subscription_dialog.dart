@@ -20,7 +20,9 @@ Future<int?> showAddSubscriptionDialog(
       DialogRoute<String?>(
         context: context,
         barrierDismissible: true,
-        barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+        barrierLabel: MaterialLocalizations.of(
+          context,
+        ).modalBarrierDismissLabel,
         useSafeArea: true,
         builder: (context) {
           return AlertDialog(

@@ -59,7 +59,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Width >= 600: use multi-column HomeScreen with selected article,
               // but keep the transition instant to avoid visual "page jumps".
               if (width >= 600) {
-                return NoTransitionPage(child: HomeScreen(selectedArticleId: id));
+                return NoTransitionPage(
+                  child: HomeScreen(selectedArticleId: id),
+                );
               }
 
               // Narrow/mobile: dedicated reader screen with default Material

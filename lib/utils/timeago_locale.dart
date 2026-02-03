@@ -12,4 +12,3 @@ String timeagoLocale(BuildContext context) {
   }
   return 'en';
 }
-
