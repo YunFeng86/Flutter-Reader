@@ -519,8 +519,49 @@ class _TriStateSwitch extends StatefulWidget {
   State<_TriStateSwitch> createState() => _TriStateSwitchState();
 }
 
+enum _TriStateMenuAction { auto, on, off }
+
 class _TriStateSwitchState extends State<_TriStateSwitch> {
-  final _menuKey = GlobalKey<PopupMenuButtonState<bool?>>();
+  _TriStateMenuAction _actionForValue(bool? value) {
+    if (value == null) return _TriStateMenuAction.auto;
+    return value ? _TriStateMenuAction.on : _TriStateMenuAction.off;
+  }
+
+  bool? _valueForAction(_TriStateMenuAction action) {
+    return switch (action) {
+      _TriStateMenuAction.auto => null,
+      _TriStateMenuAction.on => true,
+      _TriStateMenuAction.off => false,
+    };
+  }
+
+  Future<void> _showMenu(BuildContext context) async {
+    final overlay = Overlay.of(context).context.findRenderObject();
+    final box = context.findRenderObject();
+    if (overlay is! RenderBox || box is! RenderBox) return;
+    final rect = Rect.fromPoints(
+      box.localToGlobal(Offset.zero, ancestor: overlay),
+      box.localToGlobal(box.size.bottomRight(Offset.zero), ancestor: overlay),
+    );
+    final l10n = AppLocalizations.of(context)!;
+    final selected = await showMenu<_TriStateMenuAction>(
+      context: context,
+      position: RelativeRect.fromRect(rect, Offset.zero & overlay.size),
+      initialValue: _actionForValue(widget.currentValue),
+      items: [
+        PopupMenuItem(
+          value: _TriStateMenuAction.auto,
+          child: Text(
+            '${l10n.auto} (${widget.effectiveValue ? l10n.autoOn : l10n.autoOff})',
+          ),
+        ),
+        PopupMenuItem(value: _TriStateMenuAction.on, child: Text(l10n.enabled)),
+        PopupMenuItem(value: _TriStateMenuAction.off, child: Text(l10n.off)),
+      ],
+    );
+    if (!mounted || selected == null) return;
+    widget.onChanged(_valueForAction(selected));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -572,26 +613,13 @@ class _TriStateSwitchState extends State<_TriStateSwitch> {
                   l10n.inherit, // "Inherit" effectively means reset to default
               onPressed: () => widget.onChanged(null),
             ),
-          // We use a PopupMenuButton for selection
-          PopupMenuButton<bool?>(
-            key: _menuKey,
+          IconButton(
             icon: const Icon(Icons.arrow_drop_down),
-            onSelected: widget.onChanged,
-            initialValue: widget.currentValue,
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: null,
-                child: Text(
-                  '${l10n.auto} (${widget.effectiveValue ? l10n.autoOn : l10n.autoOff})',
-                ),
-              ),
-              PopupMenuItem(value: true, child: Text(l10n.enabled)),
-              PopupMenuItem(value: false, child: Text(l10n.off)),
-            ],
+            onPressed: () => _showMenu(context),
           ),
         ],
       ),
-      onTap: () => _menuKey.currentState?.showButtonMenu(),
+      onTap: () => _showMenu(context),
     );
   }
 }

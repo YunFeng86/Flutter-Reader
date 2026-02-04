@@ -25,6 +25,7 @@ class SavedScreen extends ConsumerStatefulWidget {
 class _SavedScreenState extends ConsumerState<SavedScreen> {
   _SavedMode _mode = _SavedMode.starred;
   bool _initialized = false;
+  late final TextEditingController _searchController;
 
   String _labelWithCount(String label, int? count) {
     if (count == null) return label;
@@ -34,6 +35,9 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController(
+      text: ref.read(articleSearchQueryProvider),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _applyMode(_mode);
@@ -48,18 +52,27 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
     ref.read(selectedFeedIdProvider.notifier).state = null;
     ref.read(selectedCategoryIdProvider.notifier).state = null;
     ref.read(selectedTagIdProvider.notifier).state = null;
-    ref.read(articleSearchQueryProvider.notifier).state = '';
 
     ref.read(starredOnlyProvider.notifier).state = mode == _SavedMode.starred;
     ref.read(readLaterOnlyProvider.notifier).state =
         mode == _SavedMode.readLater;
+    _searchController.text = '';
+    ref.read(articleSearchQueryProvider.notifier).state = '';
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final starredCount = ref.watch(starredCountProvider).valueOrNull;
     final readLaterCount = ref.watch(readLaterCountProvider).valueOrNull;
+    final searchQuery = ref.watch(articleSearchQueryProvider);
     final totalWidth = MediaQuery.sizeOf(context).width;
     final useCompactTopBar =
         !isDesktop || globalNavModeForWidth(totalWidth) == GlobalNavMode.bottom;
@@ -84,32 +97,95 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
             ? desktopReaderEmbedded(desktopModeForWidth(width))
             : width >= 600;
 
+        final searchField = TextField(
+          controller: _searchController,
+          onChanged: (value) {
+            ref.read(articleSearchQueryProvider.notifier).state = value;
+          },
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: l10n.searchInContent,
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: searchQuery.trim().isEmpty
+                ? null
+                : IconButton(
+                    tooltip: l10n.delete,
+                    onPressed: () {
+                      _searchController.clear();
+                      ref.read(articleSearchQueryProvider.notifier).state = '';
+                    },
+                    icon: const Icon(Icons.clear),
+                  ),
+            filled: true,
+            fillColor: theme.colorScheme.surfaceContainerLow,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.colorScheme.outlineVariant),
+            ),
+          ),
+        );
+
         final header = Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SegmentedButton<_SavedMode>(
-                segments: [
-                  ButtonSegment(
-                    value: _SavedMode.starred,
-                    label: Text(_labelWithCount(l10n.starred, starredCount)),
-                    icon: const Icon(Icons.star),
-                  ),
-                  ButtonSegment(
-                    value: _SavedMode.readLater,
-                    label: Text(
-                      _labelWithCount(l10n.readLater, readLaterCount),
-                    ),
-                    icon: const Icon(Icons.bookmark),
-                  ),
-                ],
-                selected: {_mode},
-                onSelectionChanged: (s) {
-                  final next = s.first;
-                  setState(() => _mode = next);
-                  _applyMode(next);
-                  // Deselect the current article when switching mode.
-                  if (context.mounted) context.go('/saved');
+              if (!useCompactTopBar) ...[
+                Text(l10n.saved, style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 12),
+              ],
+              LayoutBuilder(
+                builder: (context, headerConstraints) {
+                  final narrow = headerConstraints.maxWidth < 760;
+                  final segmented = SegmentedButton<_SavedMode>(
+                    segments: [
+                      ButtonSegment(
+                        value: _SavedMode.starred,
+                        label: Text(
+                          _labelWithCount(l10n.starred, starredCount),
+                        ),
+                        icon: const Icon(Icons.star),
+                      ),
+                      ButtonSegment(
+                        value: _SavedMode.readLater,
+                        label: Text(
+                          _labelWithCount(l10n.readLater, readLaterCount),
+                        ),
+                        icon: const Icon(Icons.bookmark),
+                      ),
+                    ],
+                    selected: {_mode},
+                    onSelectionChanged: (s) {
+                      final next = s.first;
+                      setState(() => _mode = next);
+                      _applyMode(next);
+                      // Deselect the current article when switching mode.
+                      if (context.mounted) context.go('/saved');
+                    },
+                  );
+
+                  if (narrow) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        segmented,
+                        const SizedBox(height: 8),
+                        searchField,
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      segmented,
+                      const Spacer(),
+                      SizedBox(width: 320, child: searchField),
+                    ],
+                  );
                 },
               ),
             ],
@@ -126,6 +202,8 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                   selectedArticleId: widget.selectedArticleId,
                   baseLocation: '/saved',
                   articleRoutePrefix: '/saved',
+                  emptyBuilder: (context, state) =>
+                      _buildEmptyState(context, l10n, state),
                 ),
               ),
             ],
@@ -174,6 +252,71 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           body: content,
         );
       },
+    );
+  }
+
+  Widget _buildEmptyState(
+    BuildContext context,
+    AppLocalizations l10n,
+    ArticleListEmptyState state,
+  ) {
+    final theme = Theme.of(context);
+    final isStarred = state.starredOnly && !state.readLaterOnly;
+    final title = isStarred
+        ? l10n.starred
+        : (state.readLaterOnly ? l10n.readLater : l10n.saved);
+    final subtitle = state.hasSearch ? l10n.notFound : l10n.noArticles;
+    final icon = isStarred ? Icons.star_border : Icons.bookmark_border;
+
+    return Container(
+      color: theme.colorScheme.surfaceContainerLow,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.all(24),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 54, color: theme.colorScheme.primary),
+            ),
+            const SizedBox(height: 16),
+            Text(title, style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                FilledButton.tonalIcon(
+                  onPressed: () => context.go('/'),
+                  icon: const Icon(Icons.rss_feed),
+                  label: Text(l10n.feeds),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => context.go('/search'),
+                  icon: const Icon(Icons.search),
+                  label: Text(l10n.search),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

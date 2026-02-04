@@ -27,6 +27,8 @@ class AppSettings {
     this.showAiSummary = false,
     this.rssUserAgent = UserAgents.rss,
     this.webUserAgent = UserAgents.web,
+    this.dashboardModuleOrder = const ['feeds', 'saved'],
+    this.dashboardHiddenModules = const [],
   });
 
   final ThemeMode themeMode;
@@ -70,6 +72,12 @@ class AppSettings {
   /// User-Agent for full web page (readability) fetches.
   final String webUserAgent;
 
+  /// Dashboard module order (ids).
+  final List<String> dashboardModuleOrder;
+
+  /// Dashboard modules hidden by user (ids).
+  final List<String> dashboardHiddenModules;
+
   AppSettings copyWith({
     ThemeMode? themeMode,
     Object? localeTag = _unset,
@@ -88,6 +96,8 @@ class AppSettings {
     bool? showAiSummary,
     String? rssUserAgent,
     String? webUserAgent,
+    List<String>? dashboardModuleOrder,
+    List<String>? dashboardHiddenModules,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -112,6 +122,9 @@ class AppSettings {
       showAiSummary: showAiSummary ?? this.showAiSummary,
       rssUserAgent: rssUserAgent ?? this.rssUserAgent,
       webUserAgent: webUserAgent ?? this.webUserAgent,
+      dashboardModuleOrder: dashboardModuleOrder ?? this.dashboardModuleOrder,
+      dashboardHiddenModules:
+          dashboardHiddenModules ?? this.dashboardHiddenModules,
     );
   }
 
@@ -133,6 +146,8 @@ class AppSettings {
     'showAiSummary': showAiSummary,
     'rssUserAgent': rssUserAgent,
     'webUserAgent': webUserAgent,
+    'dashboardModuleOrder': dashboardModuleOrder,
+    'dashboardHiddenModules': dashboardHiddenModules,
   };
 
   static AppSettings fromJson(Map<String, Object?> json) {
@@ -160,6 +175,8 @@ class AppSettings {
     final showAiSummary = json['showAiSummary'];
     final rssUserAgent = json['rssUserAgent'];
     final webUserAgent = json['webUserAgent'];
+    final dashboardModuleOrder = json['dashboardModuleOrder'];
+    final dashboardHiddenModules = json['dashboardHiddenModules'];
 
     ArticleGroupMode parseGroupMode(Object? v) {
       final s = v is String ? v : '';
@@ -207,6 +224,12 @@ class AppSettings {
       webUserAgent: webUserAgent is String && webUserAgent.trim().isNotEmpty
           ? webUserAgent
           : UserAgents.web,
+      dashboardModuleOrder: dashboardModuleOrder is List
+          ? dashboardModuleOrder.whereType<String>().toList()
+          : const ['feeds', 'saved'],
+      dashboardHiddenModules: dashboardHiddenModules is List
+          ? dashboardHiddenModules.whereType<String>().toList()
+          : const [],
     );
   }
 }

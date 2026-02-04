@@ -25,11 +25,14 @@ class ArticleList extends ConsumerStatefulWidget {
     required this.selectedArticleId,
     this.baseLocation = '/',
     this.articleRoutePrefix = '',
+    this.emptyBuilder,
   });
 
   final int? selectedArticleId;
   final String baseLocation;
   final String articleRoutePrefix;
+  final Widget Function(BuildContext context, ArticleListEmptyState state)?
+  emptyBuilder;
 
   @override
   ConsumerState<ArticleList> createState() => _ArticleListState();
@@ -93,6 +96,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
     final l10n = AppLocalizations.of(context)!;
     final unreadOnly = ref.watch(unreadOnlyProvider);
     final starredOnly = ref.watch(starredOnlyProvider);
+    final readLaterOnly = ref.watch(readLaterOnlyProvider);
     final searchQuery = ref.watch(articleSearchQueryProvider).trim();
     final state = ref.watch(articleListControllerProvider);
     final settings = ref.watch(appSettingsProvider).valueOrNull;
@@ -104,6 +108,15 @@ class _ArticleListState extends ConsumerState<ArticleList> {
       data: (data) {
         final items = data.items;
         if (items.isEmpty) {
+          final emptyState = ArticleListEmptyState(
+            searchQuery: searchQuery,
+            unreadOnly: unreadOnly,
+            starredOnly: starredOnly,
+            readLaterOnly: readLaterOnly,
+          );
+          if (widget.emptyBuilder != null) {
+            return widget.emptyBuilder!(context, emptyState);
+          }
           Widget child;
           if (searchQuery.isNotEmpty || starredOnly) {
             child = Text(l10n.notFound);
@@ -243,6 +256,22 @@ class _HeaderEntry extends _ArticleListEntry {
 class _ArticleEntry extends _ArticleListEntry {
   _ArticleEntry(this.article);
   final Article article;
+}
+
+class ArticleListEmptyState {
+  const ArticleListEmptyState({
+    required this.searchQuery,
+    required this.unreadOnly,
+    required this.starredOnly,
+    required this.readLaterOnly,
+  });
+
+  final String searchQuery;
+  final bool unreadOnly;
+  final bool starredOnly;
+  final bool readLaterOnly;
+
+  bool get hasSearch => searchQuery.isNotEmpty;
 }
 
 List<_ArticleListEntry> _buildDayGroupedEntries(List<Article> items) {
