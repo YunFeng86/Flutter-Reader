@@ -110,26 +110,52 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
   Future<void> refresh() async {
     final repo = ref.read(articleRepositoryProvider);
     final query = _currentQuery();
-    final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
+    final ids = await repo.fetchPageIds(query, offset: 0, limit: _pageSize);
     final current = state.valueOrNull;
+    final hasMore = ids.length == _pageSize;
     if (current == null) {
+      final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
       state = AsyncValue.data(
         ArticleListState(
           items: items,
-          hasMore: items.length == _pageSize,
+          hasMore: hasMore,
           nextOffset: items.length,
         ),
       );
       return;
     }
+    if (current.startOffset == 0 && _sameIds(current.items, ids)) {
+      if (current.hasMore == hasMore &&
+          current.nextOffset == ids.length &&
+          current.startOffset == 0) {
+        return;
+      }
+      state = AsyncValue.data(
+        current.copyWith(
+          hasMore: hasMore,
+          startOffset: 0,
+          nextOffset: ids.length,
+        ),
+      );
+      return;
+    }
+    final items = await repo.fetchPage(query, offset: 0, limit: _pageSize);
     state = AsyncValue.data(
       current.copyWith(
         items: items,
-        hasMore: items.length == _pageSize,
+        hasMore: hasMore,
         startOffset: 0,
         nextOffset: items.length,
       ),
     );
+  }
+
+  bool _sameIds(List<Article> items, List<int> ids) {
+    if (items.length != ids.length) return false;
+    for (var i = 0; i < ids.length; i++) {
+      if (items[i].id != ids[i]) return false;
+    }
+    return true;
   }
 
   Future<void> loadMore() async {

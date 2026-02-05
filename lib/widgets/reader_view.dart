@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -52,6 +53,7 @@ class ReaderView extends ConsumerStatefulWidget {
 class _ReaderViewState extends ConsumerState<ReaderView> {
   ProviderSubscription<AsyncValue<Article?>>? _articleSub;
   ProviderSubscription<AsyncValue<void>>? _fullTextSub;
+  ProviderSubscription<bool>? _fullTextViewSub;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<SelectionAreaState> _selectionAreaKey =
       GlobalKey<SelectionAreaState>();
@@ -67,6 +69,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   Timer? _progressSaveTimer;
   ReaderProgress? _pendingProgress;
   String? _currentContentHash;
+  String? _resolvedContentHash;
+  String? _hashSourceHtml;
+  bool _hashSourceExtracted = false;
+  int _hashRequestId = 0;
   int _restoreAttempts = 0;
   bool _restoredScrollPosition = false;
   bool _isRestoring = false;
@@ -120,6 +126,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     );
 
     _listenArticle(widget.articleId);
+    _listenFullTextView(widget.articleId);
   }
 
   @override
@@ -132,6 +139,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         _scrollController.jumpTo(_scrollController.position.minScrollExtent);
       }
       _listenArticle(widget.articleId);
+      _listenFullTextView(widget.articleId);
     }
   }
 
@@ -160,6 +168,13 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
           }
         }
 
+        if (a != null) {
+          final showExtracted = ref.read(
+            fullTextViewEnabledProvider(articleId),
+          );
+          _requestContentHashUpdate(article: a, showExtracted: showExtracted);
+        }
+
         // Prefetch images when content changes.
         final prevA = prev?.valueOrNull;
         final prevHtml =
@@ -183,6 +198,83 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     );
   }
 
+  void _listenFullTextView(int articleId) {
+    _fullTextViewSub?.close();
+    _fullTextViewSub = ref.listenManual<bool>(
+      fullTextViewEnabledProvider(articleId),
+      (prev, next) {
+        final article = ref.read(articleProvider(articleId)).valueOrNull;
+        if (article == null) return;
+        _requestContentHashUpdate(article: article, showExtracted: next);
+      },
+      fireImmediately: false,
+    );
+  }
+
+  void _requestContentHashUpdate({
+    required Article article,
+    required bool showExtracted,
+  }) {
+    final html =
+        ((showExtracted ? article.extractedContentHtml : null) ??
+                article.contentHtml ??
+                '')
+            .trim();
+    final contentChanged =
+        _hashSourceHtml != html || _hashSourceExtracted != showExtracted;
+    if (contentChanged) {
+      _currentContentHash = null;
+      _pendingProgress = null;
+      _restoredScrollPosition = false;
+      _restoreAttempts = 0;
+      _resolvedContentHash = null;
+    }
+
+    if (!showExtracted) {
+      final storedHash = article.contentHash?.trim();
+      if (storedHash != null && storedHash.isNotEmpty) {
+        _hashSourceHtml = html;
+        _hashSourceExtracted = false;
+        _setResolvedContentHash(storedHash);
+        return;
+      }
+    }
+
+    if (!contentChanged && _resolvedContentHash != null) {
+      _setResolvedContentHash(_resolvedContentHash!);
+      return;
+    }
+
+    _hashSourceHtml = html;
+    _hashSourceExtracted = showExtracted;
+
+    if (html.isEmpty) {
+      _setResolvedContentHash('');
+      return;
+    }
+
+    final requestId = ++_hashRequestId;
+    unawaited(_computeContentHashAsync(html, requestId));
+  }
+
+  void _setResolvedContentHash(String hash) {
+    if (_resolvedContentHash == hash) {
+      _syncProgressForContent(hash);
+      return;
+    }
+    _resolvedContentHash = hash;
+    _syncProgressForContent(hash);
+  }
+
+  Future<void> _computeContentHashAsync(String html, int requestId) async {
+    final hash = html.length >= _chunkThreshold
+        ? await compute(_computeContentHashInIsolate, html)
+        : ContentHash.compute(html);
+    if (!mounted) return;
+    if (requestId != _hashRequestId) return;
+    _setResolvedContentHash(hash);
+  }
+
   void _resetProgressState() {
     _progressSaveTimer?.cancel();
     _progressSaveTimer = null;
@@ -194,6 +286,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _prefetchTimer = null;
     _pendingProgress = null;
     _currentContentHash = null;
+    _resolvedContentHash = null;
+    _hashSourceHtml = null;
+    _hashSourceExtracted = false;
+    _hashRequestId = 0;
     _restoredScrollPosition = false;
     _isRestoring = false;
     _isResizing = false;
@@ -571,6 +667,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _prefetchTimer?.cancel();
     _articleSub?.close();
     _fullTextSub?.close();
+    _fullTextViewSub?.close();
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
     _quickMenuTimer?.cancel();
@@ -613,8 +710,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                     article.contentHtml ??
                     '')
                 .trim();
-        final contentHash = ContentHash.compute(html);
-        _syncProgressForContent(contentHash);
         final isChunked = html.length >= _chunkThreshold;
         _handleViewportSizeChange(
           MediaQuery.sizeOf(context),
@@ -1632,4 +1727,8 @@ class _CssLength {
 
   final double? px;
   final double? percent;
+}
+
+String _computeContentHashInIsolate(String html) {
+  return ContentHash.compute(html);
 }

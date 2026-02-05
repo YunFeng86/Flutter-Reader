@@ -151,6 +151,18 @@ class ArticleRepository {
     return sorted.offset(offset).limit(limit).findAll();
   }
 
+  Future<List<int>> fetchPageIds(
+    ArticleQuery query, {
+    required int offset,
+    required int limit,
+  }) async {
+    final feedIds = await _resolveCategoryFeedIds(query);
+    if (feedIds != null && feedIds.isEmpty) return [];
+    final qb = _buildQuery(query, categoryFeedIds: feedIds);
+    final sorted = _applySort(qb, sortAscending: query.sortAscending);
+    return sorted.offset(offset).limit(limit).idProperty().findAll();
+  }
+
   Stream<void> watchQueryChanges(ArticleQuery query) {
     // Since setCategory now updates Feed and Articles atomically in a single
     // transaction, we no longer need to watch the Feed table separately.
@@ -331,9 +343,11 @@ class ArticleRepository {
   }
 
   Future<List<Article>> upsertMany(int feedId, List<Article> incoming) {
+    if (incoming.isEmpty) return Future.value(<Article>[]);
+    for (final a in incoming) {
+      a.contentHash = ContentHash.compute(a.contentHtml);
+    }
     return _isar.writeTxn(() async {
-      if (incoming.isEmpty) return <Article>[];
-
       final newArticles = <Article>[];
 
       // Get Feed's categoryId once before the loop (prevents N+1 query problem)
@@ -389,7 +403,7 @@ class ArticleRepository {
         // Link already normalized above
 
         // [V2.0] Compute content hash for change detection
-        final newHash = ContentHash.compute(a.contentHtml);
+        final newHash = a.contentHash ?? '';
 
         // Dual-key O(1) lookup: remoteId takes priority over link
         // This prevents duplicates when URLs change but guid remains the same

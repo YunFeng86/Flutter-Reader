@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:pool/pool.dart';
 
 import '../../models/article.dart';
@@ -13,9 +14,65 @@ import '../settings/app_settings.dart';
 import '../settings/app_settings_store.dart';
 import '../rss/feed_parser.dart';
 import '../rss/rss_client.dart';
+import '../rss/parsed_feed.dart';
 import '../notifications/notification_service.dart';
 import '../cache/article_cache_service.dart';
 import '../../utils/keyword_filter.dart';
+
+const int _parseInIsolateThreshold = 50000;
+
+Map<String, Object?> _parseFeedInIsolate(String xml) {
+  final parsed = FeedParser().parse(xml);
+  return {
+    'title': parsed.title,
+    'siteUrl': parsed.siteUrl,
+    'description': parsed.description,
+    'items': parsed.items
+        .map(
+          (it) => {
+            'remoteId': it.remoteId,
+            'link': it.link,
+            'title': it.title,
+            'author': it.author,
+            'publishedAt': it.publishedAt?.toIso8601String(),
+            'contentHtml': it.contentHtml,
+          },
+        )
+        .toList(growable: false),
+  };
+}
+
+ParsedFeed _parsedFeedFromMap(Map<String, Object?> data) {
+  final items = <ParsedItem>[];
+  final rawItems = data['items'];
+  if (rawItems is List) {
+    for (final raw in rawItems) {
+      if (raw is! Map) continue;
+      final map = raw.cast<String, Object?>();
+      final link = map['link'];
+      if (link is! String || link.trim().isEmpty) continue;
+      final publishedAt = map['publishedAt'];
+      items.add(
+        ParsedItem(
+          remoteId: map['remoteId'] as String?,
+          link: link,
+          title: map['title'] as String?,
+          author: map['author'] as String?,
+          publishedAt: publishedAt is String
+              ? DateTime.tryParse(publishedAt)
+              : null,
+          contentHtml: map['contentHtml'] as String?,
+        ),
+      );
+    }
+  }
+  return ParsedFeed(
+    title: data['title'] as String?,
+    siteUrl: data['siteUrl'] as String?,
+    description: data['description'] as String?,
+    items: items,
+  );
+}
 
 class FeedRefreshResult {
   const FeedRefreshResult({
@@ -90,6 +147,14 @@ class SyncService {
     return _EffectiveFeedSettings.resolve(feed, category, resolvedAppSettings);
   }
 
+  Future<ParsedFeed> _parseFeed(String xml) async {
+    if (xml.length < _parseInIsolateThreshold) {
+      return _parser.parse(xml);
+    }
+    final data = await compute(_parseFeedInIsolate, xml);
+    return _parsedFeedFromMap(data);
+  }
+
   Future<_RefreshOutcome> _refreshFeedOnce(
     Feed feed,
     _EffectiveFeedSettings settings,
@@ -117,7 +182,7 @@ class SyncService {
       throw Exception('Feed fetch failed: HTTP $status');
     }
 
-    final parsed = _parser.parse(fetched.body);
+    final parsed = await _parseFeed(fetched.body);
 
     await _feeds.updateMeta(
       id: feedId,

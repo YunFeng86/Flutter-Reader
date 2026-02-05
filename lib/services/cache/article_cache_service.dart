@@ -161,16 +161,19 @@ class ArticleCacheService {
   }
 
   Future<ui.Size?> _decodeImageSize(File file) async {
+    ui.Codec? codec;
+    ui.Image? image;
     try {
       final bytes = await file.readAsBytes();
-      final codec = await ui.instantiateImageCodec(bytes);
+      codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
-      return ui.Size(
-        frame.image.width.toDouble(),
-        frame.image.height.toDouble(),
-      );
+      image = frame.image;
+      return ui.Size(image.width.toDouble(), image.height.toDouble());
     } catch (_) {
       return null;
+    } finally {
+      image?.dispose();
+      codec?.dispose();
     }
   }
 }
