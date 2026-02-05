@@ -121,6 +121,7 @@ class _DesktopChrome extends ConsumerStatefulWidget {
 
 class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
   final _routerVersion = ValueNotifier<int>(0);
+  bool _routerChangeScheduled = false;
 
   @override
   void initState() {
@@ -145,7 +146,14 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
   }
 
   void _handleRouterChange() {
-    _routerVersion.value++;
+    if (!mounted) return;
+    if (_routerChangeScheduled) return;
+    _routerChangeScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _routerChangeScheduled = false;
+      if (!mounted) return;
+      _routerVersion.value++;
+    });
   }
 
   String _sectionTitleForUri(AppLocalizations l10n, Uri uri) {
