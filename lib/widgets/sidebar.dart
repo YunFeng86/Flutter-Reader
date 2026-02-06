@@ -5,6 +5,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_reader/l10n/app_localizations.dart';
 
 import '../models/category.dart';
@@ -975,11 +976,15 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _importOpml(BuildContext context, WidgetRef ref) async {
-    const group = XTypeGroup(
+    final group = XTypeGroup(
       label: 'OPML',
       extensions: ['opml', 'xml'],
       mimeTypes: ['text/xml', 'application/xml'],
-      uniformTypeIdentifiers: ['public.xml'],
+      // iPadOS 上部分 .opml 文件会被标记为 public.data 而不是 public.xml，导致在
+      // UIDocumentPicker 里变灰不可选；这里仅在 iOS 放宽 UTI，并在选择后再做校验。
+      uniformTypeIdentifiers: isIOS
+          ? ['public.xml', 'public.text', 'public.data']
+          : ['public.xml'],
     );
     XFile? file;
     try {
@@ -993,7 +998,30 @@ class _SidebarState extends ConsumerState<Sidebar> {
       return;
     }
     if (file == null) return;
-    final xml = await file.readAsString();
+    final nameOrPath = file.name.isNotEmpty ? file.name : file.path;
+    final dot = nameOrPath.lastIndexOf('.');
+    final ext = dot == -1 ? '' : nameOrPath.substring(dot).toLowerCase();
+    // 允许无扩展名文件走解析兜底（例如某些文件提供商导出的文件可能没有后缀）。
+    if (ext.isNotEmpty && ext != '.opml' && ext != '.xml') {
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.errorMessage(l10n.opmlParseFailed))),
+      );
+      return;
+    }
+
+    String xml;
+    try {
+      xml = await file.readAsString();
+    } catch (e) {
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
+      return;
+    }
     List<OpmlEntry> entries;
     try {
       entries = ref.read(opmlServiceProvider).parseEntries(xml);
@@ -1035,6 +1063,46 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _exportOpml(BuildContext context, WidgetRef ref) async {
+    // file_selector_ios 目前未实现 getSaveLocation/getSavePath（会抛 UnimplementedError），
+    // iOS 这里改用系统分享面板，让用户选择“存储到文件”等导出方式。
+    if (isIOS) {
+      final feeds = await ref.read(feedRepositoryProvider).getAll();
+      final cats = await ref.read(categoryRepositoryProvider).getAll();
+      final names = {for (final c in cats) c.id: c.name};
+      final xml = ref
+          .read(opmlServiceProvider)
+          .buildOpml(feeds: feeds, categoryNames: names);
+      final xfile = XFile.fromData(
+        Uint8List.fromList(utf8.encode(xml)),
+        mimeType: 'text/xml',
+        name: 'subscriptions.opml',
+      );
+
+      final tmpDir = await getTemporaryDirectory();
+      final tmpPath = '${tmpDir.path}/subscriptions.opml';
+      try {
+        await xfile.saveTo(tmpPath);
+        await IosShareBridge.shareFile(
+          path: tmpPath,
+          mimeType: 'text/xml',
+          name: 'subscriptions.opml',
+        );
+      } catch (e) {
+        if (!context.mounted) return;
+        final l10n = AppLocalizations.of(context)!;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+        );
+        return;
+      }
+      if (!context.mounted) return;
+      final l10n = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.exportedOpml)));
+      return;
+    }
+
     const group = XTypeGroup(
       label: 'OPML',
       extensions: ['opml', 'xml'],
