@@ -105,37 +105,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final starredPreview = ref.watch(dashboardStarredPreviewProvider);
     final readLaterPreview = ref.watch(dashboardReadLaterPreviewProvider);
 
+    final centerTitle = switch (defaultTargetPlatform) {
+      TargetPlatform.iOS || TargetPlatform.macOS => true,
+      _ => false,
+    };
+
+    List<Widget> buildHeaderActionButtons() {
+      return [
+        IconButton(
+          tooltip: _editing ? l10n.done : l10n.edit,
+          onPressed: _toggleEdit,
+          icon: Icon(_editing ? Icons.check : Icons.edit),
+        ),
+        IconButton(
+          tooltip: l10n.add,
+          onPressed: () => _showManageModules(
+            order: order,
+            hidden: hidden,
+            l10n: l10n,
+          ),
+          icon: const Icon(Icons.add),
+        ),
+      ];
+    }
+
+    Widget buildHeaderActions() {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: buildHeaderActionButtons(),
+      );
+    }
+
     Widget content = LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
         final wide = width >= 900;
         final gridExtent = wide ? 440.0 : 420.0;
-        final centerTitle = switch (defaultTargetPlatform) {
-          TargetPlatform.iOS || TargetPlatform.macOS => true,
-          _ => false,
-        };
-
-        Widget buildHeaderActions() {
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: _editing ? l10n.done : l10n.edit,
-                onPressed: _toggleEdit,
-                icon: Icon(_editing ? Icons.check : Icons.edit),
-              ),
-              IconButton(
-                tooltip: l10n.add,
-                onPressed: () => _showManageModules(
-                  order: order,
-                  hidden: hidden,
-                  l10n: l10n,
-                ),
-                icon: const Icon(Icons.add),
-              ),
-            ],
-          );
-        }
 
         Widget grid;
         if (visible.isEmpty) {
@@ -317,19 +322,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.dashboard),
-        actions: [
-          IconButton(
-            tooltip: _editing ? l10n.done : l10n.edit,
-            onPressed: _toggleEdit,
-            icon: Icon(_editing ? Icons.check : Icons.edit),
-          ),
-          IconButton(
-            tooltip: l10n.add,
-            onPressed: () =>
-                _showManageModules(order: order, hidden: hidden, l10n: l10n),
-            icon: const Icon(Icons.add),
-          ),
-        ],
+        actions: buildHeaderActionButtons(),
       ),
       body: content,
     );
