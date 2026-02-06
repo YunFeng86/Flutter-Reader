@@ -119,11 +119,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         IconButton(
           tooltip: l10n.add,
-          onPressed: () => _showManageModules(
-            order: order,
-            hidden: hidden,
-            l10n: l10n,
-          ),
+          onPressed: () =>
+              _showManageModules(order: order, hidden: hidden, l10n: l10n),
           icon: const Icon(Icons.add),
         ),
       ];
