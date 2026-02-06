@@ -100,8 +100,6 @@ class HomeScreen extends ConsumerWidget {
         // 1-column: mobile-style list + drawer, dedicated reader route.
         if (columns == 1) {
           final unreadOnly = ref.watch(unreadOnlyProvider);
-          final starredOnly = ref.watch(starredOnlyProvider);
-          final searchQuery = ref.watch(articleSearchQueryProvider).trim();
           return Scaffold(
             appBar: isDesktop
                 ? null
@@ -113,43 +111,10 @@ class HomeScreen extends ConsumerWidget {
                         onPressed: refreshAll,
                         icon: const Icon(Icons.refresh),
                       ),
-                      IconButton(
-                        tooltip: l10n.starred,
-                        onPressed: () {
-                          final next = !starredOnly;
-                          ref.read(starredOnlyProvider.notifier).state = next;
-                          if (next) {
-                            ref.read(selectedFeedIdProvider.notifier).state =
-                                null;
-                            ref
-                                    .read(selectedCategoryIdProvider.notifier)
-                                    .state =
-                                null;
-                            ref
-                                    .read(articleSearchQueryProvider.notifier)
-                                    .state =
-                                '';
-                          }
-                        },
-                        icon: Icon(
-                          starredOnly ? Icons.star : Icons.star_border,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: l10n.search,
-                        onPressed: () => context.go('/search'),
-                        icon: const Icon(Icons.search),
-                      ),
-                      if (searchQuery.isNotEmpty)
-                        IconButton(
-                          tooltip: l10n.delete,
-                          onPressed: () =>
-                              ref
-                                      .read(articleSearchQueryProvider.notifier)
-                                      .state =
-                                  '',
-                          icon: const Icon(Icons.clear),
-                        ),
+                      // On mobile we have dedicated Saved/Search tabs in the
+                      // global bottom navigation. Avoid duplicating those
+                      // shortcuts here to keep the AppBar focused on feed-only
+                      // actions.
                       IconButton(
                         tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
                         onPressed: () =>
@@ -396,87 +361,9 @@ class HomeScreen extends ConsumerWidget {
                                       },
                                     ),
                                   const Spacer(),
-                                  Consumer(
-                                    builder: (context, ref, _) {
-                                      final l10n = AppLocalizations.of(
-                                        context,
-                                      )!;
-                                      final starredOnly = ref.watch(
-                                        starredOnlyProvider,
-                                      );
-                                      return IconButton(
-                                        tooltip: l10n.starred,
-                                        onPressed: () {
-                                          final next = !starredOnly;
-                                          ref
-                                                  .read(
-                                                    starredOnlyProvider
-                                                        .notifier,
-                                                  )
-                                                  .state =
-                                              next;
-                                          if (next) {
-                                            ref
-                                                    .read(
-                                                      selectedFeedIdProvider
-                                                          .notifier,
-                                                    )
-                                                    .state =
-                                                null;
-                                            ref
-                                                    .read(
-                                                      selectedCategoryIdProvider
-                                                          .notifier,
-                                                    )
-                                                    .state =
-                                                null;
-                                            ref
-                                                    .read(
-                                                      articleSearchQueryProvider
-                                                          .notifier,
-                                                    )
-                                                    .state =
-                                                '';
-                                          }
-                                        },
-                                        icon: Icon(
-                                          starredOnly
-                                              ? Icons.star
-                                              : Icons.star_border,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  IconButton(
-                                    tooltip: l10n.search,
-                                    onPressed: () => context.go('/search'),
-                                    icon: const Icon(Icons.search),
-                                  ),
-                                  Consumer(
-                                    builder: (context, ref, _) {
-                                      final l10n = AppLocalizations.of(
-                                        context,
-                                      )!;
-                                      final q = ref
-                                          .watch(articleSearchQueryProvider)
-                                          .trim();
-                                      if (q.isEmpty) {
-                                        return const SizedBox.shrink();
-                                      }
-                                      return IconButton(
-                                        tooltip: l10n.delete,
-                                        onPressed: () =>
-                                            ref
-                                                    .read(
-                                                      articleSearchQueryProvider
-                                                          .notifier,
-                                                    )
-                                                    .state =
-                                                '',
-                                        icon: const Icon(Icons.clear),
-                                      );
-                                    },
-                                  ),
+                                  // On mobile/tablet we have Saved/Search tabs
+                                  // in global navigation, so keep this header
+                                  // limited to feed-specific controls.
                                 ],
                               ),
                             ),
