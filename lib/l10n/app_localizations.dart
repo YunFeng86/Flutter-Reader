@@ -102,7 +102,7 @@ abstract class AppLocalizations {
   /// appTitle
   ///
   /// In en, this message translates to:
-  /// **'Flutter Reader'**
+  /// **'Fleur'**
   String get appTitle;
 
   /// notFound

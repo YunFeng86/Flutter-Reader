@@ -2,7 +2,7 @@ class UserAgents {
   UserAgents._();
 
   /// A lightweight UA for RSS/Atom fetches. Some CDNs block the default Dio UA.
-  static const String rss = 'FlutterReader (Dart/Dio)';
+  static const String rss = 'Fleur (Dart/Dio)';
 
   /// A modern desktop browser UA to improve server compatibility for HTML fetch.
   /// (Some sites return simplified/blocked pages for unknown clients.)

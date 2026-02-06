@@ -19,31 +19,31 @@ jobs:
             platform: windows
             build-args: windows --release
             artifact-path: build/windows/x64/runner/Release
-            artifact-name: flutter_reader-windows-x64.zip
+            artifact-name: fleur-windows-x64.zip
             archive-cmd: |
               cd build/windows/x64/runner/Release
               rm -f *.pdb
-              7z a -tzip "$GITHUB_WORKSPACE/flutter_reader-windows-x64.zip" *
+              7z a -tzip "$GITHUB_WORKSPACE/fleur-windows-x64.zip" *
 
           # macOS构建（实验性，未测试）
           - os: macos-latest
             platform: macos
             build-args: macos --release
             artifact-path: build/macos/Build/Products/Release
-            artifact-name: flutter_reader-macos.zip
+            artifact-name: fleur-macos.zip
             archive-cmd: |
               cd build/macos/Build/Products/Release
-              zip -r "$GITHUB_WORKSPACE/flutter_reader-macos.zip" flutter_reader.app
+              zip -r "$GITHUB_WORKSPACE/fleur-macos.zip" Fleur.app
 
           # Linux构建（实验性，未测试）
           - os: ubuntu-latest
             platform: linux
             build-args: linux --release
             artifact-path: build/linux/x64/release/bundle
-            artifact-name: flutter_reader-linux-x64.tar.gz
+            artifact-name: fleur-linux-x64.tar.gz
             archive-cmd: |
               cd build/linux/x64/release/bundle
-              tar -czf "$GITHUB_WORKSPACE/flutter_reader-linux-x64.tar.gz" *
+              tar -czf "$GITHUB_WORKSPACE/fleur-linux-x64.tar.gz" *
             deps-cmd: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
 
     runs-on: ${{ matrix.os }}
@@ -179,13 +179,13 @@ jobs:
           
           cd windows-release
           # 使用 PowerShell 的 Expand-Archive 而不是 7z
-          Expand-Archive -Path "flutter_reader-windows-x64.zip" -DestinationPath "temp" -Force
+          Expand-Archive -Path "fleur-windows-x64.zip" -DestinationPath "temp" -Force
           
           Write-Host "Extracted files:"
           Get-ChildItem -Path "temp" -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
           
           # 检查关键文件
-          if (Test-Path "temp\flutter_reader.exe") {
+          if (Test-Path "temp\fleur.exe") {
             Write-Host "Main executable found"
           } else {
             Write-Error "Main executable not found!"
@@ -218,17 +218,17 @@ jobs:
           # 创建 Inno Setup 脚本 - 简化版本，避免复杂路径问题
           $issContent = @"
           [Setup]
-          AppName=Flutter Reader
+          AppName=Fleur
           AppVersion=${{ steps.version_vars.outputs.version_name }}
-          AppPublisher=Flutter Reader Team
+          AppPublisher=Fleur Team
           AppPublisherURL=https://github.com/${{ github.repository }}
           AppSupportURL=https://github.com/${{ github.repository }}/issues
           AppUpdatesURL=https://github.com/${{ github.repository }}/releases
-          DefaultDirName={autopf}\FlutterReader
-          DefaultGroupName=Flutter Reader
+          DefaultDirName={autopf}\Fleur
+          DefaultGroupName=Fleur
           AllowNoIcons=yes
           LicenseFile=LICENSE
-          OutputBaseFilename=flutter_reader-windows-x64-installer-${{ steps.version_vars.outputs.version_name }}
+          OutputBaseFilename=fleur-windows-x64-installer-${{ steps.version_vars.outputs.version_name }}
           SetupIconFile=windows\runner\resources\app_icon.ico
           Compression=lzma
           SolidCompression=yes
@@ -248,12 +248,12 @@ jobs:
           Source: "windows-release\temp\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
           
           [Icons]
-          Name: "{group}\Flutter Reader"; Filename: "{app}\flutter_reader.exe"
-          Name: "{group}\{cm:UninstallProgram,Flutter Reader}"; Filename: "{uninstallexe}"
-          Name: "{autodesktop}\Flutter Reader"; Filename: "{app}\flutter_reader.exe"; Tasks: desktopicon
+          Name: "{group}\Fleur"; Filename: "{app}\fleur.exe"
+          Name: "{group}\{cm:UninstallProgram,Fleur}"; Filename: "{uninstallexe}"
+          Name: "{autodesktop}\Fleur"; Filename: "{app}\fleur.exe"; Tasks: desktopicon
           
           [Run]
-          Filename: "{app}\flutter_reader.exe"; Description: "{cm:LaunchProgram,Flutter Reader}"; Flags: nowait postinstall skipifsilent
+          Filename: "{app}\fleur.exe"; Description: "{cm:LaunchProgram,Fleur}"; Flags: nowait postinstall skipifsilent
           "@
           
           $issContent | Out-File -FilePath "installer.iss" -Encoding UTF8
@@ -308,7 +308,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: Output/flutter_reader-windows-x64-installer-*.exe
+          path: Output/fleur-windows-x64-installer-*.exe
           retention-days: 90
           if-no-files-found: error
 
@@ -343,24 +343,24 @@ jobs:
           VERSION=${VERSION#v}
 
           # 重命名Windows构建
-          if [ -f artifacts/windows-release/flutter_reader-windows-x64.zip ]; then
-            mv artifacts/windows-release/flutter_reader-windows-x64.zip \
-               artifacts/windows-release/flutter_reader-windows-x64-${VERSION}.zip
+          if [ -f artifacts/windows-release/fleur-windows-x64.zip ]; then
+            mv artifacts/windows-release/fleur-windows-x64.zip \
+               artifacts/windows-release/fleur-windows-x64-${VERSION}.zip
           fi
 
           # 重命名Windows安装器（不需要重命名，Inno Setup已经包含了版本号）
           # Windows 安装器已经在构建时包含版本号
           
           # 重命名macOS构建
-          if [ -f artifacts/macos-release/flutter_reader-macos.zip ]; then
-            mv artifacts/macos-release/flutter_reader-macos.zip \
-               artifacts/macos-release/flutter_reader-macos-${VERSION}.zip
+          if [ -f artifacts/macos-release/fleur-macos.zip ]; then
+            mv artifacts/macos-release/fleur-macos.zip \
+               artifacts/macos-release/fleur-macos-${VERSION}.zip
           fi
 
           # 重命名Linux构建
-          if [ -f artifacts/linux-release/flutter_reader-linux-x64.tar.gz ]; then
-            mv artifacts/linux-release/flutter_reader-linux-x64.tar.gz \
-               artifacts/linux-release/flutter_reader-linux-x64-${VERSION}.tar.gz
+          if [ -f artifacts/linux-release/fleur-linux-x64.tar.gz ]; then
+            mv artifacts/linux-release/fleur-linux-x64.tar.gz \
+               artifacts/linux-release/fleur-linux-x64-${VERSION}.tar.gz
           fi
 
       - name: Create Release
@@ -387,32 +387,32 @@ jobs:
             ## 安装说明
 
             **Windows:**
-            1. **安装器版本（推荐）**: 下载 `flutter_reader-windows-x64-installer-*.exe`
+            1. **安装器版本（推荐）**: 下载 `fleur-windows-x64-installer-*.exe`
                - 双击运行安装器，按提示安装
                - 自动创建开始菜单和桌面快捷方式
                - 支持自动卸载
-            2. **便携版**: 下载 `flutter_reader-windows-x64.zip`
+            2. **便携版**: 下载 `fleur-windows-x64.zip`
                - 解压到任意目录
-               - 运行 `flutter_reader.exe`
+               - 运行 `fleur.exe`
 
             **macOS:**
-            1. 下载 `flutter_reader-macos.zip`
-            2. 解压后拖动 `flutter_reader.app` 到应用程序文件夹
+            1. 下载 `fleur-macos.zip`
+            2. 解压后拖动 `Fleur.app` 到应用程序文件夹
             3. 首次运行需右键 → 打开（绕过Gatekeeper）
 
             **Linux:**
-            1. 下载 `flutter_reader-linux-x64.tar.gz`
-            2. 解压: `tar -xzf flutter_reader-linux-x64.tar.gz`
-            3. 运行: `./flutter_reader`
+            1. 下载 `fleur-linux-x64.tar.gz`
+            2. 解压: `tar -xzf fleur-linux-x64.tar.gz`
+            3. 运行: `./fleur`
             4. 如果缺少依赖: `sudo apt install libgtk-3-0` (Debian/Ubuntu)
 
             ---
 
             **如遇到问题请提交 [Issue](https://github.com/${{ github.repository }}/issues)**
           files: |
-            artifacts/windows-release/flutter_reader-windows-x64-*.zip
-            artifacts/windows-installer/flutter_reader-windows-x64-installer-*.exe
-            artifacts/macos-release/flutter_reader-macos-*.zip
-            artifacts/linux-release/flutter_reader-linux-x64-*.tar.gz
+            artifacts/windows-release/fleur-windows-x64-*.zip
+            artifacts/windows-installer/fleur-windows-x64-installer-*.exe
+            artifacts/macos-release/fleur-macos-*.zip
+            artifacts/linux-release/fleur-linux-x64-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,4 +1,4 @@
-# Flutter Reader - 静态分析配置
+# Fleur - 静态分析配置
 # 基于 flutter_lints + 严格的防 bug 规则
 include: package:flutter_lints/flutter.yaml
 

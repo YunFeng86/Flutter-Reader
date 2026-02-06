@@ -49,7 +49,7 @@ class OpmlService {
   String buildOpml({
     required List<Feed> feeds,
     Map<int, String> categoryNames = const {},
-    String title = 'Flutter Reader Subscriptions',
+    String title = 'Fleur Subscriptions',
   }) {
     final b = XmlBuilder();
     b.processing('xml', 'version="1.0" encoding="UTF-8"');

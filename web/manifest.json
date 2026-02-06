@@ -1,11 +1,11 @@
 {
-    "name": "flutter_reader",
-    "short_name": "flutter_reader",
+    "name": "Fleur",
+    "short_name": "Fleur",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Fleur - An RSS Reader built with Flutter",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -1,4 +1,4 @@
-# Flutter Reader
+# Fleur
 
 一款使用 Flutter 构建的跨平台 RSS 阅读器应用，采用 Clean Architecture 架构和 Riverpod 状态管理。
 

@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'Flutter Reader';
+  String get appTitle => 'Fleur';
 
   @override
   String get notFound => '未找到';
@@ -513,7 +513,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   AppLocalizationsZhHant() : super('zh_Hant');
 
   @override
-  String get appTitle => 'Flutter Reader';
+  String get appTitle => 'Fleur';
 
   @override
   String get notFound => '未找到';
