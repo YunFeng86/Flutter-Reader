@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, debugPrint, kDebugMode;
 import 'package:pool/pool.dart';
 
 import '../../models/article.dart';
@@ -78,11 +78,13 @@ class FeedRefreshResult {
   const FeedRefreshResult({
     required this.feedId,
     required this.incomingCount,
+    required this.newCount,
     this.error,
   });
 
   final int feedId;
   final int incomingCount;
+  final int newCount;
   final Object? error;
 
   bool get ok => error == null;
@@ -96,6 +98,7 @@ class BatchRefreshResult {
   int get okCount => results.where((r) => r.ok).length;
   int get errorCount => results.length - okCount;
   int get incomingTotal => results.fold(0, (sum, r) => sum + r.incomingCount);
+  int get newTotal => results.fold(0, (sum, r) => sum + r.newCount);
   FeedRefreshResult? get firstError => results
       .cast<FeedRefreshResult?>()
       .firstWhere((r) => r?.error != null, orElse: () => null);
@@ -159,6 +162,7 @@ class SyncService {
     Feed feed,
     _EffectiveFeedSettings settings,
     AppSettings appSettings,
+    bool notify,
   ) async {
     final feedId = feed.id;
 
@@ -175,6 +179,7 @@ class SyncService {
         feedId: feedId,
         statusCode: 304,
         incomingCount: 0,
+        newCount: 0,
         etag: fetched.etag,
         lastModified: fetched.lastModified,
       );
@@ -233,17 +238,25 @@ class SyncService {
       } catch (_) {}
     }
 
-    if (newArticles.isNotEmpty) {
-      await _notifications.showNewArticlesNotification(
-        newArticles,
-        localeTag: appSettings.localeTag,
-      );
+    if (notify && newArticles.isNotEmpty) {
+      try {
+        await _notifications.showNewArticlesNotification(
+          newArticles,
+          localeTag: appSettings.localeTag,
+        );
+      } catch (e) {
+        // Don't let notification failures (permissions/plugin issues) break sync.
+        if (kDebugMode) {
+          debugPrint('Per-feed notification failed: $e');
+        }
+      }
     }
 
     return _RefreshOutcome(
       feedId: feedId,
       statusCode: 200,
       incomingCount: incoming.length,
+      newCount: newArticles.length,
       etag: fetched.etag,
       lastModified: fetched.lastModified,
     );
@@ -253,12 +266,14 @@ class SyncService {
     int feedId, {
     int maxAttempts = 2,
     AppSettings? appSettings,
+    bool notify = true,
   }) async {
     final feed = await _feeds.getById(feedId);
     if (feed == null) {
       return FeedRefreshResult(
         feedId: feedId,
         incomingCount: 0,
+        newCount: 0,
         error: ArgumentError('Feed $feedId not found'),
       );
     }
@@ -270,7 +285,7 @@ class SyncService {
     );
     if (!settings.syncEnabled) {
       // Skip network refresh when sync is disabled for this feed (effective).
-      return FeedRefreshResult(feedId: feedId, incomingCount: 0);
+      return FeedRefreshResult(feedId: feedId, incomingCount: 0, newCount: 0);
     }
 
     Object? lastError;
@@ -279,7 +294,12 @@ class SyncService {
     for (var i = 0; i < attempts; i++) {
       final checkedAt = DateTime.now();
       try {
-        final out = await _refreshFeedOnce(feed, settings, resolvedAppSettings);
+        final out = await _refreshFeedOnce(
+          feed,
+          settings,
+          resolvedAppSettings,
+          notify,
+        );
         sw.stop();
 
         await _feeds.updateSyncState(
@@ -296,6 +316,7 @@ class SyncService {
         return FeedRefreshResult(
           feedId: feedId,
           incomingCount: out.incomingCount,
+          newCount: out.newCount,
         );
       } catch (e) {
         lastError = e;
@@ -327,6 +348,7 @@ class SyncService {
     return FeedRefreshResult(
       feedId: feedId,
       incomingCount: 0,
+      newCount: 0,
       error: lastError ?? Exception('Unknown sync error'),
     );
   }
@@ -336,6 +358,7 @@ class SyncService {
     int maxConcurrent = 2,
     int maxAttemptsPerFeed = 2,
     void Function(int current, int total)? onProgress,
+    bool notify = true,
   }) {
     final task = _batchRefreshQueue.then((_) {
       return _refreshFeedsSafeImpl(
@@ -343,6 +366,7 @@ class SyncService {
         maxConcurrent: maxConcurrent,
         maxAttemptsPerFeed: maxAttemptsPerFeed,
         onProgress: onProgress,
+        notify: notify,
       );
     });
     _batchRefreshQueue = task.then((_) {}).catchError((_) {});
@@ -354,6 +378,7 @@ class SyncService {
     int maxConcurrent = 2,
     int maxAttemptsPerFeed = 2,
     void Function(int current, int total)? onProgress,
+    required bool notify,
   }) async {
     final ids = feedIds.toList(growable: false);
     if (ids.isEmpty) return const BatchRefreshResult([]);
@@ -371,6 +396,16 @@ class SyncService {
     final batchSize = total <= 20 ? total : (total <= 100 ? 20 : 50);
     final results = <FeedRefreshResult>[];
 
+    if (ids.length == 1) {
+      final r = await refreshFeedSafe(
+        ids.first,
+        maxAttempts: maxAttemptsPerFeed,
+        appSettings: appSettings,
+        notify: notify,
+      );
+      return BatchRefreshResult([r]);
+    }
+
     for (var i = 0; i < total; i += batchSize) {
       final end = (i + batchSize < total) ? i + batchSize : total;
       final batchIds = ids.sublist(i, end);
@@ -386,6 +421,7 @@ class SyncService {
               id,
               maxAttempts: maxAttemptsPerFeed,
               appSettings: appSettings,
+              notify: false, // aggregate notification at the batch level
             );
             results.add(r);
             completed++;
@@ -404,7 +440,21 @@ class SyncService {
       }
     }
 
-    return BatchRefreshResult(results);
+    final batch = BatchRefreshResult(results);
+    if (notify && batch.newTotal > 0) {
+      try {
+        await _notifications.showNewArticlesSummaryNotification(
+          batch.newTotal,
+          localeTag: appSettings.localeTag,
+        );
+      } catch (e) {
+        // Don't let notification failures (permissions/plugin issues) break sync.
+        if (kDebugMode) {
+          debugPrint('Summary notification failed: $e');
+        }
+      }
+    }
+    return batch;
   }
 }
 
@@ -413,6 +463,7 @@ class _RefreshOutcome {
     required this.feedId,
     required this.statusCode,
     required this.incomingCount,
+    required this.newCount,
     this.etag,
     this.lastModified,
   });
@@ -420,6 +471,7 @@ class _RefreshOutcome {
   final int feedId;
   final int statusCode;
   final int incomingCount;
+  final int newCount;
   final String? etag;
   final String? lastModified;
 }

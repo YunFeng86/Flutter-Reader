@@ -149,6 +149,47 @@ class NotificationService {
     }
   }
 
+  Future<void> showNewArticlesSummaryNotification(
+    int count, {
+    String? localeTag,
+  }) async {
+    if (count <= 0) return;
+
+    final locale = _normalizeLocale(
+      (localeTag == null || localeTag.trim().isEmpty)
+          ? PlatformDispatcher.instance.locale
+          : _localeFromTag(localeTag),
+    );
+    final l10n = _l10nForLocale(locale);
+
+    final androidDetails = AndroidNotificationDetails(
+      'new_articles_channel',
+      l10n.notificationNewArticlesChannelName,
+      channelDescription: l10n.notificationNewArticlesChannelDescription,
+      importance: Importance.defaultImportance,
+      priority: Priority.defaultPriority,
+    );
+
+    const iosDetails = DarwinNotificationDetails();
+    const macOsDetails = DarwinNotificationDetails();
+    const linuxDetails = LinuxNotificationDetails();
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+      macOS: macOsDetails,
+      linux: linuxDetails,
+    );
+
+    await ensureInitialized();
+    await _notificationsPlugin.show(
+      0, // Fixed ID for summary
+      l10n.notificationNewArticlesTitle,
+      l10n.notificationNewArticlesBody(count),
+      details,
+    );
+  }
+
   Future<void> showNewArticlesNotification(
     List<Article> newArticles, {
     String? localeTag,
