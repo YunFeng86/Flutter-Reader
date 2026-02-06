@@ -13,7 +13,7 @@ Future<Isar> openIsar() async {
   final isar = await Isar.open(
     [FeedSchema, ArticleSchema, CategorySchema, TagSchema],
     directory: dir.path,
-    name: 'flutter_reader',
+    name: 'fleur',
   );
 
   // Run pending migrations after database is opened

@@ -75,7 +75,7 @@ final articleExtractorProvider = Provider<ArticleExtractor>((ref) {
 final cacheManagerProvider = Provider<BaseCacheManager>((ref) {
   return CacheManager(
     Config(
-      'flutter_reader_images',
+      'fleur_images',
       stalePeriod: const Duration(days: 45),
       maxNrOfCacheObjects: 1200,
     ),

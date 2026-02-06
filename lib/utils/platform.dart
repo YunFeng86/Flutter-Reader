@@ -13,7 +13,7 @@ bool get isMacOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
 class IosShareBridge {
   static const MethodChannel _channel = MethodChannel(
-    'flutter_reader/ios_share',
+    'com.cloudwind.fleur/ios_share',
   );
 
   /// 在 iOS 上弹出系统分享/导出面板（包含“存储到文件”等）。

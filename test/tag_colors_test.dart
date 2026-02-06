@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_reader/utils/tag_colors.dart';
+import 'package:fleur/utils/tag_colors.dart';
 
 void main() {
   test('normalizeTagColor accepts valid hex and normalizes', () {

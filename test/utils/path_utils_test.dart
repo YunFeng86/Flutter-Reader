@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_reader/utils/path_utils.dart';
+import 'package:fleur/utils/path_utils.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 class _FakePathProviderPlatform extends PathProviderPlatform {
@@ -24,7 +24,7 @@ void main() {
   });
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('flutter_reader_test_');
+    tempDir = await Directory.systemTemp.createTemp('fleur_test_');
     PathProviderPlatform.instance = _FakePathProviderPlatform(tempDir.path);
   });
 
@@ -37,13 +37,13 @@ void main() {
   });
 
   group('PathUtils', () {
-    test('getAppDataDirectory 应返回包含 flutter_reader 的目录', () async {
+    test('getAppDataDirectory 应返回包含 fleur 的目录', () async {
       final dir = await PathUtils.getAppDataDirectory();
 
       expect(
-        dir.path.contains('flutter_reader'),
+        dir.path.contains('fleur'),
         isTrue,
-        reason: '应用数据目录应包含 flutter_reader 文件夹',
+        reason: '应用数据目录应包含 fleur 文件夹',
       );
     });
 
@@ -52,9 +52,9 @@ void main() {
 
       expect(path, isA<String>(), reason: '应返回字符串类型的路径');
       expect(
-        path.contains('flutter_reader'),
+        path.contains('fleur'),
         isTrue,
-        reason: '路径应包含 flutter_reader 文件夹',
+        reason: '路径应包含 fleur 文件夹',
       );
     });
 

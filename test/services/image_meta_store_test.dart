@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_reader/services/cache/image_meta_store.dart';
+import 'package:fleur/services/cache/image_meta_store.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 class _FakePathProviderPlatform extends PathProviderPlatform {
@@ -24,7 +24,7 @@ void main() {
   });
 
   setUp(() async {
-    tempDir = await Directory.systemTemp.createTemp('flutter_reader_test_');
+    tempDir = await Directory.systemTemp.createTemp('fleur_test_');
     PathProviderPlatform.instance = _FakePathProviderPlatform(tempDir.path);
   });
 

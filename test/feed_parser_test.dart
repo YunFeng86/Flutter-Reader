@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_reader/services/rss/feed_parser.dart';
+import 'package:fleur/services/rss/feed_parser.dart';
 
 void main() {
   test('parses RSS', () {

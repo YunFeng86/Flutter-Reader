@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
-import 'package:flutter_reader/models/category.dart';
-import 'package:flutter_reader/models/feed.dart';
-import 'package:flutter_reader/providers/query_providers.dart';
-import 'package:flutter_reader/providers/subscription_settings_provider.dart';
-import 'package:flutter_reader/ui/settings/subscriptions/subscription_tree_view.dart';
+import 'package:fleur/l10n/app_localizations.dart';
+import 'package:fleur/models/category.dart';
+import 'package:fleur/models/feed.dart';
+import 'package:fleur/providers/query_providers.dart';
+import 'package:fleur/providers/subscription_settings_provider.dart';
+import 'package:fleur/ui/settings/subscriptions/subscription_tree_view.dart';
 
 void main() {
   testWidgets('SubscriptionTreeView starts expanded when category is selected', (

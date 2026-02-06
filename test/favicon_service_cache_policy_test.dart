@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_reader/services/cache/favicon_store.dart';
-import 'package:flutter_reader/services/network/favicon_service.dart';
+import 'package:fleur/services/cache/favicon_store.dart';
+import 'package:fleur/services/network/favicon_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _TestFaviconStore extends FaviconStore {

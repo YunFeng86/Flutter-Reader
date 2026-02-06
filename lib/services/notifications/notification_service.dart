@@ -2,7 +2,7 @@ import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
+import 'package:fleur/l10n/app_localizations.dart';
 
 import '../../models/article.dart';
 

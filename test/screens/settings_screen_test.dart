@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
-import 'package:flutter_reader/screens/settings_screen.dart';
+import 'package:fleur/l10n/app_localizations.dart';
+import 'package:fleur/screens/settings_screen.dart';
 
 void main() {
   // Helper to pump the Settings Screen with a specific width

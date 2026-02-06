@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:flutter_reader/l10n/app_localizations.dart';
+import 'package:fleur/l10n/app_localizations.dart';
 
 import '../providers/article_list_controller.dart';
 import '../providers/app_settings_providers.dart';

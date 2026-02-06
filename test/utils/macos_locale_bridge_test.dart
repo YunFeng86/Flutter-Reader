@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_reader/utils/macos_locale_bridge.dart';
+import 'package:fleur/utils/macos_locale_bridge.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  const channel = MethodChannel('flutter_reader/app_locale');
+  const channel = MethodChannel('com.cloudwind.fleur/app_locale');
   final calls = <String?>[];
 
   setUp(() {

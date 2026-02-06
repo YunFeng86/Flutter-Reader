@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
+import 'package:fleur/l10n/app_localizations.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 

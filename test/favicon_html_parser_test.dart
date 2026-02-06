@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_reader/services/network/favicon_service.dart';
+import 'package:fleur/services/network/favicon_service.dart';
 
 void main() {
   test('FaviconHtmlParser extracts and resolves icon hrefs', () {

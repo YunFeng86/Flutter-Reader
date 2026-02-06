@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_reader/models/feed.dart';
-import 'package:flutter_reader/services/opml/opml_service.dart';
+import 'package:fleur/models/feed.dart';
+import 'package:fleur/services/opml/opml_service.dart';
 
 void main() {
   test('parses OPML urls', () {

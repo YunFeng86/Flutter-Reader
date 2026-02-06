@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
+import 'package:fleur/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/query_providers.dart';

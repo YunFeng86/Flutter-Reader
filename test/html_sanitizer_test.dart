@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:flutter_reader/services/html_sanitizer.dart';
+import 'package:fleur/services/html_sanitizer.dart';
 
 void main() {
   test('keeps article wrapper and its content', () {

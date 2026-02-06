@@ -9,7 +9,7 @@ import UIKit
   ) -> Bool {
     if let controller = window?.rootViewController as? FlutterViewController {
       let shareChannel = FlutterMethodChannel(
-        name: "flutter_reader/ios_share",
+        name: "com.cloudwind.fleur/ios_share",
         binaryMessenger: controller.binaryMessenger
       )
       shareChannel.setMethodCallHandler { call, result in

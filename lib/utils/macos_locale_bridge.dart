@@ -5,7 +5,7 @@ import 'platform.dart';
 
 class MacOSLocaleBridge {
   static const MethodChannel _channel = MethodChannel(
-    'flutter_reader/app_locale',
+    'com.cloudwind.fleur/app_locale',
   );
   static String? _lastLocaleTag;
 

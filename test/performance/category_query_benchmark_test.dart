@@ -5,10 +5,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:isar/isar.dart';
 
-import 'package:flutter_reader/models/article.dart';
-import 'package:flutter_reader/models/category.dart';
-import 'package:flutter_reader/models/feed.dart';
-import 'package:flutter_reader/models/tag.dart';
+import 'package:fleur/models/article.dart';
+import 'package:fleur/models/category.dart';
+import 'package:fleur/models/feed.dart';
+import 'package:fleur/models/tag.dart';
 
 /// Performance benchmark test to validate the value of categoryId denormalization.
 ///

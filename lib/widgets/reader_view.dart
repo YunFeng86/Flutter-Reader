@@ -12,7 +12,7 @@ import 'package:html/dom.dart' as dom;
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_reader/l10n/app_localizations.dart';
+import 'package:fleur/l10n/app_localizations.dart';
 
 import 'reader_bottom_bar.dart';
 import '../models/article.dart';

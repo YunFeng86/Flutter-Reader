@@ -1,13 +1,13 @@
-name: flutter_reader
+name: fleur
 description: "Fleur - An RSS Reader built with Flutter"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
 # 项目链接（便于用户提Issue和查看源码）
-homepage: https://github.com/YunFeng86/Flutter-Reader
-repository: https://github.com/YunFeng86/Flutter-Reader
-issue_tracker: https://github.com/YunFeng86/Flutter-Reader/issues
+homepage: https://github.com/cloudwind/fleur
+repository: https://github.com/cloudwind/fleur
+issue_tracker: https://github.com/cloudwind/fleur/issues
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43

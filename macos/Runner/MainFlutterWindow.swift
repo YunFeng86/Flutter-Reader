@@ -18,7 +18,7 @@ class MainFlutterWindow: NSWindow {
 
   private func setupLocaleChannel(controller: FlutterViewController) {
     let channel = FlutterMethodChannel(
-      name: "flutter_reader/app_locale",
+      name: "com.cloudwind.fleur/app_locale",
       binaryMessenger: controller.engine.binaryMessenger
     )
     channel.setMethodCallHandler { call, result in
