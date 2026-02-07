@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/service_providers.dart';
+import '../../utils/context_extensions.dart';
 
 class _AddSubscriptionDialog extends StatefulWidget {
   const _AddSubscriptionDialog();
@@ -78,12 +79,8 @@ Future<int?> showAddSubscriptionDialog(
   final id = await ref.read(feedRepositoryProvider).upsertUrl(url);
   final r = await ref.read(syncServiceProvider).refreshFeedSafe(id);
   if (!context.mounted) return id;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        r.ok ? l10n.addedAndSynced : l10n.errorMessage(r.error.toString()),
-      ),
-    ),
+  context.showSnack(
+    r.ok ? l10n.addedAndSynced : l10n.errorMessage(r.error.toString()),
   );
   return id;
 }

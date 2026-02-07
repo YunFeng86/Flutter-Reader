@@ -1,65 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
-import '../providers/query_providers.dart';
-
-enum _GlobalDest { dashboard, feeds, saved, search, settings }
+import '../models/nav_destination.dart';
+import '../ui/actions/global_nav_actions.dart';
 
 class GlobalNavBar extends ConsumerWidget {
   const GlobalNavBar({super.key, required this.currentUri});
 
   final Uri currentUri;
 
-  _GlobalDest _destForUri(Uri uri) {
-    final seg = uri.pathSegments.isEmpty ? '' : uri.pathSegments.first;
-    return switch (seg) {
-      'dashboard' => _GlobalDest.dashboard,
-      'saved' => _GlobalDest.saved,
-      'search' => _GlobalDest.search,
-      'settings' => _GlobalDest.settings,
-      // article + home live under the Feeds section.
-      '' || 'article' => _GlobalDest.feeds,
-      _ => _GlobalDest.feeds,
-    };
-  }
-
-  int _indexForDest(_GlobalDest d) => _GlobalDest.values.indexOf(d);
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final dest = _destForUri(currentUri);
-    final selectedIndex = _indexForDest(dest);
+    final dest = destinationForUri(currentUri);
+    final selectedIndex = globalDestinationIndex(dest);
 
     return NavigationBar(
       selectedIndex: selectedIndex,
       onDestinationSelected: (idx) {
-        final next = _GlobalDest.values[idx];
-        switch (next) {
-          case _GlobalDest.dashboard:
-            context.go('/dashboard');
-            return;
-          case _GlobalDest.feeds:
-            // Leaving other top-level sections should bring you back to the
-            // normal feed browsing state.
-            ref.read(starredOnlyProvider.notifier).state = false;
-            ref.read(readLaterOnlyProvider.notifier).state = false;
-            // Keep current feed/category selection, but clear global search.
-            ref.read(articleSearchQueryProvider.notifier).state = '';
-            context.go('/');
-            return;
-          case _GlobalDest.saved:
-            context.go('/saved');
-            return;
-          case _GlobalDest.search:
-            context.go('/search');
-            return;
-          case _GlobalDest.settings:
-            context.go('/settings');
-            return;
-        }
+        final next = GlobalNavDestination.values[idx];
+        handleGlobalNavSelection(context, ref, next);
       },
       destinations: [
         NavigationDestination(

@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../models/article.dart';
 import '../providers/query_providers.dart';
+import '../utils/html_utils.dart';
 import '../utils/timeago_locale.dart';
 import 'favicon_avatar.dart';
 
@@ -20,19 +21,6 @@ class ArticleListItem extends ConsumerWidget {
   final VoidCallback? onTap;
 
   static const double _metaWidth = 96;
-
-  // Use a simple regex to find the first img src
-  // Parsing full HTML is expensive in a list view
-  static final _imgSrcRegex = RegExp(
-    r'<img[^>]+src="([^">]+)"',
-    caseSensitive: false,
-  );
-
-  String? _extractFirstImage(String? html) {
-    if (html == null || html.isEmpty) return null;
-    final match = _imgSrcRegex.firstMatch(html);
-    return match?.group(1);
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -53,7 +41,7 @@ class ArticleListItem extends ConsumerWidget {
     );
 
     // Prefer description/contentHtml for the thumbnail
-    final imageUrl = _extractFirstImage(article.contentHtml);
+    final imageUrl = extractFirstImageSrc(article.contentHtml);
 
     return Card(
       elevation: 0,

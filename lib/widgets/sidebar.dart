@@ -1,23 +1,18 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
 import '../models/category.dart';
 import '../models/feed.dart';
 import '../providers/query_providers.dart';
-import '../providers/opml_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../ui/actions/subscription_actions.dart';
+import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
-import '../services/opml/opml_service.dart';
 import 'favicon_avatar.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
@@ -571,9 +566,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (ref.read(selectedFeedIdProvider) == feedId) {
       _selectAll(ref);
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.deleted)));
+    context.showSnack(l10n.deleted);
   }
 
   Future<void> _confirmDeleteCategory(
@@ -606,88 +599,29 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (ref.read(selectedCategoryIdProvider) == categoryId) {
       _selectAll(ref);
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.categoryDeleted)));
+    context.showSnack(l10n.categoryDeleted);
   }
 
   Future<void> _showAddFeedDialog(BuildContext context, WidgetRef ref) async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final url = await _showDialog<String>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.addSubscription),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              labelText: l10n.rssAtomUrl,
-              hintText: 'https://example.com/feed.xml',
-            ),
-            autofocus: true,
-            keyboardType: TextInputType.url,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.add),
-            ),
-          ],
-        );
-      },
+    final id = await SubscriptionActions.addFeed(
+      context,
+      ref,
+      navigator: _navigator,
     );
-    if (url == null || url.trim().isEmpty) return;
+    if (id == null) return;
 
-    final id = await ref.read(feedRepositoryProvider).upsertUrl(url);
-    final r = await ref.read(syncServiceProvider).refreshFeedSafe(id);
-    ref.read(selectedFeedIdProvider.notifier).state = id;
-    ref.read(selectedCategoryIdProvider.notifier).state = null;
-    ref.read(selectedTagIdProvider.notifier).state = null;
+    SubscriptionActions.selectFeed(ref, id);
     widget.onSelectFeed(id);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          r.ok ? l10n.addedAndSynced : l10n.errorMessage(r.error.toString()),
-        ),
-      ),
-    );
+    _closeDrawerIfDesktopDrawer();
   }
 
   Future<void> _showAddCategoryDialog(
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController();
-    final name = await _showDialog<String>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.newCategory),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: l10n.name),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.create),
-            ),
-          ],
-        );
-      },
-    );
-    if (name == null || name.trim().isEmpty) return;
-    final id = await ref.read(categoryRepositoryProvider).upsertByName(name);
+    final id = await SubscriptionActions.addCategory(context, ref);
+    if (id == null) return;
     setState(() => _expandedCategoryId = id);
   }
 
@@ -781,12 +715,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
       case _FeedAction.refresh:
         final r = await ref.read(syncServiceProvider).refreshFeedSafe(f.id);
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              r.ok ? l10n.refreshed : l10n.errorMessage(r.error.toString()),
-            ),
-          ),
+        context.showSnack(
+          r.ok ? l10n.refreshed : l10n.errorMessage(r.error.toString()),
         );
         return;
       case _FeedAction.offlineCache:
@@ -794,9 +724,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
             .read(syncServiceProvider)
             .offlineCacheFeed(f.id);
         if (!context.mounted) return;
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.cachingArticles(count))));
+        context.showSnack(l10n.cachingArticles(count));
         return;
       case _FeedAction.move:
         await _moveFeedToCategory(context, ref, f);
@@ -846,9 +774,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
       final msg = e.toString().contains('already exists')
           ? l10n.nameAlreadyExists
           : e.toString();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(msg))));
+      context.showErrorMessage(l10n.errorMessage(msg));
     }
   }
 
@@ -949,22 +875,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
         }
         return;
       case _SidebarMenu.refreshAll:
-        final l10n = AppLocalizations.of(context)!;
-        final feeds = await ref.read(feedRepositoryProvider).getAll();
-        final batch = await ref
-            .read(syncServiceProvider)
-            .refreshFeedsSafe(feeds.map((f) => f.id));
-        if (!context.mounted) return;
-        final err = batch.firstError?.error;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              err == null
-                  ? l10n.refreshedAll
-                  : l10n.errorMessage(err.toString()),
-            ),
-          ),
-        );
+        await SubscriptionActions.refreshAll(context, ref);
         return;
       case _SidebarMenu.importOpml:
         await _importOpml(context, ref);
@@ -976,180 +887,11 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _importOpml(BuildContext context, WidgetRef ref) async {
-    final group = XTypeGroup(
-      label: 'OPML',
-      extensions: ['opml', 'xml'],
-      mimeTypes: ['text/xml', 'application/xml'],
-      // iPadOS 上部分 .opml 文件会被标记为 public.data 而不是 public.xml，导致在
-      // UIDocumentPicker 里变灰不可选；这里仅在 iOS 放宽 UTI，并在选择后再做校验。
-      uniformTypeIdentifiers: isIOS
-          ? ['public.xml', 'public.text', 'public.data']
-          : ['public.xml'],
-    );
-    XFile? file;
-    try {
-      file = await openFile(acceptedTypeGroups: [group]);
-    } catch (e) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
-      return;
-    }
-    if (file == null) return;
-    final nameOrPath = file.name.isNotEmpty ? file.name : file.path;
-    final dot = nameOrPath.lastIndexOf('.');
-    final ext = dot == -1 ? '' : nameOrPath.substring(dot).toLowerCase();
-    // 允许无扩展名文件走解析兜底（例如某些文件提供商导出的文件可能没有后缀）。
-    if (ext.isNotEmpty && ext != '.opml' && ext != '.xml') {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.errorMessage(l10n.opmlParseFailed))),
-      );
-      return;
-    }
-
-    String xml;
-    try {
-      xml = await file.readAsString();
-    } catch (e) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
-      return;
-    }
-    List<OpmlEntry> entries;
-    try {
-      entries = ref.read(opmlServiceProvider).parseEntries(xml);
-    } catch (_) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.errorMessage(l10n.opmlParseFailed))),
-      );
-      return;
-    }
-    if (entries.isEmpty) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.noFeedsFoundInOpml)));
-      return;
-    }
-
-    var added = 0;
-    for (final e in entries) {
-      final feedId = await ref.read(feedRepositoryProvider).upsertUrl(e.url);
-      if (e.category != null && e.category!.trim().isNotEmpty) {
-        final catId = await ref
-            .read(categoryRepositoryProvider)
-            .upsertByName(e.category!);
-        await ref
-            .read(feedRepositoryProvider)
-            .setCategory(feedId: feedId, categoryId: catId);
-      }
-      added += 1;
-    }
-    if (!context.mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.importedFeeds(added))));
+    await SubscriptionActions.importOpml(context, ref);
   }
 
   Future<void> _exportOpml(BuildContext context, WidgetRef ref) async {
-    // file_selector_ios 目前未实现 getSaveLocation/getSavePath（会抛 UnimplementedError），
-    // iOS 这里改用系统分享面板，让用户选择“存储到文件”等导出方式。
-    if (isIOS) {
-      final feeds = await ref.read(feedRepositoryProvider).getAll();
-      final cats = await ref.read(categoryRepositoryProvider).getAll();
-      final names = {for (final c in cats) c.id: c.name};
-      final xml = ref
-          .read(opmlServiceProvider)
-          .buildOpml(feeds: feeds, categoryNames: names);
-      final xfile = XFile.fromData(
-        Uint8List.fromList(utf8.encode(xml)),
-        mimeType: 'text/xml',
-        name: 'subscriptions.opml',
-      );
-
-      final tmpDir = await getTemporaryDirectory();
-      final tmpPath = '${tmpDir.path}/subscriptions.opml';
-      try {
-        await xfile.saveTo(tmpPath);
-        await IosShareBridge.shareFile(
-          path: tmpPath,
-          mimeType: 'text/xml',
-          name: 'subscriptions.opml',
-        );
-      } catch (e) {
-        if (!context.mounted) return;
-        final l10n = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
-        );
-        return;
-      }
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.exportedOpml)));
-      return;
-    }
-
-    const group = XTypeGroup(
-      label: 'OPML',
-      extensions: ['opml', 'xml'],
-      mimeTypes: ['text/xml', 'application/xml'],
-      uniformTypeIdentifiers: ['public.xml'],
-    );
-    FileSaveLocation? loc;
-    try {
-      loc = await getSaveLocation(
-        suggestedName: 'subscriptions.opml',
-        acceptedTypeGroups: [group],
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
-      return;
-    }
-    if (loc == null) return;
-    final feeds = await ref.read(feedRepositoryProvider).getAll();
-    final cats = await ref.read(categoryRepositoryProvider).getAll();
-    final names = {for (final c in cats) c.id: c.name};
-    final xml = ref
-        .read(opmlServiceProvider)
-        .buildOpml(feeds: feeds, categoryNames: names);
-    final xfile = XFile.fromData(
-      Uint8List.fromList(utf8.encode(xml)),
-      mimeType: 'text/xml',
-      name: 'subscriptions.opml',
-    );
-    try {
-      await xfile.saveTo(loc.path);
-    } catch (e) {
-      if (!context.mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
-      return;
-    }
-    if (!context.mounted) return;
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.exportedOpml)));
+    await SubscriptionActions.exportOpml(context, ref);
   }
 }
 

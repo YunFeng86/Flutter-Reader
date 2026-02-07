@@ -9,14 +9,10 @@ import '../models/article.dart';
 import '../models/feed.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/query_providers.dart';
-import '../ui/settings/subscriptions/subscription_actions.dart';
+import '../ui/actions/subscription_actions.dart';
+import '../utils/html_utils.dart';
 import '../utils/platform.dart';
 import '../utils/timeago_locale.dart';
-
-final RegExp _previewImageRegex = RegExp(
-  r'<img[^>]+src="([^">]+)"',
-  caseSensitive: false,
-);
 
 const List<String> _dashboardModuleIds = ['feeds', 'saved'];
 
@@ -678,7 +674,5 @@ String? _previewImageUrl(Article article) {
   final html = article.extractedContentHtml?.trim().isNotEmpty == true
       ? article.extractedContentHtml
       : article.contentHtml;
-  if (html == null || html.trim().isEmpty) return null;
-  final match = _previewImageRegex.firstMatch(html);
-  return match?.group(1);
+  return extractFirstImageSrc(html);
 }
