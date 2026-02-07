@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../../utils/path_utils.dart';
+import '../../utils/path_manager.dart';
 
 class ImageMeta {
   const ImageMeta({
@@ -113,17 +113,20 @@ class ImageMetaStore {
   }
 
   Future<void> _writeAll(Map<String, ImageMeta> data) async {
-    final f = await _file();
-    final encoded = <String, Object?>{};
-    for (final entry in data.entries) {
-      encoded[entry.key] = entry.value.toJson();
+    try {
+      final f = await _file();
+      final encoded = <String, Object?>{};
+      for (final entry in data.entries) {
+        encoded[entry.key] = entry.value.toJson();
+      }
+      await f.writeAsString(jsonEncode(encoded), encoding: utf8);
+    } catch (_) {
+      // Cache write failures should never break core flows.
     }
-    await f.writeAsString(jsonEncode(encoded), encoding: utf8);
   }
 
   Future<File> _file() async {
-    final dir = await PathUtils.getAppDataDirectory();
-    return File('${dir.path}${Platform.pathSeparator}image_meta.json');
+    return PathManager.imageMetaFile();
   }
 
   void _trimIfNeeded(Map<String, ImageMeta> data) {

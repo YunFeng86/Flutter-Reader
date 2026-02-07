@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import '../../utils/path_utils.dart';
+import '../../utils/path_manager.dart';
 
 class ReaderProgress {
   const ReaderProgress({
@@ -76,7 +76,11 @@ class ReaderProgressStore {
     final cached = _cache;
     if (cached != null) return cached;
     try {
-      final f = await _file();
+      var f = await _file();
+      if (!await f.exists() && !PathManager.isMigrationComplete) {
+        final legacy = await PathManager.legacyReaderProgressFile();
+        if (legacy != null) f = legacy;
+      }
       if (!await f.exists()) {
         _cache = <String, ReaderProgress>{};
         return _cache!;
@@ -114,8 +118,7 @@ class ReaderProgressStore {
   }
 
   Future<File> _file() async {
-    final dir = await PathUtils.getAppDataDirectory();
-    return File('${dir.path}${Platform.pathSeparator}reader_progress.json');
+    return PathManager.readerProgressFile();
   }
 
   String _keyFor(int articleId, String contentHash) {

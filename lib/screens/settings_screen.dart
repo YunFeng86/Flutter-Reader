@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
-import 'package:url_launcher/url_launcher.dart';
-
 import '../providers/app_settings_providers.dart';
 
 import '../providers/repository_providers.dart';
@@ -17,7 +15,8 @@ import '../services/settings/app_settings.dart';
 import '../services/settings/reader_settings.dart';
 
 import '../theme/app_theme.dart';
-import '../utils/path_utils.dart';
+import '../services/platform/shell_service.dart';
+import '../utils/path_manager.dart';
 import '../utils/platform.dart';
 import '../ui/settings/subscriptions/subscriptions_settings_tab.dart';
 import '../ui/global_nav.dart';
@@ -782,87 +781,14 @@ class _AboutTabState extends State<_AboutTab> {
   @override
   void initState() {
     super.initState();
-    _appDataPathFuture = PathUtils.getAppDataPath();
+    _appDataPathFuture = PathManager.getSupportPath();
   }
 
   Future<void> _openFolder(String path) async {
     final trimmed = path.trim();
     if (trimmed.isEmpty) return;
-    String? resolvedPath;
     try {
-      final entityType = await FileSystemEntity.type(trimmed);
-      if (entityType == FileSystemEntityType.notFound) {
-        throw FileSystemException('Path does not exist', trimmed);
-      }
-      final isFile = entityType == FileSystemEntityType.file;
-      resolvedPath = isFile ? File(trimmed).parent.path : trimmed;
-      String normalizeWindowsPath(String input) {
-        var normalized = input.trim();
-        if (normalized.length > 1 &&
-            normalized.startsWith('"') &&
-            normalized.endsWith('"')) {
-          normalized = normalized.substring(1, normalized.length - 1);
-        }
-        return normalized.replaceAll('/', '\\');
-      }
-
-      if (Platform.isWindows) {
-        final targetPath = normalizeWindowsPath(
-          isFile ? trimmed : resolvedPath,
-        );
-        final args = isFile ? ['/select,$targetPath'] : [targetPath];
-        final result = await Process.run('explorer', args);
-        if (result.exitCode != 0) {
-          final stderrText = result.stderr is String
-              ? result.stderr as String
-              : '${result.stderr}';
-          throw ProcessException('explorer', args, stderrText, result.exitCode);
-        }
-        return;
-      }
-      if (Platform.isMacOS) {
-        final launched = await launchUrl(
-          Uri.file(resolvedPath),
-          mode: LaunchMode.externalApplication,
-        );
-        if (launched) return;
-        final args = isFile ? ['-R', trimmed] : [resolvedPath];
-        final result = await Process.run('open', args);
-        if (result.exitCode != 0) {
-          final stderrText = result.stderr is String
-              ? result.stderr as String
-              : '${result.stderr}';
-          throw ProcessException('open', args, stderrText, result.exitCode);
-        }
-        return;
-      }
-      if (Platform.isLinux) {
-        final launched = await launchUrl(
-          Uri.file(resolvedPath),
-          mode: LaunchMode.externalApplication,
-        );
-        if (launched) return;
-        final result = await Process.run('xdg-open', [resolvedPath]);
-        if (result.exitCode != 0) {
-          final stderrText = result.stderr is String
-              ? result.stderr as String
-              : '${result.stderr}';
-          throw ProcessException(
-            'xdg-open',
-            [resolvedPath],
-            stderrText,
-            result.exitCode,
-          );
-        }
-        return;
-      }
-      final launched = await launchUrl(
-        Uri.file(resolvedPath),
-        mode: LaunchMode.externalApplication,
-      );
-      if (!launched) {
-        throw StateError('launchUrl failed for $resolvedPath');
-      }
+      await ShellService.openPath(trimmed);
     } catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context)!;

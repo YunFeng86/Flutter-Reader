@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-import '../../utils/path_utils.dart';
+import '../../utils/path_manager.dart';
 
 class FaviconCacheEntry {
   const FaviconCacheEntry({required this.fetchedAt, required this.iconUrl});
@@ -41,7 +41,6 @@ class FaviconCacheEntry {
 /// Stores host -> { fetchedAt, iconUrl } in app data directory.
 /// This intentionally caches misses (iconUrl == null) to avoid hammering sites.
 class FaviconStore {
-  static const String _fileName = 'favicons.json';
   static const int _maxEntries = 500;
   static const Duration _maxAge = Duration(days: 90);
 
@@ -83,8 +82,7 @@ class FaviconStore {
   }
 
   Future<File> _file() async {
-    final dir = await PathUtils.getAppDataDirectory();
-    return File('${dir.path}${Platform.pathSeparator}$_fileName');
+    return PathManager.faviconCacheFile();
   }
 
   Future<Map<String, FaviconCacheEntry>> _ensureLoaded() async {

@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'reader_settings.dart';
-import '../../utils/path_utils.dart';
+import '../../utils/path_manager.dart';
 
 class ReaderSettingsStore {
   Future<ReaderSettings> load() async {
     try {
-      final f = await _file();
+      var f = await _file();
+      if (!await f.exists() && !PathManager.isMigrationComplete) {
+        final legacy = await PathManager.legacyReaderSettingsFile();
+        if (legacy != null) f = legacy;
+      }
       if (!await f.exists()) return const ReaderSettings();
       final raw = await f.readAsString();
       final decoded = jsonDecode(raw);
@@ -24,8 +28,6 @@ class ReaderSettingsStore {
   }
 
   Future<File> _file() async {
-    final dir = await PathUtils.getAppDataDirectory();
-
-    return File('${dir.path}${Platform.pathSeparator}reader_settings.json');
+    return PathManager.readerSettingsFile();
   }
 }

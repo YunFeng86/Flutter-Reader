@@ -53,6 +53,7 @@ dependencies:
   file_selector: ^1.1.0
   flutter_cache_manager: ^3.4.1
   pool: ^1.5.2
+  path: ^1.9.0
   path_provider: ^2.1.5
   reorderable_grid: ^1.0.13
   rss_dart: ^1.0.14

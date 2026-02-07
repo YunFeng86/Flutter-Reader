@@ -2,15 +2,30 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fleur/services/cache/image_meta_store.dart';
+import 'package:fleur/utils/path_manager.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 class _FakePathProviderPlatform extends PathProviderPlatform {
-  _FakePathProviderPlatform(this._path);
+  _FakePathProviderPlatform({
+    required String documentsPath,
+    required String supportPath,
+    required String cachePath,
+  }) : _documentsPath = documentsPath,
+       _supportPath = supportPath,
+       _cachePath = cachePath;
 
-  final String _path;
+  final String _documentsPath;
+  final String _supportPath;
+  final String _cachePath;
 
   @override
-  Future<String?> getApplicationDocumentsPath() async => _path;
+  Future<String?> getApplicationDocumentsPath() async => _documentsPath;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => _supportPath;
+
+  @override
+  Future<String?> getApplicationCachePath() async => _cachePath;
 }
 
 void main() {
@@ -25,7 +40,21 @@ void main() {
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('fleur_test_');
-    PathProviderPlatform.instance = _FakePathProviderPlatform(tempDir.path);
+    final docs = await Directory(
+      '${tempDir.path}/documents',
+    ).create(recursive: true);
+    final support = await Directory(
+      '${tempDir.path}/support',
+    ).create(recursive: true);
+    final cache = await Directory(
+      '${tempDir.path}/cache',
+    ).create(recursive: true);
+    PathProviderPlatform.instance = _FakePathProviderPlatform(
+      documentsPath: docs.path,
+      supportPath: support.path,
+      cachePath: cache.path,
+    );
+    PathManager.resetForTests();
   });
 
   tearDown(() async {

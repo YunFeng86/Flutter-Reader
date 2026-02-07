@@ -2,12 +2,16 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'app_settings.dart';
-import '../../utils/path_utils.dart';
+import '../../utils/path_manager.dart';
 
 class AppSettingsStore {
   Future<AppSettings> load() async {
     try {
-      final f = await _file();
+      var f = await _file();
+      if (!await f.exists() && !PathManager.isMigrationComplete) {
+        final legacy = await PathManager.legacyAppSettingsFile();
+        if (legacy != null) f = legacy;
+      }
       if (!await f.exists()) return const AppSettings();
       final raw = await f.readAsString();
       final decoded = jsonDecode(raw);
@@ -24,8 +28,6 @@ class AppSettingsStore {
   }
 
   Future<File> _file() async {
-    final dir = await PathUtils.getAppDataDirectory();
-
-    return File('${dir.path}${Platform.pathSeparator}app_settings.json');
+    return PathManager.appSettingsFile();
   }
 }
