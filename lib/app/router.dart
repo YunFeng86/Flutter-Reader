@@ -15,6 +15,9 @@ import '../ui/layout.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    errorPageBuilder: (context, state) {
+      return const NoTransitionPage(child: _NotFoundScreen());
+    },
     routes: [
       ShellRoute(
         builder: (context, state, child) {
