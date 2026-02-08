@@ -64,6 +64,7 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     parser: parser,
     notifications: notifications,
     cache: ref.watch(articleCacheServiceProvider),
+    extractor: ref.watch(articleExtractorProvider),
     appSettingsStore: ref.watch(appSettingsStoreProvider),
   );
 });

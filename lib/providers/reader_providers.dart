@@ -46,8 +46,3 @@ final fullTextControllerProvider =
     AutoDisposeAsyncNotifierProvider<FullTextController, void>(
       FullTextController.new,
     );
-
-/// 是否显示提取内容（仅视图层，不持久化）。
-final fullTextViewEnabledProvider = StateProvider.autoDispose.family<bool, int>(
-  (ref, articleId) => false,
-);

@@ -17,6 +17,7 @@ import '../rss/rss_client.dart';
 import '../rss/parsed_feed.dart';
 import '../notifications/notification_service.dart';
 import '../cache/article_cache_service.dart';
+import '../extract/article_extractor.dart';
 import '../../utils/keyword_filter.dart';
 
 const int _parseInIsolateThreshold = 50000;
@@ -113,6 +114,7 @@ class SyncService {
     required FeedParser parser,
     required NotificationService notifications,
     required ArticleCacheService cache,
+    required ArticleExtractor extractor,
     required AppSettingsStore appSettingsStore,
   }) : _feeds = feeds,
        _categories = categories,
@@ -121,6 +123,7 @@ class SyncService {
        _parser = parser,
        _notifications = notifications,
        _cache = cache,
+       _extractor = extractor,
        _appSettingsStore = appSettingsStore;
 
   final FeedRepository _feeds;
@@ -130,6 +133,7 @@ class SyncService {
   final FeedParser _parser;
   final NotificationService _notifications;
   final ArticleCacheService _cache;
+  final ArticleExtractor _extractor;
   final AppSettingsStore _appSettingsStore;
   Future<void> _batchRefreshQueue = Future.value();
 
@@ -235,6 +239,17 @@ class SyncService {
       // Don't let caching failures break the refresh flow.
       try {
         await _cache.cacheArticles(newArticles);
+      } catch (_) {}
+    }
+
+    // Best-effort full web page (readability) fetch for newly discovered articles.
+    if (settings.syncWebPages && newArticles.isNotEmpty) {
+      try {
+        await _syncWebPagesForArticles(
+          newArticles,
+          webUserAgent: appSettings.webUserAgent,
+          syncImages: settings.syncImages,
+        );
       } catch (_) {}
     }
 
@@ -456,6 +471,55 @@ class SyncService {
     }
     return batch;
   }
+
+  static const int _maxWebPagesPerRefresh = 8;
+
+  Future<void> _syncWebPagesForArticles(
+    List<Article> articles, {
+    required String webUserAgent,
+    required bool syncImages,
+  }) async {
+    final pool = Pool(2);
+    final targets = articles.length <= _maxWebPagesPerRefresh
+        ? articles
+        : articles.sublist(0, _maxWebPagesPerRefresh);
+
+    final futures = <Future<void>>[];
+    for (final a in targets) {
+      futures.add(
+        pool.withResource(() async {
+          try {
+            // Skip if already extracted (should be rare for "new" articles).
+            if ((a.extractedContentHtml ?? '').trim().isNotEmpty) return;
+
+            final extracted = await _extractor.extract(
+              a.link,
+              userAgent: webUserAgent,
+            );
+            if (extracted.contentHtml.trim().isEmpty) {
+              // Mark failure only when we got an empty/invalid extraction result.
+              await _articles.markExtractionFailed(a.id);
+              return;
+            }
+            await _articles.setExtractedContent(a.id, extracted.contentHtml);
+
+            if (syncImages) {
+              await _cache.prefetchImagesFromHtml(
+                extracted.contentHtml,
+                baseUrl: Uri.tryParse(a.link),
+                maxConcurrent: 3,
+              );
+            }
+          } catch (_) {
+            // Best-effort: don't persist failure for transient network errors.
+          }
+        }),
+      );
+    }
+
+    await Future.wait(futures);
+    await pool.close();
+  }
 }
 
 class _RefreshOutcome {
@@ -482,6 +546,7 @@ class _EffectiveFeedSettings {
     required this.filterEnabled,
     required this.filterKeywords,
     required this.syncImages,
+    required this.syncWebPages,
     required this.rssUserAgent,
   });
 
@@ -489,6 +554,7 @@ class _EffectiveFeedSettings {
   final bool filterEnabled;
   final String filterKeywords;
   final bool syncImages;
+  final bool syncWebPages;
   final String rssUserAgent;
 
   static _EffectiveFeedSettings resolve(
@@ -530,6 +596,11 @@ class _EffectiveFeedSettings {
         feed.syncImages,
         category?.syncImages,
         appSettings.syncImages,
+      ),
+      syncWebPages: pickBool(
+        feed.syncWebPages,
+        category?.syncWebPages,
+        appSettings.syncWebPages,
       ),
       rssUserAgent: appSettings.rssUserAgent,
     );

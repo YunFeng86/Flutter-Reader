@@ -243,6 +243,17 @@ class ArticleRepository {
     });
   }
 
+  Future<void> setPreferredContentView(int id, ArticleContentView view) {
+    return _isar.writeTxn(() async {
+      final a = await _isar.articles.get(id);
+      if (a == null) return;
+      a.preferredContentView = view;
+      // Preference-only change: keep updatedAt untouched to avoid treating it as
+      // an article content update.
+      await _isar.articles.put(a);
+    });
+  }
+
   Future<void> markExtractionFailed(int id) {
     return _isar.writeTxn(() async {
       final a = await _isar.articles.get(id);
@@ -435,6 +446,7 @@ class ArticleRepository {
           a.isReadLater = existing.isReadLater;
           a.contentSource = existing.contentSource;
           a.extractedContentHtml = existing.extractedContentHtml;
+          a.preferredContentView = existing.preferredContentView;
           if (a.contentHtml == null || a.contentHtml!.trim().isEmpty) {
             a.contentHtml = existing.contentHtml;
           }

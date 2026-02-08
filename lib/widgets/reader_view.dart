@@ -53,7 +53,6 @@ class ReaderView extends ConsumerStatefulWidget {
 class _ReaderViewState extends ConsumerState<ReaderView> {
   ProviderSubscription<AsyncValue<Article?>>? _articleSub;
   ProviderSubscription<AsyncValue<void>>? _fullTextSub;
-  ProviderSubscription<bool>? _fullTextViewSub;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<SelectionAreaState> _selectionAreaKey =
       GlobalKey<SelectionAreaState>();
@@ -126,7 +125,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     );
 
     _listenArticle(widget.articleId);
-    _listenFullTextView(widget.articleId);
   }
 
   @override
@@ -139,8 +137,21 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         _scrollController.jumpTo(_scrollController.position.minScrollExtent);
       }
       _listenArticle(widget.articleId);
-      _listenFullTextView(widget.articleId);
     }
+  }
+
+  bool _shouldShowExtracted(Article article) {
+    final hasExtracted = (article.extractedContentHtml ?? '').trim().isNotEmpty;
+    if (!hasExtracted) return false;
+    return article.preferredContentView == ArticleContentView.extracted;
+  }
+
+  String _selectActiveHtml(Article article) {
+    final showExtracted = _shouldShowExtracted(article);
+    return ((showExtracted ? article.extractedContentHtml : null) ??
+            article.contentHtml ??
+            '')
+        .trim();
   }
 
   void _listenArticle(int articleId) {
@@ -169,17 +180,16 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         }
 
         if (a != null) {
-          final showExtracted = ref.read(
-            fullTextViewEnabledProvider(articleId),
+          _requestContentHashUpdate(
+            article: a,
+            showExtracted: _shouldShowExtracted(a),
           );
-          _requestContentHashUpdate(article: a, showExtracted: showExtracted);
         }
 
         // Prefetch images when content changes.
         final prevA = prev?.valueOrNull;
-        final prevHtml =
-            (prevA?.extractedContentHtml ?? prevA?.contentHtml ?? '').trim();
-        final html = (a?.extractedContentHtml ?? a?.contentHtml ?? '').trim();
+        final prevHtml = prevA == null ? '' : _selectActiveHtml(prevA);
+        final html = a == null ? '' : _selectActiveHtml(a);
         if (a == null || html.isEmpty) return;
         if (prevA != null && prevA.id == a.id && prevHtml == html) return;
         final maxPrefetch = html.length >= 50000 ? 6 : 24;
@@ -195,19 +205,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         );
       },
       fireImmediately: true,
-    );
-  }
-
-  void _listenFullTextView(int articleId) {
-    _fullTextViewSub?.close();
-    _fullTextViewSub = ref.listenManual<bool>(
-      fullTextViewEnabledProvider(articleId),
-      (prev, next) {
-        final article = ref.read(articleProvider(articleId)).valueOrNull;
-        if (article == null) return;
-        _requestContentHashUpdate(article: article, showExtracted: next);
-      },
-      fireImmediately: false,
     );
   }
 
@@ -667,7 +664,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _prefetchTimer?.cancel();
     _articleSub?.close();
     _fullTextSub?.close();
-    _fullTextViewSub?.close();
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
     _quickMenuTimer?.cancel();
@@ -681,9 +677,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   Widget build(BuildContext context) {
     final a = ref.watch(articleProvider(widget.articleId));
     // final fullTextRequest = ref.watch(fullTextControllerProvider); // Unused
-    final useFullText = ref.watch(
-      fullTextViewEnabledProvider(widget.articleId),
-    );
     final settingsAsync = ref.watch(readerSettingsProvider);
     return a.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -704,7 +697,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final hasExtracted = (article.extractedContentHtml ?? '')
             .trim()
             .isNotEmpty;
-        final showExtracted = hasExtracted && useFullText;
+        final showExtracted =
+            hasExtracted &&
+            article.preferredContentView == ArticleContentView.extracted;
         final html =
             ((showExtracted ? article.extractedContentHtml : null) ??
                     article.contentHtml ??

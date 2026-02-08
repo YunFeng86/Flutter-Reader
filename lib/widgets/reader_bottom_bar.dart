@@ -152,14 +152,14 @@ class ReaderBottomBar extends ConsumerWidget {
                 // 原文/提取切换
                 Consumer(
                   builder: (context, ref, _) {
-                    final useFullText = ref.watch(
-                      fullTextViewEnabledProvider(article.id),
-                    );
                     final controller = ref.watch(fullTextControllerProvider);
                     final hasFull = (article.extractedContentHtml ?? '')
                         .trim()
                         .isNotEmpty;
-                    final showFull = hasFull && useFullText;
+                    final preferExtracted =
+                        article.preferredContentView ==
+                        ArticleContentView.extracted;
+                    final showFull = hasFull && preferExtracted;
 
                     return IconButton(
                       tooltip: hasFull && showFull
@@ -169,25 +169,21 @@ class ReaderBottomBar extends ConsumerWidget {
                           ? null
                           : hasFull
                           ? () async {
-                              ref
-                                      .read(
-                                        fullTextViewEnabledProvider(
-                                          article.id,
-                                        ).notifier,
-                                      )
-                                      .state =
-                                  !useFullText;
+                              final next = showFull
+                                  ? ArticleContentView.feed
+                                  : ArticleContentView.extracted;
+                              await ref
+                                  .read(articleRepositoryProvider)
+                                  .setPreferredContentView(article.id, next);
                             }
                           : () async {
-                              // 先切换为提取视图，再触发提取。
-                              ref
-                                      .read(
-                                        fullTextViewEnabledProvider(
-                                          article.id,
-                                        ).notifier,
-                                      )
-                                      .state =
-                                  true;
+                              // 先持久化切换为提取视图，再触发提取。
+                              await ref
+                                  .read(articleRepositoryProvider)
+                                  .setPreferredContentView(
+                                    article.id,
+                                    ArticleContentView.extracted,
+                                  );
                               await ref
                                   .read(fullTextControllerProvider.notifier)
                                   .fetch(article.id);

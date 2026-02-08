@@ -6,6 +6,12 @@ part 'article.g.dart';
 
 enum ContentSource { feed, extracted, extractionFailed }
 
+/// Preferred content view mode in Reader UI.
+///
+/// Note: This is a user preference (which mode to show by default), not the
+/// actual availability of content.
+enum ArticleContentView { feed, extracted }
+
 @collection
 class Article {
   Id id = Isar.autoIncrement;
@@ -42,6 +48,10 @@ class Article {
   /// 内容来源状态。
   @enumerated
   ContentSource contentSource = ContentSource.feed;
+
+  /// Reader 默认显示哪种内容（持久化用户选择）。
+  @enumerated
+  ArticleContentView preferredContentView = ArticleContentView.feed;
 
   /// Key for pagination/sorting.
   /// Composite index with categoryId for optimized time-based queries per category.
