@@ -47,6 +47,10 @@
   "@theme": {
     "description": "theme"
   },
+  "themeMode": "主题模式",
+  "@themeMode": {
+    "description": "Theme mode selector label"
+  },
   "system": "跟随系统",
   "@system": {
     "description": "system"
@@ -58,6 +62,42 @@
   "dark": "深色",
   "@dark": {
     "description": "dark"
+  },
+  "dynamicColor": "动态取色",
+  "@dynamicColor": {
+    "description": "Use Material You dynamic colors when available"
+  },
+  "dynamicColorSubtitle": "使用 Material You 动态配色（仅 Android 12+）",
+  "@dynamicColorSubtitle": {
+    "description": "Hint for dynamic colors setting"
+  },
+  "seedColorPreset": "主题配色",
+  "@seedColorPreset": {
+    "description": "Seed color preset selector label"
+  },
+  "seedColorPresetSubtitle": "动态取色关闭或不可用时生效",
+  "@seedColorPresetSubtitle": {
+    "description": "Seed color preset selector hint"
+  },
+  "seedColorBlue": "蓝色",
+  "@seedColorBlue": {
+    "description": "Seed color preset name"
+  },
+  "seedColorGreen": "绿色",
+  "@seedColorGreen": {
+    "description": "Seed color preset name"
+  },
+  "seedColorPurple": "紫色",
+  "@seedColorPurple": {
+    "description": "Seed color preset name"
+  },
+  "seedColorOrange": "橙色",
+  "@seedColorOrange": {
+    "description": "Seed color preset name"
+  },
+  "seedColorPink": "粉色",
+  "@seedColorPink": {
+    "description": "Seed color preset name"
   },
   "language": "语言",
   "@language": {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../network/user_agents.dart';
+import '../../theme/seed_color_presets.dart';
 
 enum ArticleGroupMode { none, day }
 
@@ -11,6 +12,8 @@ class AppSettings {
 
   const AppSettings({
     this.themeMode = ThemeMode.system,
+    this.useDynamicColor = true,
+    this.seedColorPreset = SeedColorPreset.blue,
     this.localeTag,
     this.autoMarkRead = true,
     this.autoRefreshMinutes,
@@ -30,6 +33,15 @@ class AppSettings {
   });
 
   final ThemeMode themeMode;
+
+  /// Whether to use Material You dynamic colors when available (Android 12+).
+  ///
+  /// When unsupported, the app falls back to the seeded color scheme.
+  final bool useDynamicColor;
+
+  /// Seed color preset used for generating the ColorScheme when dynamic colors
+  /// are unavailable/disabled.
+  final SeedColorPreset seedColorPreset;
   // null => follow system language.
   final String? localeTag;
 
@@ -72,6 +84,8 @@ class AppSettings {
 
   AppSettings copyWith({
     ThemeMode? themeMode,
+    bool? useDynamicColor,
+    SeedColorPreset? seedColorPreset,
     Object? localeTag = _unset,
     bool? autoMarkRead,
     Object? autoRefreshMinutes = _unset,
@@ -91,6 +105,8 @@ class AppSettings {
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
+      useDynamicColor: useDynamicColor ?? this.useDynamicColor,
+      seedColorPreset: seedColorPreset ?? this.seedColorPreset,
       localeTag: localeTag == _unset ? this.localeTag : localeTag as String?,
       autoMarkRead: autoMarkRead ?? this.autoMarkRead,
       autoRefreshMinutes: autoRefreshMinutes == _unset
@@ -117,6 +133,8 @@ class AppSettings {
 
   Map<String, Object?> toJson() => {
     'themeMode': themeMode.name,
+    'useDynamicColor': useDynamicColor,
+    'seedColorPreset': seedColorPreset.name,
     'localeTag': localeTag,
     'autoMarkRead': autoMarkRead,
     'autoRefreshMinutes': autoRefreshMinutes,
@@ -143,6 +161,8 @@ class AppSettings {
       _ => ThemeMode.system,
     };
 
+    final useDynamicColor = json['useDynamicColor'];
+    final seedColorPreset = json['seedColorPreset'];
     final localeTag = json['localeTag'];
 
     final autoMarkRead = json['autoMarkRead'];
@@ -177,8 +197,18 @@ class AppSettings {
       };
     }
 
+    SeedColorPreset parseSeedColorPreset(Object? v) {
+      final s = v is String ? v : '';
+      for (final p in SeedColorPreset.values) {
+        if (p.name == s) return p;
+      }
+      return SeedColorPreset.blue;
+    }
+
     return AppSettings(
       themeMode: mode,
+      useDynamicColor: useDynamicColor is! bool || useDynamicColor,
+      seedColorPreset: parseSeedColorPreset(seedColorPreset),
       localeTag: localeTag is String && localeTag.trim().isNotEmpty
           ? localeTag
           : null,

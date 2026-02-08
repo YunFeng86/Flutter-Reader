@@ -46,6 +46,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get theme => 'Theme';
 
   @override
+  String get themeMode => 'Theme mode';
+
+  @override
   String get system => 'System';
 
   @override
@@ -53,6 +56,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get dark => 'Dark';
+
+  @override
+  String get dynamicColor => 'Dynamic colors';
+
+  @override
+  String get dynamicColorSubtitle => 'Use Material You colors (Android 12+)';
+
+  @override
+  String get seedColorPreset => 'Theme colors';
+
+  @override
+  String get seedColorPresetSubtitle =>
+      'Used when dynamic colors are off/unavailable';
+
+  @override
+  String get seedColorBlue => 'Blue';
+
+  @override
+  String get seedColorGreen => 'Green';
+
+  @override
+  String get seedColorPurple => 'Purple';
+
+  @override
+  String get seedColorOrange => 'Orange';
+
+  @override
+  String get seedColorPink => 'Pink';
 
   @override
   String get language => 'Language';

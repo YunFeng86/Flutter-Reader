@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import 'router.dart';
 import '../theme/app_theme.dart';
+import '../theme/seed_color_presets.dart';
 import '../providers/app_settings_providers.dart';
 import '../utils/macos_locale_bridge.dart';
 import '../utils/platform.dart';
@@ -73,6 +74,9 @@ class App extends ConsumerWidget {
     final router = ref.watch(routerProvider);
     final appSettings = ref.watch(appSettingsProvider).valueOrNull;
     final localeTag = appSettings?.localeTag;
+    final useDynamicColor = appSettings?.useDynamicColor ?? true;
+    final seedColorPreset =
+        appSettings?.seedColorPreset ?? SeedColorPreset.blue;
     ref.watch(autoRefreshControllerProvider);
     unawaited(ref.watch(notificationServiceProvider).init().catchError((_) {}));
     unawaited(MacOSLocaleBridge.setPreferredLanguage(localeTag));
@@ -98,8 +102,14 @@ class App extends ConsumerWidget {
               ],
             );
           },
-          theme: AppTheme.light(scheme: lightDynamic),
-          darkTheme: AppTheme.dark(scheme: darkDynamic),
+          theme: AppTheme.light(
+            scheme: useDynamicColor ? lightDynamic : null,
+            seedColorPreset: seedColorPreset,
+          ),
+          darkTheme: AppTheme.dark(
+            scheme: useDynamicColor ? darkDynamic : null,
+            seedColorPreset: seedColorPreset,
+          ),
           themeMode: appSettings?.themeMode ?? ThemeMode.system,
           locale: (localeTag == null) ? null : _localeFromTag(localeTag),
           localizationsDelegates: AppLocalizations.localizationsDelegates,

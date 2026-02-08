@@ -165,6 +165,12 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get theme;
 
+  /// Theme mode selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Theme mode'**
+  String get themeMode;
+
   /// system
   ///
   /// In en, this message translates to:
@@ -182,6 +188,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get dark;
+
+  /// Use Material You dynamic colors when available
+  ///
+  /// In en, this message translates to:
+  /// **'Dynamic colors'**
+  String get dynamicColor;
+
+  /// Hint for dynamic colors setting
+  ///
+  /// In en, this message translates to:
+  /// **'Use Material You colors (Android 12+)'**
+  String get dynamicColorSubtitle;
+
+  /// Seed color preset selector label
+  ///
+  /// In en, this message translates to:
+  /// **'Theme colors'**
+  String get seedColorPreset;
+
+  /// Seed color preset selector hint
+  ///
+  /// In en, this message translates to:
+  /// **'Used when dynamic colors are off/unavailable'**
+  String get seedColorPresetSubtitle;
+
+  /// Seed color preset name
+  ///
+  /// In en, this message translates to:
+  /// **'Blue'**
+  String get seedColorBlue;
+
+  /// Seed color preset name
+  ///
+  /// In en, this message translates to:
+  /// **'Green'**
+  String get seedColorGreen;
+
+  /// Seed color preset name
+  ///
+  /// In en, this message translates to:
+  /// **'Purple'**
+  String get seedColorPurple;
+
+  /// Seed color preset name
+  ///
+  /// In en, this message translates to:
+  /// **'Orange'**
+  String get seedColorOrange;
+
+  /// Seed color preset name
+  ///
+  /// In en, this message translates to:
+  /// **'Pink'**
+  String get seedColorPink;
 
   /// language
   ///

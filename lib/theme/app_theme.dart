@@ -1,19 +1,32 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'seed_color_presets.dart';
 import '../utils/platform.dart';
 
 class AppTheme {
-  static const _seed = Color(0xFF1A73E8); // neutral Google-ish blue
   // Simple design tokens to keep UI consistent across pages.
   static const double radiusCard = 8;
   static const double radiusField = 12;
   static const double desktopTitleBarHeight = 40;
 
-  static ThemeData light({ColorScheme? scheme}) =>
-      _build(Brightness.light, dynamicScheme: scheme);
-  static ThemeData dark({ColorScheme? scheme}) =>
-      _build(Brightness.dark, dynamicScheme: scheme);
+  static ThemeData light({
+    ColorScheme? scheme,
+    SeedColorPreset? seedColorPreset,
+  }) => _build(
+    Brightness.light,
+    dynamicScheme: scheme,
+    seedColor: (seedColorPreset ?? SeedColorPreset.blue).seedColor, // default
+  );
+
+  static ThemeData dark({
+    ColorScheme? scheme,
+    SeedColorPreset? seedColorPreset,
+  }) => _build(
+    Brightness.dark,
+    dynamicScheme: scheme,
+    seedColor: (seedColorPreset ?? SeedColorPreset.blue).seedColor, // default
+  );
 
   static List<String> _fontFallback() {
     if (kIsWeb) {
@@ -74,10 +87,14 @@ class AppTheme {
     };
   }
 
-  static ThemeData _build(Brightness brightness, {ColorScheme? dynamicScheme}) {
+  static ThemeData _build(
+    Brightness brightness, {
+    ColorScheme? dynamicScheme,
+    required Color seedColor,
+  }) {
     final cs =
         dynamicScheme ??
-        ColorScheme.fromSeed(seedColor: _seed, brightness: brightness);
+        ColorScheme.fromSeed(seedColor: seedColor, brightness: brightness);
 
     final base = ThemeData(
       useMaterial3: true,

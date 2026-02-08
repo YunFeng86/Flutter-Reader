@@ -44,6 +44,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get theme => '主题';
 
   @override
+  String get themeMode => '主题模式';
+
+  @override
   String get system => '跟随系统';
 
   @override
@@ -51,6 +54,33 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get dark => '深色';
+
+  @override
+  String get dynamicColor => '动态取色';
+
+  @override
+  String get dynamicColorSubtitle => '使用 Material You 动态配色（仅 Android 12+）';
+
+  @override
+  String get seedColorPreset => '主题配色';
+
+  @override
+  String get seedColorPresetSubtitle => '动态取色关闭或不可用时生效';
+
+  @override
+  String get seedColorBlue => '蓝色';
+
+  @override
+  String get seedColorGreen => '绿色';
+
+  @override
+  String get seedColorPurple => '紫色';
+
+  @override
+  String get seedColorOrange => '橙色';
+
+  @override
+  String get seedColorPink => '粉色';
 
   @override
   String get language => '语言';
@@ -545,6 +575,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get theme => '主題';
 
   @override
+  String get themeMode => '主題模式';
+
+  @override
   String get system => '跟隨系統';
 
   @override
@@ -552,6 +585,33 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get dark => '深色';
+
+  @override
+  String get dynamicColor => '動態取色';
+
+  @override
+  String get dynamicColorSubtitle => '使用 Material You 動態配色（僅 Android 12+）';
+
+  @override
+  String get seedColorPreset => '主題配色';
+
+  @override
+  String get seedColorPresetSubtitle => '動態取色關閉或不可用時生效';
+
+  @override
+  String get seedColorBlue => '藍色';
+
+  @override
+  String get seedColorGreen => '綠色';
+
+  @override
+  String get seedColorPurple => '紫色';
+
+  @override
+  String get seedColorOrange => '橙色';
+
+  @override
+  String get seedColorPink => '粉色';
 
   @override
   String get language => '語言';

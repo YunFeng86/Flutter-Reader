@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/settings/app_settings.dart';
 import '../services/settings/app_settings_store.dart';
+import '../theme/seed_color_presets.dart';
 
 final appSettingsStoreProvider = Provider<AppSettingsStore>((ref) {
   return AppSettingsStore();
@@ -22,6 +23,16 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
   Future<void> setThemeMode(ThemeMode mode) async {
     final cur = state.valueOrNull ?? const AppSettings();
     await save(cur.copyWith(themeMode: mode));
+  }
+
+  Future<void> setUseDynamicColor(bool value) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(useDynamicColor: value));
+  }
+
+  Future<void> setSeedColorPreset(SeedColorPreset preset) async {
+    final cur = state.valueOrNull ?? const AppSettings();
+    await save(cur.copyWith(seedColorPreset: preset));
   }
 
   Future<void> setLocaleTag(String? localeTag) async {
