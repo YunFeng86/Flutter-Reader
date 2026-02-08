@@ -124,10 +124,12 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
             drawer: Drawer(
-              child: Sidebar(
-                onSelectFeed: (_) async {
-                  await Navigator.of(context).maybePop(); // close drawer
-                },
+              child: SafeArea(
+                child: Sidebar(
+                  onSelectFeed: (_) async {
+                    await Navigator.of(context).maybePop(); // close drawer
+                  },
+                ),
               ),
             ),
             floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
@@ -296,12 +298,14 @@ class HomeScreen extends ConsumerWidget {
                     : null,
                 drawer: columns == 2
                     ? Drawer(
-                        child: Sidebar(
-                          onSelectFeed: (_) async {
-                            await Navigator.of(
-                              context,
-                            ).maybePop(); // close drawer
-                          },
+                        child: SafeArea(
+                          child: Sidebar(
+                            onSelectFeed: (_) async {
+                              await Navigator.of(
+                                context,
+                              ).maybePop(); // close drawer
+                            },
+                          ),
                         ),
                       )
                     : null,
@@ -571,10 +575,12 @@ class HomeScreen extends ConsumerWidget {
       ),
       drawer: drawerEnabled
           ? Drawer(
-              child: Sidebar(
-                onSelectFeed: (_) async {
-                  await Navigator.of(context).maybePop();
-                },
+              child: SafeArea(
+                child: Sidebar(
+                  onSelectFeed: (_) async {
+                    await Navigator.of(context).maybePop();
+                  },
+                ),
               ),
             )
           : null,

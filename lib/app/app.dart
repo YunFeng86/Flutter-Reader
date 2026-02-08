@@ -244,13 +244,18 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
         return Scaffold(
           drawer: drawerEnabled
               ? Drawer(
-                  child: Padding(
-                    // On macOS (hidden title bar), the drawer can overlap the
-                    // system traffic lights and our custom title bar.
-                    padding: EdgeInsets.only(
-                      top: isMacOS ? AppTheme.desktopTitleBarHeight : 0,
+                  child: SafeArea(
+                    child: Padding(
+                      // On macOS (hidden title bar), the drawer can overlap the
+                      // system traffic lights and our custom title bar.
+                      padding: EdgeInsets.only(
+                        top: isMacOS ? AppTheme.desktopTitleBarHeight : 0,
+                      ),
+                      child: Sidebar(
+                        onSelectFeed: (_) {},
+                        router: widget.router,
+                      ),
                     ),
-                    child: Sidebar(onSelectFeed: (_) {}, router: widget.router),
                   ),
                 )
               : null,
