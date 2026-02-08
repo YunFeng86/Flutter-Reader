@@ -170,7 +170,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         // staying on this reader view, we do not immediately flip it back.
         if (!hasMarkedRead && a != null && !a.isRead) {
           final appSettings =
-              ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
+              ref.read(appSettingsProvider).valueOrNull ??
+              AppSettings.defaults();
           if (appSettings.autoMarkRead) {
             unawaited(
               ref.read(articleRepositoryProvider).markRead(articleId, true),

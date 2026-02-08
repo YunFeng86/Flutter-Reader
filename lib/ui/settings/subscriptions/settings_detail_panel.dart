@@ -900,11 +900,11 @@ class _UserAgentSectionState extends ConsumerState<_UserAgentSection> {
                 icon: const Icon(Icons.refresh),
                 tooltip: l10n.resetToDefault,
                 onPressed: () {
-                  _webController.text = UserAgents.web;
+                  _webController.text = UserAgents.webForCurrentPlatform();
                   unawaited(
                     ref
                         .read(appSettingsProvider.notifier)
-                        .setWebUserAgent(UserAgents.web),
+                        .setWebUserAgent(UserAgents.webForCurrentPlatform()),
                   );
                 },
               ),

@@ -26,15 +26,15 @@ class ArticleExtractor {
   Future<String> _fetchHtml(String url, {String? userAgent}) async {
     final ua = (userAgent != null && userAgent.trim().isNotEmpty)
         ? userAgent.trim()
-        : UserAgents.web;
+        : UserAgents.webForCurrentPlatform();
     final res = await _dio.get<String>(
       url,
       options: Options(
         responseType: ResponseType.plain,
-        headers: {
+        headers: <String, String>{
           'Accept':
               'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'User-Agent': ua,
+          if (!kIsWeb) 'User-Agent': ua,
         },
       ),
     );

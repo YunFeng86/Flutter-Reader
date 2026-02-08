@@ -29,8 +29,16 @@ class AppSettings {
     this.syncWebPages = false,
     this.showAiSummary = false,
     this.rssUserAgent = UserAgents.rss,
+    // Keep legacy value as a const fallback; prefer [AppSettings.defaults].
     this.webUserAgent = UserAgents.web,
   });
+
+  static AppSettings defaults() {
+    return AppSettings(
+      rssUserAgent: UserAgents.rss,
+      webUserAgent: UserAgents.webForCurrentPlatform(),
+    );
+  }
 
   final ThemeMode themeMode;
 
@@ -236,7 +244,7 @@ class AppSettings {
           : UserAgents.rss,
       webUserAgent: webUserAgent is String && webUserAgent.trim().isNotEmpty
           ? webUserAgent
-          : UserAgents.web,
+          : UserAgents.webForCurrentPlatform(),
     );
   }
 }

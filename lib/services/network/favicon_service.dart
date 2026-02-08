@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:html/parser.dart' as html_parser;
 
 import '../cache/favicon_store.dart';
@@ -157,9 +158,10 @@ class FaviconService {
           headers: <String, String>{
             'Accept':
                 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'User-Agent': (userAgent != null && userAgent.trim().isNotEmpty)
-                ? userAgent.trim()
-                : UserAgents.web,
+            if (!kIsWeb)
+              'User-Agent': (userAgent != null && userAgent.trim().isNotEmpty)
+                  ? userAgent.trim()
+                  : UserAgents.webForCurrentPlatform(),
           },
         ),
       );

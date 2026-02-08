@@ -25,7 +25,7 @@ class AppPreferencesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final appSettings =
-        ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+        ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 

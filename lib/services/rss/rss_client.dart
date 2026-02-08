@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../network/user_agents.dart';
 
@@ -38,7 +39,7 @@ class RssClient {
         validateStatus: (s) => s != null && s >= 200 && s < 400,
         headers: <String, String>{
           'Accept': 'application/rss+xml, application/atom+xml, text/xml, */*',
-          'User-Agent': ua,
+          if (!kIsWeb) 'User-Agent': ua,
           if (ifNoneMatch != null && ifNoneMatch.trim().isNotEmpty)
             'If-None-Match': ifNoneMatch,
           if (ifModifiedSince != null && ifModifiedSince.trim().isNotEmpty)
