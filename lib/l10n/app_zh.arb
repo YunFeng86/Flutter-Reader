@@ -590,6 +590,30 @@
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
   },
+  "version": "版本号",
+  "@version": {
+    "description": "version"
+  },
+  "buildNumber": "构建号",
+  "@buildNumber": {
+    "description": "buildNumber"
+  },
+  "openSourceLicense": "开源许可证",
+  "@openSourceLicense": {
+    "description": "openSourceLicense"
+  },
+  "viewLicense": "查看许可证",
+  "@viewLicense": {
+    "description": "viewLicense"
+  },
+  "thirdPartyLicenses": "第三方许可证",
+  "@thirdPartyLicenses": {
+    "description": "thirdPartyLicenses"
+  },
+  "viewThirdPartyLicenses": "查看所有开源许可证",
+  "@viewThirdPartyLicenses": {
+    "description": "viewThirdPartyLicenses"
+  },
   "filter": "过滤",
   "@filter": {
     "description": "filter"

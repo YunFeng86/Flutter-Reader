@@ -909,6 +909,42 @@ abstract class AppLocalizations {
   /// **'Keyboard shortcuts'**
   String get keyboardShortcuts;
 
+  /// version
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
+
+  /// buildNumber
+  ///
+  /// In en, this message translates to:
+  /// **'Build number'**
+  String get buildNumber;
+
+  /// openSourceLicense
+  ///
+  /// In en, this message translates to:
+  /// **'Open source license'**
+  String get openSourceLicense;
+
+  /// viewLicense
+  ///
+  /// In en, this message translates to:
+  /// **'View license'**
+  String get viewLicense;
+
+  /// thirdPartyLicenses
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party licenses'**
+  String get thirdPartyLicenses;
+
+  /// viewThirdPartyLicenses
+  ///
+  /// In en, this message translates to:
+  /// **'View all open source licenses'**
+  String get viewThirdPartyLicenses;
+
   /// filter
   ///
   /// In en, this message translates to:

@@ -440,6 +440,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyboardShortcuts => 'Keyboard shortcuts';
 
   @override
+  String get version => 'Version';
+
+  @override
+  String get buildNumber => 'Build number';
+
+  @override
+  String get openSourceLicense => 'Open source license';
+
+  @override
+  String get viewLicense => 'View license';
+
+  @override
+  String get thirdPartyLicenses => 'Third-party licenses';
+
+  @override
+  String get viewThirdPartyLicenses => 'View all open source licenses';
+
+  @override
   String get filter => 'Filter';
 
   @override

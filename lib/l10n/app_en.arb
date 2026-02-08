@@ -589,6 +589,30 @@
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
   },
+  "version": "Version",
+  "@version": {
+    "description": "version"
+  },
+  "buildNumber": "Build number",
+  "@buildNumber": {
+    "description": "buildNumber"
+  },
+  "openSourceLicense": "Open source license",
+  "@openSourceLicense": {
+    "description": "openSourceLicense"
+  },
+  "viewLicense": "View license",
+  "@viewLicense": {
+    "description": "viewLicense"
+  },
+  "thirdPartyLicenses": "Third-party licenses",
+  "@thirdPartyLicenses": {
+    "description": "thirdPartyLicenses"
+  },
+  "viewThirdPartyLicenses": "View all open source licenses",
+  "@viewThirdPartyLicenses": {
+    "description": "viewThirdPartyLicenses"
+  },
   "filter": "Filter",
   "@filter": {
     "description": "filter"

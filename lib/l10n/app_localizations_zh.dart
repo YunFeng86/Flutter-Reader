@@ -434,6 +434,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keyboardShortcuts => '快捷键';
 
   @override
+  String get version => '版本号';
+
+  @override
+  String get buildNumber => '构建号';
+
+  @override
+  String get openSourceLicense => '开源许可证';
+
+  @override
+  String get viewLicense => '查看许可证';
+
+  @override
+  String get thirdPartyLicenses => '第三方许可证';
+
+  @override
+  String get viewThirdPartyLicenses => '查看所有开源许可证';
+
+  @override
   String get filter => '过滤';
 
   @override
@@ -963,6 +981,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get keyboardShortcuts => '快速鍵';
+
+  @override
+  String get version => '版本號';
+
+  @override
+  String get buildNumber => '構建號';
+
+  @override
+  String get openSourceLicense => '開放原始碼授權';
+
+  @override
+  String get viewLicense => '檢視授權';
+
+  @override
+  String get thirdPartyLicenses => '第三方授權';
+
+  @override
+  String get viewThirdPartyLicenses => '檢視所有開放原始碼授權';
 
   @override
   String get filter => '過濾';

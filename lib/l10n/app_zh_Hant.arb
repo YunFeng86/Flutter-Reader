@@ -590,6 +590,30 @@
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
   },
+  "version": "版本號",
+  "@version": {
+    "description": "version"
+  },
+  "buildNumber": "構建號",
+  "@buildNumber": {
+    "description": "buildNumber"
+  },
+  "openSourceLicense": "開放原始碼授權",
+  "@openSourceLicense": {
+    "description": "openSourceLicense"
+  },
+  "viewLicense": "檢視授權",
+  "@viewLicense": {
+    "description": "viewLicense"
+  },
+  "thirdPartyLicenses": "第三方授權",
+  "@thirdPartyLicenses": {
+    "description": "thirdPartyLicenses"
+  },
+  "viewThirdPartyLicenses": "檢視所有開放原始碼授權",
+  "@viewThirdPartyLicenses": {
+    "description": "viewThirdPartyLicenses"
+  },
   "filter": "過濾",
   "@filter": {
     "description": "filter"
