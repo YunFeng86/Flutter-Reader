@@ -14,7 +14,7 @@ jobs:
       fail-fast: false  # 一个平台失败不影响其他平台继续构建
       matrix:
         include:
-          # Windows构建（正式支持，已测试）
+          # Windows构建
           - os: windows-latest
             platform: windows
             build-args: windows --release
@@ -25,15 +25,22 @@ jobs:
               rm -f *.pdb
               7z a -tzip "$GITHUB_WORKSPACE/fleur-windows-x64.zip" *
 
-          # macOS构建（实验性，未测试）
+          # macOS构建
           - os: macos-latest
             platform: macos
             build-args: macos --release
             artifact-path: build/macos/Build/Products/Release
-            artifact-name: fleur-macos.zip
+            artifact-name: fleur-macos.dmg
             archive-cmd: |
-              cd build/macos/Build/Products/Release
-              zip -r "$GITHUB_WORKSPACE/fleur-macos.zip" Fleur.app
+              # 创建临时目录用于 DMG 内容
+              mkdir -p "$GITHUB_WORKSPACE/dmg_temp"
+              cp -R build/macos/Build/Products/Release/Fleur.app "$GITHUB_WORKSPACE/dmg_temp/"
+
+              # 创建 DMG（使用 hdiutil）
+              hdiutil create -volname "Fleur" \
+                -srcfolder "$GITHUB_WORKSPACE/dmg_temp" \
+                -ov -format UDZO \
+                "$GITHUB_WORKSPACE/fleur-macos.dmg"
 
           # Linux构建（实验性，未测试）
           - os: ubuntu-latest
@@ -352,9 +359,9 @@ jobs:
           # Windows 安装器已经在构建时包含版本号
           
           # 重命名macOS构建
-          if [ -f artifacts/macos-release/fleur-macos.zip ]; then
-            mv artifacts/macos-release/fleur-macos.zip \
-               artifacts/macos-release/fleur-macos-${VERSION}.zip
+          if [ -f artifacts/macos-release/fleur-macos.dmg ]; then
+            mv artifacts/macos-release/fleur-macos.dmg \
+               artifacts/macos-release/fleur-macos-${VERSION}.dmg
           fi
 
           # 重命名Linux构建
@@ -373,10 +380,12 @@ jobs:
             ## 支持平台
 
             ### ✅ 正式支持（已测试）
-            - **Windows 10/11 (x64)** - 经过充分测试，稳定可用
+            - **Windows 11 (x64)** - 经过充分测试，稳定可用
+            - **macOS 26** - 经过充分测试，稳定可用
 
             ### 🔄 实验性支持（未经测试，风险自负）
-            - **macOS 11+** - 理论上可用，但未在真机验证
+            - **Windows 10 (x64)** - 理论上可用，但未在真机验证
+            - **macOS 11~25** - 理论上可用，但未在真机验证
             - **Linux (x64)** - 需要 GTK 3.0+，可能需要手动安装依赖
 
             ## 已知问题
@@ -396,9 +405,10 @@ jobs:
                - 运行 `fleur.exe`
 
             **macOS:**
-            1. 下载 `fleur-macos.zip`
-            2. 解压后拖动 `Fleur.app` 到应用程序文件夹
-            3. 首次运行需右键 → 打开（绕过Gatekeeper）
+            1. 下载 `fleur-macos.dmg`
+            2. 双击打开 DMG 文件
+            3. 拖动 `Fleur.app` 到应用程序文件夹
+            4. 首次运行需右键 → 打开（绕过Gatekeeper）
 
             **Linux:**
             1. 下载 `fleur-linux-x64.tar.gz`
@@ -412,7 +422,7 @@ jobs:
           files: |
             artifacts/windows-release/fleur-windows-x64-*.zip
             artifacts/windows-installer/fleur-windows-x64-installer-*.exe
-            artifacts/macos-release/fleur-macos-*.zip
+            artifacts/macos-release/fleur-macos-*.dmg
             artifacts/linux-release/fleur-linux-x64-*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
