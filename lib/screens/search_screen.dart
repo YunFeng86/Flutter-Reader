@@ -7,6 +7,7 @@ import '../providers/app_settings_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
 import '../ui/layout.dart';
+import '../ui/layout_spec.dart';
 import '../utils/platform.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
@@ -91,9 +92,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final spec = LayoutSpec.fromContentSize(
+          contentWidth: width,
+          contentHeight: MediaQuery.sizeOf(context).height,
+        );
         final isEmbedded = isDesktop
-            ? desktopReaderEmbedded(desktopModeForWidth(width))
-            : width >= 600;
+            ? spec.desktopEmbedsReader
+            : spec.canEmbedReader(listWidth: kDesktopListWidth);
 
         final query = ref.watch(articleSearchQueryProvider);
         final appSettings = ref.watch(appSettingsProvider).valueOrNull;
@@ -116,7 +121,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (width >= 600)
+              if (width >= kCompactWidth)
                 Row(
                   children: [
                     Expanded(

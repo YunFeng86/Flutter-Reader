@@ -82,7 +82,7 @@ class HomeScreen extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final columns = _effectiveColumns(width);
+        final columns = homeColumnsForWidth(width);
 
         if (isDesktop) {
           final mode = desktopModeForWidth(width);
@@ -309,7 +309,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     if (columns == 3) ...[
                       SizedBox(
-                        width: 280,
+                        width: kHomeSidebarWidth,
                         child: Sidebar(
                           onSelectFeed: (_) {
                             if (selectedArticleId != null) context.go('/');
@@ -319,7 +319,7 @@ class HomeScreen extends ConsumerWidget {
                       const VerticalDivider(width: 1),
                     ],
                     SizedBox(
-                      width: 420,
+                      width: kHomeListWidth,
                       child: Column(
                         children: [
                           Expanded(
@@ -609,11 +609,4 @@ class _ToggleStarIntent extends Intent {
 
 class _SearchIntent extends Intent {
   const _SearchIntent();
-}
-
-int _effectiveColumns(double width) {
-  // Non-desktop: classic M3-ish breakpoints.
-  const mobileThreshold = 600.0;
-  const largeThreshold = 1200.0;
-  return width < mobileThreshold ? 1 : (width < largeThreshold ? 2 : 3);
 }

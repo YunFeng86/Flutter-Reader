@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
 import '../ui/layout.dart';
+import '../ui/layout_spec.dart';
 import '../utils/platform.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
@@ -90,9 +91,13 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
+        final spec = LayoutSpec.fromContentSize(
+          contentWidth: width,
+          contentHeight: MediaQuery.sizeOf(context).height,
+        );
         final isEmbedded = isDesktop
-            ? desktopReaderEmbedded(desktopModeForWidth(width))
-            : width >= 600;
+            ? spec.desktopEmbedsReader
+            : spec.canEmbedReader(listWidth: kDesktopListWidth);
 
         final searchField = TextField(
           controller: _searchController,

@@ -1413,7 +1413,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     ReaderSettings settings,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final isNarrow = MediaQuery.sizeOf(context).width < 600;
+    final isNarrow = MediaQuery.sizeOf(context).width < kCompactWidth;
 
     Future<void> saveAndPop(ReaderSettings cur) async {
       await ref.read(readerSettingsProvider.notifier).save(cur);

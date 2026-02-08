@@ -14,7 +14,7 @@ import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
 import '../services/settings/app_settings.dart';
 import '../ui/layout.dart';
-import '../ui/global_nav.dart';
+import '../ui/layout_spec.dart';
 import '../utils/platform.dart';
 import '../models/article.dart';
 import 'article_list_item.dart';
@@ -130,9 +130,8 @@ class _ArticleListState extends ConsumerState<ArticleList> {
           );
         }
 
-        final totalWidth = MediaQuery.sizeOf(context).width;
-        final width = effectiveContentWidth(totalWidth);
-        final narrow = width < 600;
+        final spec = LayoutSpec.fromContext(context);
+        final isCompact = spec.isCompact;
 
         final entries = _getEntries(items, groupMode);
 
@@ -183,8 +182,12 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                         }
 
                         final openAsSecondaryPage = isDesktop
-                            ? !desktopReaderEmbedded(desktopModeForWidth(width))
-                            : width < 600;
+                            ? !spec.desktopEmbedsReader
+                            : !spec.canEmbedReader(
+                                listWidth: widget.baseLocation == '/'
+                                    ? kHomeListWidth
+                                    : kDesktopListWidth,
+                              );
 
                         final loc = widget.articleRoutePrefix.isEmpty
                             ? '/article/${live.id}'
@@ -198,7 +201,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                       },
                     );
 
-                    if (narrow) {
+                    if (spec.canSwipeToDelete && isCompact) {
                       child = Dismissible(
                         key: ValueKey(live.id),
                         background: Container(

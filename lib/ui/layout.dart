@@ -16,6 +16,10 @@ const double kDesktopSidebarWidth = 260;
 const double kDesktopListWidth = 320;
 const double kDividerWidth = 1;
 
+// Non-desktop (tablet / narrow window) pane widths used in HomeScreen.
+const double kHomeSidebarWidth = 280;
+const double kHomeListWidth = 420;
+
 // Classic compact breakpoint; desktop can still be narrower when the window is
 // resized, but this helps keep mobile behavior consistent.
 const double kCompactWidth = 600;
@@ -61,3 +65,16 @@ bool desktopSidebarInDrawer(DesktopPaneMode mode) =>
 bool desktopReaderEmbedded(DesktopPaneMode mode) =>
     mode == DesktopPaneMode.threePane ||
     mode == DesktopPaneMode.splitListReader;
+
+/// Home (feeds) page column count for non-desktop layouts.
+///
+/// Unlike classic "600/1200" breakpoints, this keeps the reader pane at least
+/// [kMinReadingWidth] wide when it is shown side-by-side.
+int homeColumnsForWidth(double width) {
+  final minFor2 = kHomeListWidth + kMinReadingWidth + kDividerWidth;
+  final minFor3 =
+      kHomeSidebarWidth + kHomeListWidth + kMinReadingWidth + kDividerWidth * 2;
+  if (width >= minFor3) return 3;
+  if (width >= minFor2) return 2;
+  return 1;
+}

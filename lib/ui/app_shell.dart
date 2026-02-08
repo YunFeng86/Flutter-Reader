@@ -5,6 +5,7 @@ import '../widgets/global_nav_bar.dart';
 import '../widgets/global_nav_rail.dart';
 import 'global_nav.dart';
 import 'layout.dart';
+import 'layout_spec.dart';
 
 class AppShell extends StatelessWidget {
   const AppShell({super.key, required this.currentUri, required this.child});
@@ -14,21 +15,32 @@ class AppShell extends StatelessWidget {
 
   bool _isArticleRoute(Uri uri) => uri.pathSegments.contains('article');
 
-  bool _isReaderEmbedded({required double totalWidth, required Uri uri}) {
+  double _listWidthForArticleUri(Uri uri) {
+    final seg0 = uri.pathSegments.isEmpty ? '' : uri.pathSegments.first;
+    return switch (seg0) {
+      'saved' || 'search' => kDesktopListWidth,
+      _ => kHomeListWidth,
+    };
+  }
+
+  bool _isReaderEmbedded({required LayoutSpec spec, required Uri uri}) {
     if (!_isArticleRoute(uri)) return true;
-    final contentWidth = effectiveContentWidth(totalWidth);
     if (isDesktop) {
-      return desktopReaderEmbedded(desktopModeForWidth(contentWidth));
+      return spec.desktopEmbedsReader;
     }
-    return contentWidth >= kCompactWidth;
+    return spec.canEmbedReader(listWidth: _listWidthForArticleUri(uri));
   }
 
   @override
   Widget build(BuildContext context) {
-    final totalWidth = MediaQuery.sizeOf(context).width;
+    final size = MediaQuery.sizeOf(context);
+    final spec = LayoutSpec.fromTotalSize(
+      totalWidth: size.width,
+      totalHeight: size.height,
+    );
     final hideNavForReaderPage =
         _isArticleRoute(currentUri) &&
-        !_isReaderEmbedded(totalWidth: totalWidth, uri: currentUri);
+        !_isReaderEmbedded(spec: spec, uri: currentUri);
 
     if (hideNavForReaderPage) {
       // Dedicated reader pages should maximize content; they have their own
@@ -36,7 +48,7 @@ class AppShell extends StatelessWidget {
       return GlobalNavScope(hasGlobalNav: false, child: child);
     }
 
-    final mode = globalNavModeForWidth(totalWidth);
+    final mode = spec.globalNavMode;
 
     return switch (mode) {
       GlobalNavMode.rail => GlobalNavScope(

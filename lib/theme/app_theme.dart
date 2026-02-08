@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/platform.dart';
+
 class AppTheme {
   static const _seed = Color(0xFF1A73E8); // neutral Google-ish blue
   // Simple design tokens to keep UI consistent across pages.
@@ -81,7 +83,8 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: cs,
-      visualDensity: VisualDensity.compact, // desktop-first information density
+      // Desktop-first density, but keep minimum touch targets on mobile.
+      visualDensity: isDesktop ? VisualDensity.compact : VisualDensity.standard,
       // Prefer sane CJK fallbacks (notably improves Windows Chinese rendering).
       fontFamilyFallback: _fontFallback(),
     );
@@ -107,8 +110,10 @@ class AppTheme {
         foregroundColor: cs.onSurface,
       ),
       listTileTheme: ListTileThemeData(
-        dense: true,
-        visualDensity: VisualDensity.compact,
+        dense: isDesktop,
+        visualDensity: isDesktop
+            ? VisualDensity.compact
+            : VisualDensity.standard,
         iconColor: cs.onSurfaceVariant,
         textColor: cs.onSurface,
         selectedTileColor: cs.primaryContainer.withAlpha(153),
@@ -127,7 +132,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: cs.surfaceContainerHighest.withAlpha(128),
-        isDense: true,
+        isDense: isDesktop,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusField),
           borderSide: BorderSide.none,

@@ -403,6 +403,33 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => const SizedBox.shrink(),
               ),
+              if (isDesktop)
+                MenuAnchor(
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.edit_outlined),
+                      onPressed: () => _renameCategory(context, ref, category),
+                      child: Text(l10n.rename),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.delete_outline),
+                      onPressed: () =>
+                          _confirmDeleteCategory(context, ref, category.id),
+                      child: Text(l10n.deleteCategory),
+                    ),
+                  ],
+                  builder: (context, controller, child) {
+                    return IconButton(
+                      tooltip: l10n.more,
+                      onPressed: () {
+                        controller.isOpen
+                            ? controller.close()
+                            : controller.open();
+                      },
+                      icon: const Icon(Icons.more_vert),
+                    );
+                  },
+                ),
               IconButton(
                 tooltip: expanded ? l10n.collapse : l10n.expand,
                 onPressed: () {
@@ -415,7 +442,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
             ],
           ),
           onTap: () => _selectCategory(ref, category.id),
-          onLongPress: () => _showCategoryMenu(context, ref, category),
+          onLongPress: isDesktop
+              ? null
+              : () => _showCategoryMenu(context, ref, category),
         ),
         if (expanded)
           ...feeds.map((f) {
@@ -443,6 +472,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     Key? key,
   }) {
     final theme = Theme.of(context);
+    final l10n = AppLocalizations.of(context)!;
     final displayTitle = f.userTitle?.trim().isNotEmpty == true
         ? f.userTitle!
         : (f.title?.trim().isNotEmpty == true ? f.title! : f.url);
@@ -474,9 +504,74 @@ class _SidebarState extends ConsumerState<Sidebar> {
               f.title?.trim().isNotEmpty == true)
           ? Text(f.url, maxLines: 1, overflow: TextOverflow.ellipsis)
           : null,
-      trailing: unreadCount == null ? null : _UnreadBadge(unreadCount),
+      trailing: isDesktop
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (unreadCount != null) _UnreadBadge(unreadCount),
+                MenuAnchor(
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.edit_outlined),
+                      onPressed: () => _editFeedTitle(context, ref, f),
+                      child: Text(l10n.edit),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.refresh),
+                      onPressed: () async {
+                        final r = await ref
+                            .read(syncServiceProvider)
+                            .refreshFeedSafe(f.id);
+                        if (!context.mounted) return;
+                        context.showSnack(
+                          r.ok
+                              ? l10n.refreshed
+                              : l10n.errorMessage(r.error.toString()),
+                        );
+                      },
+                      child: Text(l10n.refresh),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(
+                        Icons.download_for_offline_outlined,
+                      ),
+                      onPressed: () async {
+                        final count = await ref
+                            .read(syncServiceProvider)
+                            .offlineCacheFeed(f.id);
+                        if (!context.mounted) return;
+                        context.showSnack(l10n.cachingArticles(count));
+                      },
+                      child: Text(l10n.makeAvailableOffline),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.drive_file_move_outline),
+                      onPressed: () => _moveFeedToCategory(context, ref, f),
+                      child: Text(l10n.moveToCategory),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.delete_outline),
+                      onPressed: () => _confirmDelete(context, ref, f.id),
+                      child: Text(l10n.deleteSubscription),
+                    ),
+                  ],
+                  builder: (context, controller, child) {
+                    return IconButton(
+                      tooltip: l10n.more,
+                      onPressed: () {
+                        controller.isOpen
+                            ? controller.close()
+                            : controller.open();
+                      },
+                      icon: const Icon(Icons.more_vert),
+                    );
+                  },
+                ),
+              ],
+            )
+          : (unreadCount == null ? null : _UnreadBadge(unreadCount)),
       onTap: () => _select(ref, f.id),
-      onLongPress: () => _showFeedMenu(context, ref, f),
+      onLongPress: isDesktop ? null : () => _showFeedMenu(context, ref, f),
     );
   }
 

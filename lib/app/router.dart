@@ -10,8 +10,8 @@ import '../screens/search_screen.dart';
 import '../screens/settings_screen.dart';
 import '../utils/platform.dart';
 import '../ui/app_shell.dart';
-import '../ui/global_nav.dart';
 import '../ui/layout.dart';
+import '../ui/layout_spec.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -42,12 +42,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                 return const NoTransitionPage(child: _NotFoundScreen());
               }
 
-              final totalWidth = MediaQuery.sizeOf(context).width;
-              final width = effectiveContentWidth(totalWidth);
+              final spec = LayoutSpec.fromContext(context);
 
               if (isDesktop) {
-                final mode = desktopModeForWidth(width);
-                if (desktopReaderEmbedded(mode)) {
+                if (spec.desktopEmbedsReader) {
                   return NoTransitionPage(
                     child: HomeScreen(selectedArticleId: id),
                   );
@@ -56,9 +54,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                 return MaterialPage(child: ReaderScreen(articleId: id));
               }
 
-              // Width >= 600: use multi-column HomeScreen with selected article,
-              // but keep the transition instant to avoid visual "page jumps".
-              if (width >= 600) {
+              // Non-desktop: only embed the reader when it can keep a minimum
+              // comfortable measure; otherwise use a dedicated reader page.
+              if (spec.canEmbedReader(listWidth: kHomeListWidth)) {
                 return NoTransitionPage(
                   child: HomeScreen(selectedArticleId: id),
                 );
@@ -87,12 +85,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     return const NoTransitionPage(child: _NotFoundScreen());
                   }
 
-                  final totalWidth = MediaQuery.sizeOf(context).width;
-                  final width = effectiveContentWidth(totalWidth);
+                  final spec = LayoutSpec.fromContext(context);
 
                   if (isDesktop) {
-                    final mode = desktopModeForWidth(width);
-                    if (desktopReaderEmbedded(mode)) {
+                    if (spec.desktopEmbedsReader) {
                       return NoTransitionPage(
                         child: SavedScreen(selectedArticleId: id),
                       );
@@ -105,7 +101,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     );
                   }
 
-                  if (width >= 600) {
+                  if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
                     return NoTransitionPage(
                       child: SavedScreen(selectedArticleId: id),
                     );
@@ -139,12 +135,10 @@ final routerProvider = Provider<GoRouter>((ref) {
                     return const NoTransitionPage(child: _NotFoundScreen());
                   }
 
-                  final totalWidth = MediaQuery.sizeOf(context).width;
-                  final width = effectiveContentWidth(totalWidth);
+                  final spec = LayoutSpec.fromContext(context);
 
                   if (isDesktop) {
-                    final mode = desktopModeForWidth(width);
-                    if (desktopReaderEmbedded(mode)) {
+                    if (spec.desktopEmbedsReader) {
                       return NoTransitionPage(
                         child: SearchScreen(selectedArticleId: id),
                       );
@@ -157,7 +151,7 @@ final routerProvider = Provider<GoRouter>((ref) {
                     );
                   }
 
-                  if (width >= 600) {
+                  if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
                     return NoTransitionPage(
                       child: SearchScreen(selectedArticleId: id),
                     );

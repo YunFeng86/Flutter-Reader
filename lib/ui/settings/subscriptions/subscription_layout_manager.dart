@@ -6,6 +6,7 @@ import 'feed_list_component.dart';
 import 'settings_detail_panel.dart';
 import 'subscription_tree_view.dart';
 import 'subscription_toolbar.dart';
+import '../../layout.dart';
 
 class SubscriptionLayoutManager extends ConsumerWidget {
   const SubscriptionLayoutManager({super.key});
@@ -14,8 +15,8 @@ class SubscriptionLayoutManager extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Breakpoints
     // Wide: > 1000
-    // Medium: 600 - 1000
-    // Narrow: < 600
+    // Medium: kCompactWidth - 1000
+    // Narrow: < kCompactWidth
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -71,7 +72,7 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                     ),
                   ],
                 );
-              } else if (width >= 600) {
+              } else if (width >= kCompactWidth) {
                 // 2 Columns: Nav (Tree) | Details
                 // User requested Tree View for Medium
                 // 2 Columns: Nav (Tree) | Details
