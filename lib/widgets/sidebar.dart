@@ -13,7 +13,7 @@ import '../ui/actions/subscription_actions.dart';
 import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
-import 'favicon_avatar.dart';
+import 'favicon_circle.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
   const Sidebar({super.key, required this.onSelectFeed, this.router});
@@ -483,20 +483,12 @@ class _SidebarState extends ConsumerState<Sidebar> {
       key: key,
       selected: selectedFeedId == f.id,
       contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
-      leading: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHigh,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: FaviconAvatar(
-          siteUri: siteUri,
-          size: 18,
-          fallbackIcon: Icons.rss_feed,
-          fallbackColor: theme.colorScheme.onSurfaceVariant,
-        ),
+      leading: FaviconCircle(
+        siteUri: siteUri,
+        diameter: 28,
+        avatarSize: 18,
+        fallbackIcon: Icons.rss_feed,
+        fallbackColor: theme.colorScheme.onSurfaceVariant,
       ),
       title: Text(displayTitle),
       subtitle:
