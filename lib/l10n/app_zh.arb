@@ -617,6 +617,26 @@
   "@apiToken": {
     "description": "apiToken"
   },
+  "authenticationMethod": "认证方式",
+  "@authenticationMethod": {
+    "description": "authenticationMethod"
+  },
+  "usernamePassword": "用户名与密码",
+  "@usernamePassword": {
+    "description": "usernamePassword"
+  },
+  "minifluxAuthHint": "可填写 API Token（推荐）或用户名/密码。",
+  "@minifluxAuthHint": {
+    "description": "minifluxAuthHint"
+  },
+  "username": "用户名",
+  "@username": {
+    "description": "username"
+  },
+  "password": "密码",
+  "@password": {
+    "description": "password"
+  },
   "show": "显示",
   "@show": {
     "description": "show"

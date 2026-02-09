@@ -1,22 +1,45 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 class MinifluxClient {
   MinifluxClient({
     required Dio dio,
     required String baseUrl,
-    required String apiToken,
+    String? apiToken,
+    String? username,
+    String? password,
   }) : _dio = dio,
        _baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), ''),
-       _apiToken = apiToken.trim();
+       _apiToken = apiToken?.trim(),
+       _basicUsername = username?.trim(),
+       _basicPassword = password;
 
   final Dio _dio;
   final String _baseUrl;
-  final String _apiToken;
+  final String? _apiToken;
+  final String? _basicUsername;
+  final String? _basicPassword;
 
-  Options get _options => Options(
-    headers: <String, Object?>{'X-Auth-Token': _apiToken},
-    responseType: ResponseType.json,
-  );
+  Map<String, Object?> get _authHeaders {
+    final token = (_apiToken ?? '').trim();
+    if (token.isNotEmpty) {
+      return <String, Object?>{'X-Auth-Token': token};
+    }
+
+    final u = (_basicUsername ?? '').trim();
+    final p = _basicPassword;
+    if (u.isNotEmpty && p != null) {
+      final raw = '$u:$p';
+      final encoded = base64Encode(utf8.encode(raw));
+      return <String, Object?>{'Authorization': 'Basic $encoded'};
+    }
+
+    return const <String, Object?>{};
+  }
+
+  Options get _options =>
+      Options(headers: _authHeaders, responseType: ResponseType.json);
 
   Future<Map<String, Object?>> getEntry(int entryId) async {
     final resp = await _dio.get(

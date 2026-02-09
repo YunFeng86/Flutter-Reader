@@ -14,6 +14,8 @@ import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../widgets/section_header.dart';
 
+enum _MinifluxAuthMode { apiToken, basicAuth }
+
 class ServicesTab extends ConsumerWidget {
   const ServicesTab({super.key});
 
@@ -104,14 +106,25 @@ class ServicesTab extends ConsumerWidget {
       final nameCtrl = TextEditingController(text: l10n.miniflux);
       final baseUrlCtrl = TextEditingController();
       final tokenCtrl = TextEditingController();
-      bool obscure = true;
+      final usernameCtrl = TextEditingController();
+      final passwordCtrl = TextEditingController();
+      bool obscureToken = true;
+      bool obscurePassword = true;
+      var authMode = _MinifluxAuthMode.apiToken;
 
       Future<void> submit(StateSetter setState) async {
         final name = nameCtrl.text.trim();
         final baseUrl = baseUrlCtrl.text.trim();
         final token = tokenCtrl.text.trim();
+        final username = usernameCtrl.text.trim();
+        final password = passwordCtrl.text;
         final uri = Uri.tryParse(baseUrl);
-        if (name.isEmpty || baseUrl.isEmpty || token.isEmpty) {
+        final hasCreds = switch (authMode) {
+          _MinifluxAuthMode.apiToken => token.isNotEmpty,
+          _MinifluxAuthMode.basicAuth =>
+            username.isNotEmpty && password.isNotEmpty,
+        };
+        if (name.isEmpty || baseUrl.isEmpty || !hasCreds) {
           context.showSnack(l10n.errorMessage(l10n.missingRequiredFields));
           return;
         }
@@ -127,9 +140,23 @@ class ServicesTab extends ConsumerWidget {
               name: name,
               baseUrl: baseUrl,
             );
-        await ref
-            .read(credentialStoreProvider)
-            .setApiToken(id, AccountType.miniflux, token);
+        final store = ref.read(credentialStoreProvider);
+        switch (authMode) {
+          case _MinifluxAuthMode.apiToken:
+            await store.setApiToken(id, AccountType.miniflux, token);
+            // Strict mode: only keep one auth mechanism on disk.
+            await store.deleteBasicAuth(id, AccountType.miniflux);
+            break;
+          case _MinifluxAuthMode.basicAuth:
+            await store.setBasicAuth(
+              id,
+              AccountType.miniflux,
+              username: username,
+              password: password,
+            );
+            await store.deleteApiToken(id, AccountType.miniflux);
+            break;
+        }
         await ref.read(accountsControllerProvider.notifier).setActive(id);
         if (!context.mounted) return;
         Navigator.of(context).pop();
@@ -163,20 +190,86 @@ class ServicesTab extends ConsumerWidget {
                         keyboardType: TextInputType.url,
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: tokenCtrl,
-                        obscureText: obscure,
-                        decoration: InputDecoration(
-                          labelText: l10n.apiToken,
-                          suffixIcon: IconButton(
-                            tooltip: obscure ? l10n.show : l10n.hide,
-                            icon: Icon(
-                              obscure ? Icons.visibility : Icons.visibility_off,
+                      Text(
+                        l10n.authenticationMethod,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ChoiceChip(
+                            label: Text(l10n.apiToken),
+                            selected: authMode == _MinifluxAuthMode.apiToken,
+                            onSelected: (v) {
+                              if (!v) return;
+                              setState(
+                                () => authMode = _MinifluxAuthMode.apiToken,
+                              );
+                            },
+                          ),
+                          ChoiceChip(
+                            label: Text(l10n.usernamePassword),
+                            selected: authMode == _MinifluxAuthMode.basicAuth,
+                            onSelected: (v) {
+                              if (!v) return;
+                              setState(
+                                () => authMode = _MinifluxAuthMode.basicAuth,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        l10n.minifluxAuthHint,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                      if (authMode == _MinifluxAuthMode.apiToken) ...[
+                        TextField(
+                          controller: tokenCtrl,
+                          obscureText: obscureToken,
+                          decoration: InputDecoration(
+                            labelText: l10n.apiToken,
+                            suffixIcon: IconButton(
+                              tooltip: obscureToken ? l10n.show : l10n.hide,
+                              icon: Icon(
+                                obscureToken
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () =>
+                                  setState(() => obscureToken = !obscureToken),
                             ),
-                            onPressed: () => setState(() => obscure = !obscure),
                           ),
                         ),
-                      ),
+                      ] else ...[
+                        TextField(
+                          controller: usernameCtrl,
+                          decoration: InputDecoration(labelText: l10n.username),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: passwordCtrl,
+                          obscureText: obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: l10n.password,
+                            suffixIcon: IconButton(
+                              tooltip: obscurePassword ? l10n.show : l10n.hide,
+                              icon: Icon(
+                                obscurePassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () => setState(
+                                () => obscurePassword = !obscurePassword,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),

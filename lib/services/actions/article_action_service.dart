@@ -252,7 +252,20 @@ class ArticleActionService {
       _account.id,
       AccountType.miniflux,
     );
-    if (token == null || token.trim().isEmpty) return null;
-    return MinifluxClient(dio: _dio, baseUrl: baseUrl, apiToken: token);
+    if (token != null && token.trim().isNotEmpty) {
+      return MinifluxClient(dio: _dio, baseUrl: baseUrl, apiToken: token);
+    }
+
+    final basic = await _credentials.getBasicAuth(
+      _account.id,
+      AccountType.miniflux,
+    );
+    if (basic == null) return null;
+    return MinifluxClient(
+      dio: _dio,
+      baseUrl: baseUrl,
+      username: basic.username,
+      password: basic.password,
+    );
   }
 }

@@ -464,6 +464,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiToken => 'API Token';
 
   @override
+  String get authenticationMethod => 'Authentication method';
+
+  @override
+  String get usernamePassword => 'Username & password';
+
+  @override
+  String get minifluxAuthHint =>
+      'Use an API token (recommended) or username/password.';
+
+  @override
+  String get username => 'Username';
+
+  @override
+  String get password => 'Password';
+
+  @override
   String get show => 'Show';
 
   @override

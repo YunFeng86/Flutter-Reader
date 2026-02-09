@@ -957,6 +957,36 @@ abstract class AppLocalizations {
   /// **'API Token'**
   String get apiToken;
 
+  /// authenticationMethod
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication method'**
+  String get authenticationMethod;
+
+  /// usernamePassword
+  ///
+  /// In en, this message translates to:
+  /// **'Username & password'**
+  String get usernamePassword;
+
+  /// minifluxAuthHint
+  ///
+  /// In en, this message translates to:
+  /// **'Use an API token (recommended) or username/password.'**
+  String get minifluxAuthHint;
+
+  /// username
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// password
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
   /// show
   ///
   /// In en, this message translates to:

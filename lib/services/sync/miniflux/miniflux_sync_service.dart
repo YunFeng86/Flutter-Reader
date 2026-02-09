@@ -336,10 +336,24 @@ class MinifluxSyncService implements SyncServiceBase {
       account.id,
       AccountType.miniflux,
     );
-    if (token == null || token.trim().isEmpty) {
-      throw StateError('Miniflux api token is missing');
+    if (token != null && token.trim().isNotEmpty) {
+      return MinifluxClient(dio: _dio, baseUrl: baseUrl, apiToken: token);
     }
-    return MinifluxClient(dio: _dio, baseUrl: baseUrl, apiToken: token);
+
+    final basic = await _credentials.getBasicAuth(
+      account.id,
+      AccountType.miniflux,
+    );
+    if (basic != null) {
+      return MinifluxClient(
+        dio: _dio,
+        baseUrl: baseUrl,
+        username: basic.username,
+        password: basic.password,
+      );
+    }
+
+    throw StateError('Miniflux credentials are missing');
   }
 
   Future<void> _flushOutbox(MinifluxClient client) async {

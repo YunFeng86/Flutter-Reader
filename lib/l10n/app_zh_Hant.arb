@@ -617,6 +617,26 @@
   "@apiToken": {
     "description": "apiToken"
   },
+  "authenticationMethod": "驗證方式",
+  "@authenticationMethod": {
+    "description": "authenticationMethod"
+  },
+  "usernamePassword": "使用者名稱與密碼",
+  "@usernamePassword": {
+    "description": "usernamePassword"
+  },
+  "minifluxAuthHint": "可填寫 API Token（建議）或使用者名稱/密碼。",
+  "@minifluxAuthHint": {
+    "description": "minifluxAuthHint"
+  },
+  "username": "使用者名稱",
+  "@username": {
+    "description": "username"
+  },
+  "password": "密碼",
+  "@password": {
+    "description": "password"
+  },
   "show": "顯示",
   "@show": {
     "description": "show"

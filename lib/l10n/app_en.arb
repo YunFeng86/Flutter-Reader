@@ -616,6 +616,26 @@
   "@apiToken": {
     "description": "apiToken"
   },
+  "authenticationMethod": "Authentication method",
+  "@authenticationMethod": {
+    "description": "authenticationMethod"
+  },
+  "usernamePassword": "Username & password",
+  "@usernamePassword": {
+    "description": "usernamePassword"
+  },
+  "minifluxAuthHint": "Use an API token (recommended) or username/password.",
+  "@minifluxAuthHint": {
+    "description": "minifluxAuthHint"
+  },
+  "username": "Username",
+  "@username": {
+    "description": "username"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "password"
+  },
   "show": "Show",
   "@show": {
     "description": "show"

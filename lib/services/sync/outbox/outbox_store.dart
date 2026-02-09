@@ -86,7 +86,16 @@ class OutboxStore {
           // Skip malformed entries; keep the rest of the queue.
         }
       }
-      return out;
+      // Auto-compact legacy/duplicated actions.
+      final compacted = _compact(out);
+      if (compacted.length != out.length) {
+        try {
+          await save(accountId, compacted);
+        } catch (_) {
+          // ignore: best-effort cleanup
+        }
+      }
+      return compacted;
     } catch (_) {
       return const [];
     }
@@ -94,7 +103,8 @@ class OutboxStore {
 
   Future<void> save(String accountId, List<OutboxAction> actions) async {
     final f = await _file(accountId);
-    final payload = actions.map((a) => a.toJson()).toList(growable: false);
+    final compacted = _compact(actions);
+    final payload = compacted.map((a) => a.toJson()).toList(growable: false);
     await f.writeAsString(jsonEncode(payload));
   }
 
@@ -125,5 +135,43 @@ class OutboxStore {
         a.feedUrl == b.feedUrl &&
         a.categoryTitle == b.categoryTitle &&
         a.createdAt.toIso8601String() == b.createdAt.toIso8601String();
+  }
+
+  static List<OutboxAction> _compact(List<OutboxAction> actions) {
+    if (actions.length <= 1) return actions;
+
+    // Keep the last intent per scope; makes toggle-like operations safe to replay.
+    final keptKeys = <String>{};
+    final keptReversed = <OutboxAction>[];
+    for (var i = actions.length - 1; i >= 0; i--) {
+      final a = actions[i];
+      final key = _dedupeKey(a);
+      if (key == null) {
+        keptReversed.add(a);
+        continue;
+      }
+      if (keptKeys.add(key)) {
+        keptReversed.add(a);
+      }
+    }
+    return keptReversed.reversed.toList(growable: false);
+  }
+
+  static String? _dedupeKey(OutboxAction a) {
+    switch (a.type) {
+      case OutboxActionType.markRead:
+        final id = a.remoteEntryId;
+        if (id == null) return null;
+        return 'markRead:$id';
+      case OutboxActionType.bookmark:
+        final id = a.remoteEntryId;
+        if (id == null) return null;
+        return 'bookmark:$id';
+      case OutboxActionType.markAllRead:
+        final feedUrl = (a.feedUrl ?? '').trim();
+        final categoryTitle = (a.categoryTitle ?? '').trim();
+        // Empty values represent "all feeds" scope.
+        return 'markAllRead:feed=$feedUrl:cat=$categoryTitle';
+    }
   }
 }

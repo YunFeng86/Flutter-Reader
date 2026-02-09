@@ -456,6 +456,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiToken => 'API Token';
 
   @override
+  String get authenticationMethod => '认证方式';
+
+  @override
+  String get usernamePassword => '用户名与密码';
+
+  @override
+  String get minifluxAuthHint => '可填写 API Token（推荐）或用户名/密码。';
+
+  @override
+  String get username => '用户名';
+
+  @override
+  String get password => '密码';
+
+  @override
   String get show => '显示';
 
   @override
@@ -1072,6 +1087,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get apiToken => 'API Token';
+
+  @override
+  String get authenticationMethod => '驗證方式';
+
+  @override
+  String get usernamePassword => '使用者名稱與密碼';
+
+  @override
+  String get minifluxAuthHint => '可填寫 API Token（建議）或使用者名稱/密碼。';
+
+  @override
+  String get username => '使用者名稱';
+
+  @override
+  String get password => '密碼';
 
   @override
   String get show => '顯示';
