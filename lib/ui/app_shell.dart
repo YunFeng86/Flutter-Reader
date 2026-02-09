@@ -60,7 +60,7 @@ class AppShell extends StatelessWidget {
               width: kGlobalNavRailWidth,
               child: GlobalNavRail(currentUri: currentUri),
             ),
-            const VerticalDivider(width: kDividerWidth, thickness: 1),
+            const SizedBox(width: kPaneGap),
             Expanded(child: child),
           ],
         ),
@@ -80,7 +80,6 @@ class AppShell extends StatelessWidget {
                 child: child,
               ),
             ),
-            const Divider(height: 1),
             // NavigationBar includes its own SafeArea internally. When used
             // outside Scaffold.bottomNavigationBar, we must remove the *top*
             // system padding from MediaQuery, otherwise NavigationBar's internal

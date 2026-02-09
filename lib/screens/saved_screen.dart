@@ -190,7 +190,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           return Column(
             children: [
               header,
-              const Divider(height: 1),
+              const SizedBox(height: 8),
               Expanded(
                 child: ArticleList(
                   selectedArticleId: widget.selectedArticleId,
@@ -240,7 +240,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
                   child: SizedBox(width: kDesktopListWidth, child: listPane()),
                 ),
               ),
-              const VerticalDivider(width: 1),
+              const SizedBox(width: kPaneGap),
               Expanded(child: readerPane(embedded: true)),
             ],
           );

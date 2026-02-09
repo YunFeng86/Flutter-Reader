@@ -322,21 +322,13 @@ class HomeScreen extends ConsumerWidget {
                           },
                         ),
                       ),
-                      const VerticalDivider(width: 1),
+                      const SizedBox(width: kPaneGap),
                     ],
                     SizedBox(
                       width: kHomeListWidth,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ArticleList(
-                              selectedArticleId: selectedArticleId,
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: ArticleList(selectedArticleId: selectedArticleId),
                     ),
-                    const VerticalDivider(width: 1),
+                    const SizedBox(width: kPaneGap),
                     Expanded(
                       child: selectedArticleId == null
                           ? Container(
@@ -391,11 +383,7 @@ class HomeScreen extends ConsumerWidget {
     final sidebarVisible = ref.watch(sidebarVisibleProvider);
 
     Widget listPane({double? width}) {
-      final pane = Column(
-        children: [
-          Expanded(child: ArticleList(selectedArticleId: selectedArticleId)),
-        ],
-      );
+      final pane = ArticleList(selectedArticleId: selectedArticleId);
 
       if (width == null) return pane;
       return Hero(
@@ -443,8 +431,10 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(width: kPaneGap),
           ],
           listPane(width: kDesktopListWidth),
+          const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
       ),
@@ -452,6 +442,7 @@ class HomeScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           listPane(width: kDesktopListWidth),
+          const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
       ),

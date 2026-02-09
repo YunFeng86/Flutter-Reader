@@ -15,6 +15,7 @@ class GroupingSortingTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final appSettings =
         ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
 
@@ -33,7 +34,7 @@ class GroupingSortingTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: theme.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppTheme.radiusCard),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -69,7 +70,7 @@ class GroupingSortingTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: theme.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppTheme.radiusCard),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),

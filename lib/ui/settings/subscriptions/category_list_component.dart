@@ -45,7 +45,7 @@ class CategoryListComponent extends ConsumerWidget {
                 ).colorScheme.primaryContainer,
               ),
 
-            const Divider(),
+            const SizedBox(height: 8),
 
             // Uncategorized
             ListTile(

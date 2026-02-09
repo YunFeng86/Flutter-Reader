@@ -217,7 +217,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           return Column(
             children: [
               header,
-              const Divider(height: 1),
+              const SizedBox(height: 8),
               Expanded(
                 child: showResults
                     ? ArticleList(
@@ -271,7 +271,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                   child: SizedBox(width: kDesktopListWidth, child: listPane()),
                 ),
               ),
-              const VerticalDivider(width: 1),
+              const SizedBox(width: kPaneGap),
               Expanded(child: readerPane(embedded: true)),
             ],
           );

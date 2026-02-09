@@ -18,6 +18,7 @@ class ServicesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final appSettings =
         ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
 
@@ -97,7 +98,7 @@ class ServicesTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   ),
                   child: Column(
@@ -128,7 +129,7 @@ class ServicesTab extends ConsumerWidget {
                               .setAutoRefreshMinutes(v),
                         ),
                       ),
-                      const Divider(height: 24),
+                      const SizedBox(height: 16),
                       Text(
                         l10n.refreshConcurrency,
                         style: Theme.of(context).textTheme.titleMedium,

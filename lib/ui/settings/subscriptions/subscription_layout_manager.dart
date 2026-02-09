@@ -52,7 +52,7 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                 return Column(
                   children: [
                     const SubscriptionToolbar(),
-                    const Divider(height: 1),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: Row(
                         children: [
@@ -60,12 +60,12 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                             width: 280,
                             child: CategoryListComponent(),
                           ),
-                          const VerticalDivider(width: 1),
+                          const SizedBox(width: kPaneGap),
                           const SizedBox(
                             width: 320,
                             child: FeedListComponent(),
                           ),
-                          const VerticalDivider(width: 1),
+                          const SizedBox(width: kPaneGap),
                           const Expanded(child: SettingsDetailPanel()),
                         ],
                       ),
@@ -80,7 +80,7 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                 return Column(
                   children: [
                     const SubscriptionToolbar(),
-                    const Divider(height: 1),
+                    const SizedBox(height: 8),
                     Expanded(
                       child: Row(
                         children: [
@@ -88,7 +88,7 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                             width: 320,
                             child: SubscriptionTreeView(),
                           ),
-                          const VerticalDivider(width: 1),
+                          const SizedBox(width: kPaneGap),
                           const Expanded(child: SettingsDetailPanel()),
                         ],
                       ),

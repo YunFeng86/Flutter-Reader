@@ -275,12 +275,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                   value: _SidebarMenu.settings,
                                   child: Text(l10n.settings),
                                 ),
-                                const PopupMenuDivider(),
                                 PopupMenuItem(
                                   value: _SidebarMenu.refreshAll,
                                   child: Text(l10n.refreshAll),
                                 ),
-                                const PopupMenuDivider(),
                                 PopupMenuItem(
                                   value: _SidebarMenu.importOpml,
                                   child: Text(l10n.importOpml),

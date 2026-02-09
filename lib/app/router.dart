@@ -109,51 +109,49 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: const SavedScreen(selectedArticleId: null),
               );
             },
-            routes: [
-              GoRoute(
-                path: 'article/:id',
-                name: 'savedArticle',
-                pageBuilder: (context, state) {
-                  final id = int.tryParse(state.pathParameters['id'] ?? '');
-                  if (id == null) {
-                    return const NoTransitionPage(child: _NotFoundScreen());
-                  }
+          ),
+          GoRoute(
+            path: '/saved/article/:id',
+            name: 'savedArticle',
+            pageBuilder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) {
+                return const NoTransitionPage(child: _NotFoundScreen());
+              }
 
-                  final spec = LayoutSpec.fromContext(context);
+              final spec = LayoutSpec.fromContext(context);
 
-                  if (isDesktop) {
-                    if (spec.desktopEmbedsReader) {
-                      return sectionPage(
-                        state: state,
-                        pageKey: _savedSectionKey,
-                        child: SavedScreen(selectedArticleId: id),
-                      );
-                    }
-                    return MaterialPage(
-                      child: ReaderScreen(
-                        articleId: id,
-                        fallbackBackLocation: '/saved',
-                      ),
-                    );
-                  }
-
-                  if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
-                    return sectionPage(
-                      state: state,
-                      pageKey: _savedSectionKey,
-                      child: SavedScreen(selectedArticleId: id),
-                    );
-                  }
-
-                  return MaterialPage(
-                    child: ReaderScreen(
-                      articleId: id,
-                      fallbackBackLocation: '/saved',
-                    ),
+              if (isDesktop) {
+                if (spec.desktopEmbedsReader) {
+                  return sectionPage(
+                    state: state,
+                    pageKey: _savedSectionKey,
+                    child: SavedScreen(selectedArticleId: id),
                   );
-                },
-              ),
-            ],
+                }
+                return MaterialPage(
+                  child: ReaderScreen(
+                    articleId: id,
+                    fallbackBackLocation: '/saved',
+                  ),
+                );
+              }
+
+              if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
+                return sectionPage(
+                  state: state,
+                  pageKey: _savedSectionKey,
+                  child: SavedScreen(selectedArticleId: id),
+                );
+              }
+
+              return MaterialPage(
+                child: ReaderScreen(
+                  articleId: id,
+                  fallbackBackLocation: '/saved',
+                ),
+              );
+            },
           ),
           GoRoute(
             path: '/search',
@@ -165,51 +163,49 @@ final routerProvider = Provider<GoRouter>((ref) {
                 child: const SearchScreen(selectedArticleId: null),
               );
             },
-            routes: [
-              GoRoute(
-                path: 'article/:id',
-                name: 'searchArticle',
-                pageBuilder: (context, state) {
-                  final id = int.tryParse(state.pathParameters['id'] ?? '');
-                  if (id == null) {
-                    return const NoTransitionPage(child: _NotFoundScreen());
-                  }
+          ),
+          GoRoute(
+            path: '/search/article/:id',
+            name: 'searchArticle',
+            pageBuilder: (context, state) {
+              final id = int.tryParse(state.pathParameters['id'] ?? '');
+              if (id == null) {
+                return const NoTransitionPage(child: _NotFoundScreen());
+              }
 
-                  final spec = LayoutSpec.fromContext(context);
+              final spec = LayoutSpec.fromContext(context);
 
-                  if (isDesktop) {
-                    if (spec.desktopEmbedsReader) {
-                      return sectionPage(
-                        state: state,
-                        pageKey: _searchSectionKey,
-                        child: SearchScreen(selectedArticleId: id),
-                      );
-                    }
-                    return MaterialPage(
-                      child: ReaderScreen(
-                        articleId: id,
-                        fallbackBackLocation: '/search',
-                      ),
-                    );
-                  }
-
-                  if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
-                    return sectionPage(
-                      state: state,
-                      pageKey: _searchSectionKey,
-                      child: SearchScreen(selectedArticleId: id),
-                    );
-                  }
-
-                  return MaterialPage(
-                    child: ReaderScreen(
-                      articleId: id,
-                      fallbackBackLocation: '/search',
-                    ),
+              if (isDesktop) {
+                if (spec.desktopEmbedsReader) {
+                  return sectionPage(
+                    state: state,
+                    pageKey: _searchSectionKey,
+                    child: SearchScreen(selectedArticleId: id),
                   );
-                },
-              ),
-            ],
+                }
+                return MaterialPage(
+                  child: ReaderScreen(
+                    articleId: id,
+                    fallbackBackLocation: '/search',
+                  ),
+                );
+              }
+
+              if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
+                return sectionPage(
+                  state: state,
+                  pageKey: _searchSectionKey,
+                  child: SearchScreen(selectedArticleId: id),
+                );
+              }
+
+              return MaterialPage(
+                child: ReaderScreen(
+                  articleId: id,
+                  fallbackBackLocation: '/search',
+                ),
+              );
+            },
           ),
           GoRoute(
             path: '/settings',

@@ -119,7 +119,7 @@ class _AboutTabState extends State<AboutTab> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(
                           AppTheme.radiusCard,
                         ),
@@ -220,7 +220,7 @@ class _AboutTabState extends State<AboutTab> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(
                           AppTheme.radiusCard,
                         ),
@@ -249,7 +249,7 @@ class _AboutTabState extends State<AboutTab> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(
                           AppTheme.radiusCard,
                         ),
@@ -281,7 +281,7 @@ class _AboutTabState extends State<AboutTab> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
+                        color: theme.colorScheme.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(
                           AppTheme.radiusCard,
                         ),

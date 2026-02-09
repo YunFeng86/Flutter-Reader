@@ -73,7 +73,7 @@ class LayoutSpec {
     required double listWidth,
     double minReaderWidth = kMinReadingWidth,
   }) {
-    return contentWidth >= (listWidth + minReaderWidth + kDividerWidth);
+    return contentWidth >= (listWidth + minReaderWidth + kPaneGap);
   }
 
   bool get isCompact => contentWidth < kCompactWidth;

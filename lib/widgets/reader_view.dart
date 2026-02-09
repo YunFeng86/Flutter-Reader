@@ -738,9 +738,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
-            const Divider(height: 1),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
           ],
         );
 
