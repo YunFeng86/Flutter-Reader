@@ -18,6 +18,16 @@ class MinifluxClient {
     responseType: ResponseType.json,
   );
 
+  Future<Map<String, Object?>> getEntry(int entryId) async {
+    final resp = await _dio.get(
+      '$_baseUrl/v1/entries/$entryId',
+      options: _options,
+    );
+    final data = resp.data;
+    if (data is Map) return data.cast<String, Object?>();
+    throw StateError('Unexpected Miniflux response for entry $entryId');
+  }
+
   Future<List<Map<String, Object?>>> getCategories() async {
     final resp = await _dio.get('$_baseUrl/v1/categories', options: _options);
     final data = resp.data;
@@ -80,15 +90,22 @@ class MinifluxClient {
     );
   }
 
-  Future<void> bookmarkEntry(int entryId) async {
+  /// Miniflux API: PUT /v1/entries/{id}/bookmark (toggle starred flag).
+  Future<void> toggleBookmark(int entryId) async {
     await _dio.put('$_baseUrl/v1/entries/$entryId/bookmark', options: _options);
   }
 
-  Future<void> unbookmarkEntry(int entryId) async {
-    await _dio.put(
-      '$_baseUrl/v1/entries/$entryId/unbookmark',
-      options: _options,
-    );
+  /// Pseudo-idempotent "set starred": fetch remote state and toggle only if needed.
+  /// This avoids the non-idempotent toggle hazard during retries/outbox replay.
+  Future<void> setBookmarkState(int entryId, bool targetStarred) async {
+    final entry = await getEntry(entryId);
+    final starred = entry['starred'];
+    if (starred is! bool) {
+      throw StateError('Missing "starred" field for entry $entryId');
+    }
+    final remoteStarred = starred;
+    if (remoteStarred == targetStarred) return;
+    await toggleBookmark(entryId);
   }
 
   Future<void> markFeedAllAsRead(int feedId) async {

@@ -73,11 +73,7 @@ class ArticleActionService {
     final client = await _minifluxClientOrNull();
     if (client == null) return;
     try {
-      if (a?.isStarred == true) {
-        await client.bookmarkEntry(rid);
-      } else {
-        await client.unbookmarkEntry(rid);
-      }
+      await client.setBookmarkState(rid, a?.isStarred == true);
     } catch (_) {
       await _outbox.enqueue(
         _account.id,

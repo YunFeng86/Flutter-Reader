@@ -405,11 +405,7 @@ class MinifluxSyncService implements SyncServiceBase {
             final entryId = a.remoteEntryId;
             final value = a.value;
             if (entryId == null || value == null) continue;
-            if (value) {
-              await client.bookmarkEntry(entryId);
-            } else {
-              await client.unbookmarkEntry(entryId);
-            }
+            await client.setBookmarkState(entryId, value);
             break;
           case OutboxActionType.markAllRead:
             final feedUrl = a.feedUrl == null
