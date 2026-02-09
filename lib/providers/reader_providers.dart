@@ -45,4 +45,5 @@ class FullTextController extends AutoDisposeAsyncNotifier<void> {
 final fullTextControllerProvider =
     AutoDisposeAsyncNotifierProvider<FullTextController, void>(
       FullTextController.new,
+      dependencies: [articleRepositoryProvider],
     );

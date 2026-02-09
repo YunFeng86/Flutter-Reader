@@ -105,7 +105,26 @@ class BatchRefreshResult {
       .firstWhere((r) => r?.error != null, orElse: () => null);
 }
 
-class SyncService {
+abstract class SyncServiceBase {
+  Future<int> offlineCacheFeed(int feedId);
+
+  Future<FeedRefreshResult> refreshFeedSafe(
+    int feedId, {
+    int maxAttempts = 2,
+    AppSettings? appSettings,
+    bool notify = true,
+  });
+
+  Future<BatchRefreshResult> refreshFeedsSafe(
+    Iterable<int> feedIds, {
+    int maxConcurrent = 2,
+    int maxAttemptsPerFeed = 2,
+    void Function(int current, int total)? onProgress,
+    bool notify = true,
+  });
+}
+
+class SyncService implements SyncServiceBase {
   SyncService({
     required FeedRepository feeds,
     required CategoryRepository categories,
@@ -137,6 +156,7 @@ class SyncService {
   final AppSettingsStore _appSettingsStore;
   Future<void> _batchRefreshQueue = Future.value();
 
+  @override
   Future<int> offlineCacheFeed(int feedId) async {
     final articles = await _articles.getUnread(feedId: feedId);
     return _cache.cacheArticles(articles);
@@ -277,6 +297,7 @@ class SyncService {
     );
   }
 
+  @override
   Future<FeedRefreshResult> refreshFeedSafe(
     int feedId, {
     int maxAttempts = 2,
@@ -368,6 +389,7 @@ class SyncService {
     );
   }
 
+  @override
   Future<BatchRefreshResult> refreshFeedsSafe(
     Iterable<int> feedIds, {
     int maxConcurrent = 2,

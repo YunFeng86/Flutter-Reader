@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/repository_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/reader_providers.dart';
+import '../providers/service_providers.dart';
 import '../models/article.dart';
 import '../models/tag.dart';
 import '../repositories/tag_repository.dart';
@@ -110,7 +111,7 @@ class ReaderBottomBar extends ConsumerWidget {
                 IconButton(
                   tooltip: article.isStarred ? l10n.unstar : l10n.star,
                   onPressed: () => ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .toggleStar(article.id),
                   icon: Icon(
                     article.isStarred ? Icons.star : Icons.star_border,
@@ -127,7 +128,7 @@ class ReaderBottomBar extends ConsumerWidget {
                 IconButton(
                   tooltip: article.isRead ? l10n.markUnread : l10n.markRead,
                   onPressed: () => ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .markRead(article.id, !article.isRead),
                   icon: Icon(
                     article.isRead
@@ -138,7 +139,7 @@ class ReaderBottomBar extends ConsumerWidget {
                 IconButton(
                   tooltip: l10n.readLater,
                   onPressed: () => ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .toggleReadLater(article.id),
                   icon: Icon(
                     article.isReadLater

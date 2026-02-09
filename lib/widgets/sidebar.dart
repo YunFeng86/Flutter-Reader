@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,10 +7,12 @@ import 'package:fleur/l10n/app_localizations.dart';
 
 import '../models/category.dart';
 import '../models/feed.dart';
+import '../providers/account_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../services/accounts/account.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
@@ -114,6 +118,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final selectedTagId = ref.watch(selectedTagIdProvider);
     final tags = ref.watch(tagsProvider);
+    final accountsState = ref.watch(accountsControllerProvider).valueOrNull;
+    final activeAccount = ref.watch(activeAccountProvider);
 
     final starredOnly = ref.watch(starredOnlyProvider);
     final readLaterOnly = ref.watch(readLaterOnlyProvider);
@@ -148,6 +154,39 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     ),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  tooltip: 'Account',
+                  icon: const Icon(Icons.account_circle_outlined),
+                  onSelected: (id) {
+                    unawaited(
+                      ref
+                          .read(accountsControllerProvider.notifier)
+                          .setActive(id),
+                    );
+                  },
+                  itemBuilder: (context) {
+                    final accounts =
+                        accountsState?.accounts ?? const <Account>[];
+                    return accounts
+                        .map(
+                          (a) => PopupMenuItem<String>(
+                            value: a.id,
+                            child: Row(
+                              children: [
+                                if (a.id == activeAccount.id)
+                                  const Icon(Icons.check, size: 18)
+                                else
+                                  const SizedBox(width: 18),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(a.name)),
+                              ],
+                            ),
+                          ),
+                        )
+                        .toList(growable: false);
+                  },
                 ),
               ],
             ),

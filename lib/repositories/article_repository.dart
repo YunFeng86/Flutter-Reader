@@ -353,7 +353,11 @@ class ArticleRepository {
     return q.findAll();
   }
 
-  Future<List<Article>> upsertMany(int feedId, List<Article> incoming) {
+  Future<List<Article>> upsertMany(
+    int feedId,
+    List<Article> incoming, {
+    bool preserveUserState = true,
+  }) {
     if (incoming.isEmpty) return Future.value(<Article>[]);
     for (final a in incoming) {
       a.contentHash = ContentHash.compute(a.contentHtml);
@@ -435,14 +439,21 @@ class ArticleRepository {
           // [V2.0] Only update if content changed
           if (existing.contentHash != newHash) {
             a.contentHash = newHash;
-            a.isRead = false; // Content changed -> mark unread
+            if (preserveUserState) {
+              a.isRead = false; // Content changed -> mark unread
+            }
           } else {
             // Content unchanged -> preserve user state
-            a.isRead = existing.isRead;
-            a.contentHash = existing.contentHash;
+            if (preserveUserState) {
+              a.isRead = existing.isRead;
+              a.contentHash = existing.contentHash;
+            }
           }
 
-          a.isStarred = existing.isStarred;
+          if (preserveUserState) {
+            a.isStarred = existing.isStarred;
+          }
+          // Read-later is currently local-only; always preserve.
           a.isReadLater = existing.isReadLater;
           a.contentSource = existing.contentSource;
           a.extractedContentHtml = existing.extractedContentHtml;

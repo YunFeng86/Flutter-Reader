@@ -26,7 +26,7 @@ final unreadCountProvider = StreamProvider.family<int, int?>((
   await for (final _ in qb.watchLazy()) {
     yield await qb.count();
   }
-});
+}, dependencies: [isarProvider]);
 
 /// Watches all unread counts, returning a Map of feedId -> count.
 /// Key null represents "All" unread count.
@@ -50,7 +50,7 @@ final allUnreadCountsProvider = StreamProvider<Map<int?, int>>((ref) async* {
   await for (final _ in qb.watchLazy()) {
     yield await computeCounts();
   }
-});
+}, dependencies: [isarProvider]);
 
 Stream<int> _watchUnreadCountByCategoryId(Isar isar, int categoryId) {
   final controller = StreamController<int>.broadcast();
@@ -119,12 +119,12 @@ final unreadCountByCategoryProvider = StreamProvider.family<int, int>((
 ) {
   final isar = ref.watch(isarProvider);
   return _watchUnreadCountByCategoryId(isar, categoryId);
-});
+}, dependencies: [isarProvider]);
 
 final unreadCountUncategorizedProvider = StreamProvider<int>((ref) {
   final isar = ref.watch(isarProvider);
   return _watchUnreadCountByCategoryId(isar, -1);
-});
+}, dependencies: [isarProvider]);
 
 /// Watches total count of Starred articles.
 final starredCountProvider = StreamProvider<int>((ref) async* {
@@ -134,7 +134,7 @@ final starredCountProvider = StreamProvider<int>((ref) async* {
   await for (final _ in qb.watchLazy()) {
     yield await qb.count();
   }
-});
+}, dependencies: [isarProvider]);
 
 /// Watches total count of Read Later articles.
 final readLaterCountProvider = StreamProvider<int>((ref) async* {
@@ -144,4 +144,4 @@ final readLaterCountProvider = StreamProvider<int>((ref) async* {
   await for (final _ in qb.watchLazy()) {
     yield await qb.count();
   }
-});
+}, dependencies: [isarProvider]);

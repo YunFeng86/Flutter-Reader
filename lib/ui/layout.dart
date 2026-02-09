@@ -41,7 +41,9 @@ DesktopPaneMode desktopModeForWidth(double width) {
   // We check against kMinReadingWidth to allow the reader to start small and grow.
   final minFor3 =
       kDesktopSidebarWidth +
-      kDesktopListWidth + kMinReadingWidth + kPaneGap * 2;
+      kDesktopListWidth +
+      kMinReadingWidth +
+      kPaneGap * 2;
 
   // Stage 2 -> 3 boundary: Can we fit List + MinReader?
   // We prioritizing keeping the Reader view visible over the Sidebar.

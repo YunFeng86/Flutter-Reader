@@ -230,7 +230,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
           final selectedFeedId = ref.read(selectedFeedIdProvider);
           final selectedCategoryId = ref.read(selectedCategoryIdProvider);
           await ref
-              .read(articleRepositoryProvider)
+              .read(articleActionServiceProvider)
               .markAllRead(
                 feedId: selectedFeedId,
                 categoryId: selectedFeedId == null ? selectedCategoryId : null,

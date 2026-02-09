@@ -9,8 +9,8 @@ import 'package:fleur/l10n/app_localizations.dart';
 
 import '../providers/article_list_controller.dart';
 import '../providers/app_settings_providers.dart';
-import '../providers/repository_providers.dart';
 import '../providers/query_providers.dart';
+import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../services/settings/app_settings.dart';
 import '../ui/layout.dart';
@@ -293,11 +293,13 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                           ),
                         ),
                         confirmDismiss: (direction) async {
-                          final repo = ref.read(articleRepositoryProvider);
+                          final actions = ref.read(
+                            articleActionServiceProvider,
+                          );
                           if (direction == DismissDirection.startToEnd) {
-                            await repo.markRead(live.id, !live.isRead);
+                            await actions.markRead(live.id, !live.isRead);
                           } else {
-                            await repo.toggleStar(live.id);
+                            await actions.toggleStar(live.id);
                           }
                           return false; // keep item in list
                         },

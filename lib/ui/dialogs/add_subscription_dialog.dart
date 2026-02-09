@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../providers/account_providers.dart';
 import '../../providers/repository_providers.dart';
 import '../../providers/service_providers.dart';
+import '../../services/accounts/account.dart';
 import '../../utils/context_extensions.dart';
 
 class _AddSubscriptionDialog extends StatefulWidget {
@@ -64,6 +66,14 @@ Future<int?> showAddSubscriptionDialog(
 }) async {
   final l10n = AppLocalizations.of(context)!;
   final nav = navigator ?? Navigator.of(context);
+
+  final account = ref.read(activeAccountProvider);
+  if (account.type != AccountType.local) {
+    if (context.mounted) {
+      context.showSnack(l10n.errorMessage('Only supported in Local account'));
+    }
+    return null;
+  }
 
   final url = await nav.push<String?>(
     DialogRoute<String?>(

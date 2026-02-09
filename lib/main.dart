@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:window_manager/window_manager.dart';
 
-import 'app/app.dart';
-import 'db/isar_db.dart';
-import 'providers/core_providers.dart';
+import 'app/account_gate.dart';
 import 'utils/platform.dart';
 
 Future<void> main() async {
@@ -29,12 +27,5 @@ Future<void> main() async {
     });
   }
 
-  final isar = await openIsar();
-
-  runApp(
-    ProviderScope(
-      overrides: [isarProvider.overrideWithValue(isar)],
-      child: const App(),
-    ),
-  );
+  runApp(const ProviderScope(child: AccountGate()));
 }

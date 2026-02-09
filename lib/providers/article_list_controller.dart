@@ -198,4 +198,5 @@ class ArticleListController extends AutoDisposeAsyncNotifier<ArticleListState> {
 final articleListControllerProvider =
     AutoDisposeAsyncNotifierProvider<ArticleListController, ArticleListState>(
       ArticleListController.new,
+      dependencies: [articleRepositoryProvider],
     );

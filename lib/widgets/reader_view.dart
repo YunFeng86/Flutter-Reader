@@ -19,7 +19,6 @@ import '../models/article.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
-import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/settings_providers.dart';
 import '../services/cache/image_meta_store.dart';
@@ -174,7 +173,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
               AppSettings.defaults();
           if (appSettings.autoMarkRead) {
             unawaited(
-              ref.read(articleRepositoryProvider).markRead(articleId, true),
+              ref.read(articleActionServiceProvider).markRead(articleId, true),
             );
             hasMarkedRead = true;
           }

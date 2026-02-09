@@ -62,7 +62,7 @@ class HomeScreen extends ConsumerWidget {
       final selectedFeedId = ref.read(selectedFeedIdProvider);
       final selectedCategoryId = ref.read(selectedCategoryIdProvider);
       await ref
-          .read(articleRepositoryProvider)
+          .read(articleActionServiceProvider)
           .markAllRead(
             feedId: selectedFeedId,
             categoryId: selectedFeedId == null ? selectedCategoryId : null,
@@ -239,7 +239,7 @@ class HomeScreen extends ConsumerWidget {
                       .getById(selectedArticleId!);
                   if (a == null) return null;
                   await ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .markRead(selectedArticleId!, !a.isRead);
                   return null;
                 },
@@ -248,7 +248,7 @@ class HomeScreen extends ConsumerWidget {
                 onInvoke: (intent) async {
                   if (selectedArticleId == null) return null;
                   await ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .toggleStar(selectedArticleId!);
                   return null;
                 },
@@ -519,7 +519,7 @@ class HomeScreen extends ConsumerWidget {
                   .getById(selectedArticleId!);
               if (a == null) return null;
               await ref
-                  .read(articleRepositoryProvider)
+                  .read(articleActionServiceProvider)
                   .markRead(selectedArticleId!, !a.isRead);
               return null;
             },
@@ -528,7 +528,7 @@ class HomeScreen extends ConsumerWidget {
             onInvoke: (intent) async {
               if (selectedArticleId == null) return null;
               await ref
-                  .read(articleRepositoryProvider)
+                  .read(articleActionServiceProvider)
                   .toggleStar(selectedArticleId!);
               return null;
             },
