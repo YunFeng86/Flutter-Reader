@@ -13,8 +13,10 @@ import '../providers/unread_providers.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar.dart';
+import '../widgets/sidebar_pane_hero.dart';
 import '../utils/platform.dart';
 import '../ui/layout.dart';
+import '../ui/hero_tags.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.selectedArticleId});
@@ -396,7 +398,12 @@ class HomeScreen extends ConsumerWidget {
       );
 
       if (width == null) return pane;
-      return SizedBox(width: width, child: pane);
+      return Hero(
+        tag: kHeroArticleListPane,
+        child: RepaintBoundary(
+          child: SizedBox(width: width, child: pane),
+        ),
+      );
     }
 
     Widget readerPane({required bool embedded}) {
@@ -424,10 +431,16 @@ class HomeScreen extends ConsumerWidget {
           if (sidebarVisible) ...[
             SizedBox(
               width: kDesktopSidebarWidth,
-              child: Sidebar(
-                onSelectFeed: (_) {
-                  if (selectedArticleId != null) context.go('/');
-                },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const SidebarPaneHero(),
+                  Sidebar(
+                    onSelectFeed: (_) {
+                      if (selectedArticleId != null) context.go('/');
+                    },
+                  ),
+                ],
               ),
             ),
           ],

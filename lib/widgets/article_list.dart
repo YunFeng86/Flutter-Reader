@@ -15,8 +15,10 @@ import '../providers/unread_providers.dart';
 import '../services/settings/app_settings.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
+import '../ui/motion.dart';
 import '../utils/platform.dart';
 import '../models/article.dart';
+import 'appear.dart';
 import 'article_list_item.dart';
 
 class ArticleList extends ConsumerStatefulWidget {
@@ -41,6 +43,10 @@ class ArticleList extends ConsumerStatefulWidget {
 class _ArticleListState extends ConsumerState<ArticleList> {
   late final ScrollController _controller;
   bool _loadMoreScheduled = false;
+
+  int? _lastContextKey;
+  Set<int> _seenArticleIds = <int>{};
+  Set<String> _seenHeaderTitles = <String>{};
 
   // Cache to avoid recalculating entries on every build
   List<Article> _cachedItems = [];
@@ -94,6 +100,9 @@ class _ArticleListState extends ConsumerState<ArticleList> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final feedId = ref.watch(selectedFeedIdProvider);
+    final categoryId = ref.watch(selectedCategoryIdProvider);
+    final tagId = ref.watch(selectedTagIdProvider);
     final unreadOnly = ref.watch(unreadOnlyProvider);
     final starredOnly = ref.watch(starredOnlyProvider);
     final readLaterOnly = ref.watch(readLaterOnlyProvider);
@@ -101,6 +110,25 @@ class _ArticleListState extends ConsumerState<ArticleList> {
     final state = ref.watch(articleListControllerProvider);
     final settings = ref.watch(appSettingsProvider).valueOrNull;
     final groupMode = settings?.articleGroupMode ?? ArticleGroupMode.none;
+    final sortAscending =
+        (settings?.articleSortOrder ?? ArticleSortOrder.newestFirst) ==
+        ArticleSortOrder.oldestFirst;
+    final searchInContent = settings?.searchInContent ?? true;
+
+    final contextKey = Object.hash(
+      widget.baseLocation,
+      widget.articleRoutePrefix,
+      feedId,
+      categoryId,
+      tagId,
+      unreadOnly,
+      starredOnly,
+      readLaterOnly,
+      searchQuery,
+      sortAscending,
+      searchInContent,
+      groupMode,
+    );
 
     return state.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -135,7 +163,36 @@ class _ArticleListState extends ConsumerState<ArticleList> {
 
         final entries = _getEntries(items, groupMode);
 
-        return Container(
+        final contextChanged = _lastContextKey != contextKey;
+        final atTop = !_controller.hasClients || _controller.offset < 24;
+
+        // When the "context" changes (feed/category/tag/unread/search...), treat
+        // this as a new list rather than an incremental update. We'll still do a
+        // subtle list fade-in (keyed by [contextKey]), but avoid per-item
+        // insertion animations that would otherwise fire for the whole list.
+        final newArticleIds = <int>{};
+        final newHeaderTitles = <String>{};
+        if (contextChanged) {
+          _lastContextKey = contextKey;
+          _seenArticleIds = items.map((a) => a.id).toSet();
+          _seenHeaderTitles = entries
+              .whereType<_HeaderEntry>()
+              .map((e) => e.title)
+              .toSet();
+        } else {
+          for (final a in items) {
+            if (_seenArticleIds.add(a.id)) {
+              newArticleIds.add(a.id);
+            }
+          }
+          for (final e in entries) {
+            if (e is _HeaderEntry && _seenHeaderTitles.add(e.title)) {
+              newHeaderTitles.add(e.title);
+            }
+          }
+        }
+
+        Widget list = Container(
           color: Theme.of(context).colorScheme.surfaceContainerLow,
           child: Scrollbar(
             controller: _controller,
@@ -158,11 +215,22 @@ class _ArticleListState extends ConsumerState<ArticleList> {
 
                 final entry = entries[index];
                 if (entry is _HeaderEntry) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
-                    child: Text(
-                      entry.title,
-                      style: Theme.of(context).textTheme.titleSmall,
+                  final animate =
+                      !contextChanged &&
+                      atTop &&
+                      index < 12 &&
+                      newHeaderTitles.contains(entry.title);
+                  return KeyedSubtree(
+                    key: ValueKey('h-${entry.title}'),
+                    child: Appear(
+                      enabled: animate,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 8),
+                        child: Text(
+                          entry.title,
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                      ),
                     ),
                   );
                 }
@@ -237,12 +305,41 @@ class _ArticleListState extends ConsumerState<ArticleList> {
                       );
                     }
 
-                    return child;
+                    final animate =
+                        !contextChanged &&
+                        atTop &&
+                        index < 16 &&
+                        newArticleIds.contains(seed.id);
+                    return KeyedSubtree(
+                      key: ValueKey('a-${seed.id}'),
+                      child: Appear(enabled: animate, child: child),
+                    );
                   },
                 );
               },
             ),
           ),
+        );
+
+        if (AppMotion.reduceMotion(context)) return list;
+
+        // Keyed "content switch": on context changes, fade/slide in the new list.
+        // This keeps a single ScrollController attached (no AnimatedSwitcher).
+        return TweenAnimationBuilder<double>(
+          key: ValueKey(contextKey),
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          builder: (context, t, child) {
+            return Opacity(
+              opacity: t,
+              child: Transform.translate(
+                offset: Offset(0, (1 - t) * 8),
+                child: child,
+              ),
+            );
+          },
+          child: list,
         );
       },
     );

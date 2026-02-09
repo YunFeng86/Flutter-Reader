@@ -6,11 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
+import '../ui/hero_tags.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
 import '../utils/platform.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
+import '../widgets/sidebar_pane_hero.dart';
+import '../widgets/staggered_reveal.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key, required this.selectedArticleId});
@@ -116,16 +119,57 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           _suppressControllerListener = false;
         }
 
-        final header = Padding(
-          padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (width >= kCompactWidth)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
+        final header = StaggeredReveal(
+          enabled: isDesktop,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (width >= kCompactWidth)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _controller,
+                          focusNode: _focusNode,
+                          autofocus: widget.selectedArticleId == null,
+                          decoration: InputDecoration(
+                            hintText: l10n.search,
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (query.trim().isNotEmpty)
+                                  IconButton(
+                                    tooltip: l10n.delete,
+                                    onPressed: () => _applyQuery(''),
+                                    icon: const Icon(Icons.clear),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          textInputAction: TextInputAction.search,
+                          onSubmitted: _applyQuery,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      FilterChip(
+                        label: Text(l10n.searchInContent),
+                        selected: searchInContent,
+                        onSelected: (v) async {
+                          await ref
+                              .read(appSettingsProvider.notifier)
+                              .setSearchInContent(v);
+                        },
+                      ),
+                    ],
+                  )
+                else
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
                         controller: _controller,
                         focusNode: _focusNode,
                         autofocus: widget.selectedArticleId == null,
@@ -147,61 +191,23 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         textInputAction: TextInputAction.search,
                         onSubmitted: _applyQuery,
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    FilterChip(
-                      label: Text(l10n.searchInContent),
-                      selected: searchInContent,
-                      onSelected: (v) async {
-                        await ref
-                            .read(appSettingsProvider.notifier)
-                            .setSearchInContent(v);
-                      },
-                    ),
-                  ],
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: _controller,
-                      focusNode: _focusNode,
-                      autofocus: widget.selectedArticleId == null,
-                      decoration: InputDecoration(
-                        hintText: l10n.search,
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (query.trim().isNotEmpty)
-                              IconButton(
-                                tooltip: l10n.delete,
-                                onPressed: () => _applyQuery(''),
-                                icon: const Icon(Icons.clear),
-                              ),
-                          ],
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: FilterChip(
+                          label: Text(l10n.searchInContent),
+                          selected: searchInContent,
+                          onSelected: (v) async {
+                            await ref
+                                .read(appSettingsProvider.notifier)
+                                .setSearchInContent(v);
+                          },
                         ),
                       ),
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: _applyQuery,
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: FilterChip(
-                        label: Text(l10n.searchInContent),
-                        selected: searchInContent,
-                        onSelected: (v) async {
-                          await ref
-                              .read(appSettingsProvider.notifier)
-                              .setSearchInContent(v);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-            ],
+                    ],
+                  ),
+              ],
+            ),
           ),
         );
 
@@ -258,7 +264,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           content = Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(width: kDesktopListWidth, child: listPane()),
+              SizedBox(width: 0, child: const SidebarPaneHero()),
+              Hero(
+                tag: kHeroArticleListPane,
+                child: RepaintBoundary(
+                  child: SizedBox(width: kDesktopListWidth, child: listPane()),
+                ),
+              ),
               const VerticalDivider(width: 1),
               Expanded(child: readerPane(embedded: true)),
             ],

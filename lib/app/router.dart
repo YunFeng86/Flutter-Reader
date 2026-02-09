@@ -12,8 +12,34 @@ import '../utils/platform.dart';
 import '../ui/app_shell.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
+import '../ui/motion.dart';
+
+const _homeSectionKey = ValueKey<String>('home-section');
+const _savedSectionKey = ValueKey<String>('saved-section');
+const _searchSectionKey = ValueKey<String>('search-section');
 
 final routerProvider = Provider<GoRouter>((ref) {
+  Page<void> sectionPage({
+    required GoRouterState state,
+    required Widget child,
+    LocalKey? pageKey,
+  }) {
+    return CustomTransitionPage<void>(
+      key: pageKey ?? state.pageKey,
+      transitionDuration: AppMotion.pageTransitionDuration,
+      reverseTransitionDuration: AppMotion.pageReverseTransitionDuration,
+      child: child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return AppMotion.sectionTransition(
+          context: context,
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          child: child,
+        );
+      },
+    );
+  }
+
   return GoRouter(
     errorPageBuilder: (context, state) {
       return const NoTransitionPage(child: _NotFoundScreen());
@@ -28,8 +54,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/',
             name: 'home',
             pageBuilder: (context, state) {
-              return const NoTransitionPage(
-                child: HomeScreen(selectedArticleId: null),
+              return sectionPage(
+                state: state,
+                pageKey: _homeSectionKey,
+                child: const HomeScreen(selectedArticleId: null),
               );
             },
           ),
@@ -46,7 +74,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
               if (isDesktop) {
                 if (spec.desktopEmbedsReader) {
-                  return NoTransitionPage(
+                  return sectionPage(
+                    state: state,
+                    pageKey: _homeSectionKey,
                     child: HomeScreen(selectedArticleId: id),
                   );
                 }
@@ -57,7 +87,9 @@ final routerProvider = Provider<GoRouter>((ref) {
               // Non-desktop: only embed the reader when it can keep a minimum
               // comfortable measure; otherwise use a dedicated reader page.
               if (spec.canEmbedReader(listWidth: kHomeListWidth)) {
-                return NoTransitionPage(
+                return sectionPage(
+                  state: state,
+                  pageKey: _homeSectionKey,
                   child: HomeScreen(selectedArticleId: id),
                 );
               }
@@ -71,8 +103,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/saved',
             name: 'saved',
             pageBuilder: (context, state) {
-              return const NoTransitionPage(
-                child: SavedScreen(selectedArticleId: null),
+              return sectionPage(
+                state: state,
+                pageKey: _savedSectionKey,
+                child: const SavedScreen(selectedArticleId: null),
               );
             },
             routes: [
@@ -89,7 +123,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
                   if (isDesktop) {
                     if (spec.desktopEmbedsReader) {
-                      return NoTransitionPage(
+                      return sectionPage(
+                        state: state,
+                        pageKey: _savedSectionKey,
                         child: SavedScreen(selectedArticleId: id),
                       );
                     }
@@ -102,7 +138,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                   }
 
                   if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
-                    return NoTransitionPage(
+                    return sectionPage(
+                      state: state,
+                      pageKey: _savedSectionKey,
                       child: SavedScreen(selectedArticleId: id),
                     );
                   }
@@ -121,8 +159,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/search',
             name: 'search',
             pageBuilder: (context, state) {
-              return const NoTransitionPage(
-                child: SearchScreen(selectedArticleId: null),
+              return sectionPage(
+                state: state,
+                pageKey: _searchSectionKey,
+                child: const SearchScreen(selectedArticleId: null),
               );
             },
             routes: [
@@ -139,7 +179,9 @@ final routerProvider = Provider<GoRouter>((ref) {
 
                   if (isDesktop) {
                     if (spec.desktopEmbedsReader) {
-                      return NoTransitionPage(
+                      return sectionPage(
+                        state: state,
+                        pageKey: _searchSectionKey,
                         child: SearchScreen(selectedArticleId: id),
                       );
                     }
@@ -152,7 +194,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                   }
 
                   if (spec.canEmbedReader(listWidth: kDesktopListWidth)) {
-                    return NoTransitionPage(
+                    return sectionPage(
+                      state: state,
+                      pageKey: _searchSectionKey,
                       child: SearchScreen(selectedArticleId: id),
                     );
                   }
@@ -171,7 +215,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/settings',
             name: 'settings',
             pageBuilder: (context, state) {
-              return const NoTransitionPage(child: SettingsScreen());
+              return sectionPage(state: state, child: const SettingsScreen());
             },
           ),
         ],
