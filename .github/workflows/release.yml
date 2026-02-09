@@ -51,7 +51,7 @@ jobs:
             archive-cmd: |
               cd build/linux/x64/release/bundle
               tar -czf "$GITHUB_WORKSPACE/fleur-linux-x64.tar.gz" *
-            deps-cmd: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev
+            deps-cmd: sudo apt-get update && sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-dev
 
     runs-on: ${{ matrix.os }}
 
