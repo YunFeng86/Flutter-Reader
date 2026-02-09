@@ -77,6 +77,7 @@ class ArticleCacheService {
   Future<int> cacheArticles(
     Iterable<Article> articles, {
     int maxConcurrentArticles = 2,
+    int maxImagesPerArticle = 24,
   }) async {
     final maxConcurrent = maxConcurrentArticles < 1 ? 1 : maxConcurrentArticles;
     int count = 0;
@@ -87,10 +88,13 @@ class ArticleCacheService {
           ? article.extractedContentHtml
           : article.contentHtml;
       if (content == null || content.trim().isEmpty) continue;
+      final maxImages = maxImagesPerArticle < 0 ? 0 : maxImagesPerArticle;
+      if (maxImages == 0) continue;
       batch.add(
         prefetchImagesFromHtml(
           content,
           baseUrl: Uri.tryParse(article.link),
+          maxImages: maxImages,
           maxConcurrent: 3,
         ),
       );

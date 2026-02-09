@@ -408,6 +408,77 @@ class AppLocalizationsEn extends AppLocalizations {
   String get services => 'Services';
 
   @override
+  String get account => 'Account';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get addLocal => 'Add Local';
+
+  @override
+  String get addLocalAccount => 'Add Local Account';
+
+  @override
+  String get addMiniflux => 'Add Miniflux';
+
+  @override
+  String get minifluxStrategy => 'Miniflux strategy';
+
+  @override
+  String get minifluxStrategySubtitle =>
+      'Controls how much data is fetched/prefetched during sync.';
+
+  @override
+  String get minifluxEntriesLimit => 'Entries per sync';
+
+  @override
+  String get minifluxWebFetchMode => 'Web page fetching';
+
+  @override
+  String get minifluxWebFetchModeSubtitle =>
+      'When \"Download Web Pages during Sync\" is enabled.';
+
+  @override
+  String get minifluxWebFetchModeClient => 'Client (Readability)';
+
+  @override
+  String get minifluxWebFetchModeServer => 'Server (Miniflux fetch-content)';
+
+  @override
+  String get unlimited => 'Unlimited';
+
+  @override
+  String get fieldName => 'Name';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get show => 'Show';
+
+  @override
+  String get hide => 'Hide';
+
+  @override
+  String get missingRequiredFields => 'Missing required fields';
+
+  @override
+  String get invalidBaseUrl => 'Invalid base URL';
+
+  @override
+  String get onlySupportedInLocalAccount => 'Only supported in Local account';
+
+  @override
   String get autoRefresh => 'Auto refresh';
 
   @override

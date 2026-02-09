@@ -56,50 +56,70 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 
 final outboxStoreProvider = Provider<OutboxStore>((ref) => OutboxStore());
 
-final syncServiceProvider = Provider<SyncServiceBase>((ref) {
-  final account = ref.watch(activeAccountProvider);
-  final feeds = ref.watch(feedRepositoryProvider);
-  final categories = ref.watch(categoryRepositoryProvider);
-  final articles = ref.watch(articleRepositoryProvider);
+final syncServiceProvider = Provider<SyncServiceBase>(
+  (ref) {
+    final account = ref.watch(activeAccountProvider);
+    final feeds = ref.watch(feedRepositoryProvider);
+    final categories = ref.watch(categoryRepositoryProvider);
+    final articles = ref.watch(articleRepositoryProvider);
 
-  switch (account.type) {
-    case AccountType.local:
-      return SyncService(
-        feeds: feeds,
-        categories: categories,
-        articles: articles,
-        client: ref.watch(rssClientProvider),
-        parser: ref.watch(feedParserProvider),
-        notifications: ref.watch(notificationServiceProvider),
-        cache: ref.watch(articleCacheServiceProvider),
-        extractor: ref.watch(articleExtractorProvider),
-        appSettingsStore: ref.watch(appSettingsStoreProvider),
-      );
-    case AccountType.miniflux:
-      return MinifluxSyncService(
-        account: account,
-        dio: ref.watch(dioProvider),
-        credentials: ref.watch(credentialStoreProvider),
-        feeds: feeds,
-        categories: categories,
-        articles: articles,
-        outbox: ref.watch(outboxStoreProvider),
-      );
-    case AccountType.fever:
-      // TODO: implement Fever adapter (M2).
-      return SyncService(
-        feeds: feeds,
-        categories: categories,
-        articles: articles,
-        client: ref.watch(rssClientProvider),
-        parser: ref.watch(feedParserProvider),
-        notifications: ref.watch(notificationServiceProvider),
-        cache: ref.watch(articleCacheServiceProvider),
-        extractor: ref.watch(articleExtractorProvider),
-        appSettingsStore: ref.watch(appSettingsStoreProvider),
-      );
-  }
-});
+    switch (account.type) {
+      case AccountType.local:
+        return SyncService(
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          client: ref.watch(rssClientProvider),
+          parser: ref.watch(feedParserProvider),
+          notifications: ref.watch(notificationServiceProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          extractor: ref.watch(articleExtractorProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+        );
+      case AccountType.miniflux:
+        return MinifluxSyncService(
+          account: account,
+          dio: ref.watch(dioProvider),
+          credentials: ref.watch(credentialStoreProvider),
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          outbox: ref.watch(outboxStoreProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          extractor: ref.watch(articleExtractorProvider),
+        );
+      case AccountType.fever:
+        // TODO: implement Fever adapter (M2).
+        return SyncService(
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          client: ref.watch(rssClientProvider),
+          parser: ref.watch(feedParserProvider),
+          notifications: ref.watch(notificationServiceProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          extractor: ref.watch(articleExtractorProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+        );
+    }
+  },
+  dependencies: [
+    activeAccountProvider,
+    feedRepositoryProvider,
+    categoryRepositoryProvider,
+    articleRepositoryProvider,
+    rssClientProvider,
+    feedParserProvider,
+    notificationServiceProvider,
+    articleCacheServiceProvider,
+    articleExtractorProvider,
+    appSettingsStoreProvider,
+    dioProvider,
+    credentialStoreProvider,
+    outboxStoreProvider,
+  ],
+);
 
 final articleExtractorProvider = Provider<ArticleExtractor>((ref) {
   return ArticleExtractor(ref.watch(dioProvider));
@@ -137,14 +157,25 @@ final articleCacheServiceProvider = Provider<ArticleCacheService>((ref) {
   );
 });
 
-final articleActionServiceProvider = Provider<ArticleActionService>((ref) {
-  return ArticleActionService(
-    account: ref.watch(activeAccountProvider),
-    articles: ref.watch(articleRepositoryProvider),
-    feeds: ref.watch(feedRepositoryProvider),
-    categories: ref.watch(categoryRepositoryProvider),
-    dio: ref.watch(dioProvider),
-    credentials: ref.watch(credentialStoreProvider),
-    outbox: ref.watch(outboxStoreProvider),
-  );
-});
+final articleActionServiceProvider = Provider<ArticleActionService>(
+  (ref) {
+    return ArticleActionService(
+      account: ref.watch(activeAccountProvider),
+      articles: ref.watch(articleRepositoryProvider),
+      feeds: ref.watch(feedRepositoryProvider),
+      categories: ref.watch(categoryRepositoryProvider),
+      dio: ref.watch(dioProvider),
+      credentials: ref.watch(credentialStoreProvider),
+      outbox: ref.watch(outboxStoreProvider),
+    );
+  },
+  dependencies: [
+    activeAccountProvider,
+    articleRepositoryProvider,
+    feedRepositoryProvider,
+    categoryRepositoryProvider,
+    dioProvider,
+    credentialStoreProvider,
+    outboxStoreProvider,
+  ],
+);

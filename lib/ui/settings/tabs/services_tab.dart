@@ -36,61 +36,72 @@ class ServicesTab extends ConsumerWidget {
       final concurrency = appSettings.autoRefreshConcurrency;
 
       if (!context.mounted) return;
+      final navigator = Navigator.of(context, rootNavigator: true);
 
       // Show progress dialog.
       final progressNotifier = ValueNotifier<String>('0/${feeds.length}');
-      unawaited(
-        showDialog<void>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return PopScope(
-              canPop: false,
-              child: AlertDialog(
-                content: Row(
-                  children: [
-                    const CircularProgressIndicator(),
-                    const SizedBox(width: 24),
-                    ValueListenableBuilder<String>(
-                      valueListenable: progressNotifier,
-                      builder: (context, value, _) {
-                        return Text(
-                          l10n.refreshingProgress(
-                            int.tryParse(value.split('/')[0]) ?? 0,
-                            int.tryParse(value.split('/')[1]) ?? feeds.length,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+      try {
+        unawaited(
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return PopScope(
+                canPop: false,
+                child: AlertDialog(
+                  content: Row(
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(width: 24),
+                      ValueListenableBuilder<String>(
+                        valueListenable: progressNotifier,
+                        builder: (context, value, _) {
+                          return Text(
+                            l10n.refreshingProgress(
+                              int.tryParse(value.split('/')[0]) ?? 0,
+                              int.tryParse(value.split('/')[1]) ?? feeds.length,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ).then((_) {}),
-      );
-
-      final batch = await ref
-          .read(syncServiceProvider)
-          .refreshFeedsSafe(
-            feeds.map((f) => f.id),
-            maxConcurrent: concurrency,
-            onProgress: (current, total) {
-              progressNotifier.value = '$current/$total';
+              );
             },
-          );
+          ).then((_) {}),
+        );
 
-      if (!context.mounted) return;
-      Navigator.of(context).pop(); // Close progress dialog.
+        final batch = await ref
+            .read(syncServiceProvider)
+            .refreshFeedsSafe(
+              feeds.map((f) => f.id),
+              maxConcurrent: concurrency,
+              onProgress: (current, total) {
+                progressNotifier.value = '$current/$total';
+              },
+            );
 
-      final err = batch.firstError?.error;
-      context.showSnack(
-        err == null ? l10n.refreshedAll : l10n.errorMessage(err.toString()),
-      );
+        final err = batch.firstError?.error;
+        if (!context.mounted) return;
+        context.showSnack(
+          err == null ? l10n.refreshedAll : l10n.errorMessage(err.toString()),
+        );
+      } finally {
+        // Close progress dialog even if the settings page was popped.
+        try {
+          if (navigator.mounted && navigator.canPop()) {
+            navigator.pop();
+          }
+        } catch (_) {
+          // ignore: best-effort cleanup
+        }
+        progressNotifier.dispose();
+      }
     }
 
     Future<void> addMiniflux() async {
-      final nameCtrl = TextEditingController(text: 'Miniflux');
+      final nameCtrl = TextEditingController(text: l10n.miniflux);
       final baseUrlCtrl = TextEditingController();
       final tokenCtrl = TextEditingController();
       bool obscure = true;
@@ -101,11 +112,11 @@ class ServicesTab extends ConsumerWidget {
         final token = tokenCtrl.text.trim();
         final uri = Uri.tryParse(baseUrl);
         if (name.isEmpty || baseUrl.isEmpty || token.isEmpty) {
-          context.showSnack(l10n.errorMessage('Missing required fields'));
+          context.showSnack(l10n.errorMessage(l10n.missingRequiredFields));
           return;
         }
         if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
-          context.showSnack(l10n.errorMessage('Invalid base URL'));
+          context.showSnack(l10n.errorMessage(l10n.invalidBaseUrl));
           return;
         }
 
@@ -132,7 +143,7 @@ class ServicesTab extends ConsumerWidget {
           return StatefulBuilder(
             builder: (context, setState) {
               return AlertDialog(
-                title: const Text('Add Miniflux'),
+                title: Text(l10n.addMiniflux),
                 content: SizedBox(
                   width: 520,
                   child: Column(
@@ -140,14 +151,14 @@ class ServicesTab extends ConsumerWidget {
                     children: [
                       TextField(
                         controller: nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Name'),
+                        decoration: InputDecoration(labelText: l10n.fieldName),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: baseUrlCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Base URL',
-                          hintText: 'https://miniflux.example.com',
+                        decoration: InputDecoration(
+                          labelText: l10n.baseUrl,
+                          hintText: l10n.minifluxBaseUrlHint,
                         ),
                         keyboardType: TextInputType.url,
                       ),
@@ -156,9 +167,9 @@ class ServicesTab extends ConsumerWidget {
                         controller: tokenCtrl,
                         obscureText: obscure,
                         decoration: InputDecoration(
-                          labelText: 'API Token',
+                          labelText: l10n.apiToken,
                           suffixIcon: IconButton(
-                            tooltip: obscure ? 'Show' : 'Hide',
+                            tooltip: obscure ? l10n.show : l10n.hide,
                             icon: Icon(
                               obscure ? Icons.visibility : Icons.visibility_off,
                             ),
@@ -187,16 +198,16 @@ class ServicesTab extends ConsumerWidget {
     }
 
     Future<void> addLocal() async {
-      final nameCtrl = TextEditingController(text: 'Local');
+      final nameCtrl = TextEditingController(text: l10n.local);
       if (!context.mounted) return;
       final name = await showDialog<String?>(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: const Text('Add Local Account'),
+            title: Text(l10n.addLocalAccount),
             content: TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Name'),
+              decoration: InputDecoration(labelText: l10n.fieldName),
               autofocus: true,
             ),
             actions: [
@@ -242,7 +253,7 @@ class ServicesTab extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        'Account',
+                        l10n.account,
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 8),
@@ -279,12 +290,12 @@ class ServicesTab extends ConsumerWidget {
                           const SizedBox(width: 8),
                           OutlinedButton(
                             onPressed: addLocal,
-                            child: const Text('Add Local'),
+                            child: Text(l10n.addLocal),
                           ),
                           const SizedBox(width: 8),
                           OutlinedButton(
                             onPressed: addMiniflux,
-                            child: const Text('Add Miniflux'),
+                            child: Text(l10n.addMiniflux),
                           ),
                         ],
                       ),
@@ -362,6 +373,93 @@ class ServicesTab extends ConsumerWidget {
                     ],
                   ),
                 ),
+                if (activeAccount.type == AccountType.miniflux) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.minifluxStrategy,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.minifluxStrategySubtitle,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.minifluxEntriesLimit,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            value: appSettings.minifluxEntriesLimit,
+                            isExpanded: true,
+                            items: [
+                              for (final v in const [100, 200, 400, 800, 1200])
+                                DropdownMenuItem(value: v, child: Text('$v')),
+                              DropdownMenuItem(
+                                value: 0,
+                                child: Text(l10n.unlimited),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              unawaited(
+                                ref
+                                    .read(appSettingsProvider.notifier)
+                                    .setMinifluxEntriesLimit(v),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.minifluxWebFetchMode,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.minifluxWebFetchModeSubtitle,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<MinifluxWebFetchMode>(
+                            value: appSettings.minifluxWebFetchMode,
+                            isExpanded: true,
+                            items: [
+                              DropdownMenuItem(
+                                value: MinifluxWebFetchMode.clientReadability,
+                                child: Text(l10n.minifluxWebFetchModeClient),
+                              ),
+                              DropdownMenuItem(
+                                value: MinifluxWebFetchMode.serverFetchContent,
+                                child: Text(l10n.minifluxWebFetchModeServer),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v == null) return;
+                              unawaited(
+                                ref
+                                    .read(appSettingsProvider.notifier)
+                                    .setMinifluxWebFetchMode(v),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

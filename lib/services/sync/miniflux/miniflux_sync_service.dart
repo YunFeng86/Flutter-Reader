@@ -1,16 +1,22 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide Category;
 import 'package:dio/dio.dart';
+import 'package:pool/pool.dart';
 
 import '../../../models/article.dart';
+import '../../../models/category.dart';
 import '../../../models/feed.dart';
 import '../../../repositories/article_repository.dart';
 import '../../../repositories/category_repository.dart';
 import '../../../repositories/feed_repository.dart';
 import '../../accounts/account.dart';
 import '../../accounts/credential_store.dart';
+import '../../cache/article_cache_service.dart';
+import '../../extract/article_extractor.dart';
 import '../../settings/app_settings.dart';
+import '../../settings/app_settings_store.dart';
+import '../effective_feed_settings.dart';
 import '../outbox/outbox_store.dart';
 import '../sync_service.dart';
 import 'miniflux_client.dart';
@@ -24,12 +30,18 @@ class MinifluxSyncService implements SyncServiceBase {
     required CategoryRepository categories,
     required ArticleRepository articles,
     required OutboxStore outbox,
+    required AppSettingsStore appSettingsStore,
+    required ArticleCacheService cache,
+    required ArticleExtractor extractor,
   }) : _dio = dio,
        _credentials = credentials,
        _feeds = feeds,
        _categories = categories,
        _articles = articles,
-       _outbox = outbox;
+       _outbox = outbox,
+       _appSettingsStore = appSettingsStore,
+       _cache = cache,
+       _extractor = extractor;
 
   final Account account;
 
@@ -39,10 +51,45 @@ class MinifluxSyncService implements SyncServiceBase {
   final CategoryRepository _categories;
   final ArticleRepository _articles;
   final OutboxStore _outbox;
+  final AppSettingsStore _appSettingsStore;
+  final ArticleCacheService _cache;
+  final ArticleExtractor _extractor;
 
   @override
   Future<int> offlineCacheFeed(int feedId) async {
-    // Cache service is wired in the Local SyncService; keep remote M1 minimal.
+    final feed = await _feeds.getById(feedId);
+    if (feed == null) return 0;
+    final appSettings = await _appSettingsStore.load();
+    final settings = await _resolveSettings(feed, appSettings);
+    final unread = await _articles.getUnread(feedId: feedId);
+
+    // Best-effort: do not throw to callers.
+    try {
+      // If web pages are enabled, prefer extracting + caching from extracted HTML.
+      if (settings.syncWebPages && unread.isNotEmpty) {
+        MinifluxClient? client;
+        final preferServerFetch =
+            appSettings.minifluxWebFetchMode ==
+            MinifluxWebFetchMode.serverFetchContent;
+        if (preferServerFetch) {
+          try {
+            client = await _buildClient();
+          } catch (_) {
+            client = null;
+          }
+        }
+        await _syncWebPagesForArticles(
+          unread,
+          client: client,
+          preferServerFetch: preferServerFetch,
+          webUserAgent: appSettings.webUserAgent,
+          syncImages: settings.syncImages,
+        );
+      }
+      if (settings.syncImages && unread.isNotEmpty) {
+        return await _cache.cacheArticles(unread);
+      }
+    } catch (_) {}
     return 0;
   }
 
@@ -93,9 +140,15 @@ class MinifluxSyncService implements SyncServiceBase {
     }
   }
 
-  Future<void> syncNow({int entriesLimit = 400}) async {
+  Future<void> syncNow({int? entriesLimit}) async {
     final client = await _buildClient();
     await _flushOutbox(client);
+    final appSettings = await _appSettingsStore.load();
+    final effectiveEntriesLimit =
+        entriesLimit ?? appSettings.minifluxEntriesLimit;
+    final preferServerFetch =
+        appSettings.minifluxWebFetchMode ==
+        MinifluxWebFetchMode.serverFetchContent;
 
     final cats = await client.getCategories();
     final remoteCatIdToLocalId = <int, int>{};
@@ -109,6 +162,8 @@ class MinifluxSyncService implements SyncServiceBase {
 
     final feeds = await client.getFeeds();
     final remoteFeedIdToLocalFeed = <int, Feed>{};
+    final localFeedIdToFeed = <int, Feed>{};
+    final localFeedIdToSettings = <int, EffectiveFeedSettings>{};
     for (final f in feeds) {
       final id = f['id'];
       final feedUrl = f['feed_url'];
@@ -124,20 +179,72 @@ class MinifluxSyncService implements SyncServiceBase {
       }
       final local = await _feeds.getById(localId);
       if (local != null) {
+        final settings = await _resolveSettings(local, appSettings);
         await _feeds.updateMeta(
           id: local.id,
           title: f['title'] as String?,
           siteUrl: f['site_url'] as String?,
           description: f['description'] as String?,
-          lastSyncedAt: DateTime.now(),
+          lastSyncedAt: settings.syncEnabled ? DateTime.now() : null,
         );
         remoteFeedIdToLocalFeed[id] = local;
+        localFeedIdToFeed[local.id] = local;
+        localFeedIdToSettings[local.id] = settings;
       }
     }
 
-    final entries = await client.getEntries(limit: entriesLimit, status: 'all');
-    final raw = entries['entries'];
-    if (raw is! List) return;
+    // 0 means "unlimited": paginate until server has no more entries.
+    if (effectiveEntriesLimit == 0) {
+      const pageSize = 1000;
+      var offset = 0;
+      while (true) {
+        final r = await _syncEntriesBatch(
+          client,
+          appSettings,
+          remoteFeedIdToLocalFeed: remoteFeedIdToLocalFeed,
+          localFeedIdToFeed: localFeedIdToFeed,
+          localFeedIdToSettings: localFeedIdToSettings,
+          limit: pageSize,
+          offset: offset,
+          preferServerFetch: preferServerFetch,
+        );
+        if (r.processed == 0) break;
+        offset += r.processed;
+        if (r.total != null && offset >= r.total!) break;
+        if (r.processed < pageSize) break;
+      }
+      return;
+    }
+
+    if (effectiveEntriesLimit < 0) return;
+    await _syncEntriesBatch(
+      client,
+      appSettings,
+      remoteFeedIdToLocalFeed: remoteFeedIdToLocalFeed,
+      localFeedIdToFeed: localFeedIdToFeed,
+      localFeedIdToSettings: localFeedIdToSettings,
+      limit: effectiveEntriesLimit,
+      offset: 0,
+      preferServerFetch: preferServerFetch,
+    );
+  }
+
+  Future<({int processed, int? total})> _syncEntriesBatch(
+    MinifluxClient client,
+    AppSettings appSettings, {
+    required Map<int, Feed> remoteFeedIdToLocalFeed,
+    required Map<int, Feed> localFeedIdToFeed,
+    required Map<int, EffectiveFeedSettings> localFeedIdToSettings,
+    required int limit,
+    required int offset,
+    required bool preferServerFetch,
+  }) async {
+    if (limit <= 0) return (processed: 0, total: null);
+    final resp = await client.getEntries(limit: limit, offset: offset);
+    final raw = resp['entries'];
+    final totalRaw = resp['total'];
+    final total = totalRaw is int ? totalRaw : null;
+    if (raw is! List) return (processed: 0, total: total);
 
     // Group by local feed id for ArticleRepository.upsertMany() calls.
     final byLocalFeedId = <int, List<Article>>{};
@@ -149,6 +256,8 @@ class MinifluxSyncService implements SyncServiceBase {
       if (remoteEntryId is! int || remoteFeedId is! int) continue;
       final localFeed = remoteFeedIdToLocalFeed[remoteFeedId];
       if (localFeed == null) continue;
+      final effectiveSettings = localFeedIdToSettings[localFeed.id];
+      if (effectiveSettings != null && !effectiveSettings.syncEnabled) continue;
 
       final url = m['url'] as String? ?? '';
       if (url.trim().isEmpty) continue;
@@ -180,11 +289,41 @@ class MinifluxSyncService implements SyncServiceBase {
 
     for (final entry in byLocalFeedId.entries) {
       // Remote-backed: we want remote read/star state to be authoritative.
-      await _articles.upsertMany(
+      final newArticles = await _articles.upsertMany(
         entry.key,
         entry.value,
         preserveUserState: false,
       );
+
+      // Best-effort offline "inventory": cache/extract newly discovered items.
+      if (newArticles.isNotEmpty) {
+        final feed =
+            localFeedIdToFeed[entry.key] ?? await _feeds.getById(entry.key);
+        if (feed != null) {
+          final settings =
+              localFeedIdToSettings[feed.id] ??
+              await _resolveSettings(feed, appSettings);
+          await _prefetchNewArticles(
+            newArticles,
+            settings,
+            appSettings,
+            client: client,
+            preferServerFetch: preferServerFetch,
+          );
+        }
+      }
+    }
+
+    return (processed: raw.length, total: total);
+  }
+
+  Future<bool> flushOutboxSafe() async {
+    try {
+      final client = await _buildClient();
+      await _flushOutbox(client);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -273,7 +412,9 @@ class MinifluxSyncService implements SyncServiceBase {
             }
             break;
           case OutboxActionType.markAllRead:
-            final feedUrl = a.feedUrl == null ? null : normalizeFeedUrl(a.feedUrl!);
+            final feedUrl = a.feedUrl == null
+                ? null
+                : normalizeFeedUrl(a.feedUrl!);
             final catTitle = a.categoryTitle?.trim();
             if (feedUrl != null && feedUrl.isNotEmpty) {
               final map = await getFeedUrlMap();
@@ -286,7 +427,9 @@ class MinifluxSyncService implements SyncServiceBase {
               final map = await getCategoryTitleMap();
               final remoteCatId = map[catTitle];
               if (remoteCatId == null) {
-                throw StateError('Remote category not found for title: $catTitle');
+                throw StateError(
+                  'Remote category not found for title: $catTitle',
+                );
               }
               await client.markCategoryAllAsRead(remoteCatId);
             } else {
@@ -320,5 +463,112 @@ class MinifluxSyncService implements SyncServiceBase {
   static DateTime? _parseIso(Object? v) {
     if (v is String) return DateTime.tryParse(v)?.toUtc();
     return null;
+  }
+
+  Future<EffectiveFeedSettings> _resolveSettings(
+    Feed feed,
+    AppSettings appSettings,
+  ) async {
+    final categoryId = feed.categoryId;
+    final Category? category = categoryId == null
+        ? null
+        : await _categories.getById(categoryId);
+    return EffectiveFeedSettings.resolve(feed, category, appSettings);
+  }
+
+  Future<void> _prefetchNewArticles(
+    List<Article> newArticles,
+    EffectiveFeedSettings settings,
+    AppSettings appSettings, {
+    required MinifluxClient client,
+    required bool preferServerFetch,
+  }) async {
+    // Best-effort prefetch; do not break sync flow.
+    if (newArticles.isEmpty) return;
+
+    // Mirror local SyncService behavior: cache feed/extracted images first.
+    if (settings.syncImages) {
+      try {
+        // Avoid accidental long stalls when syncing a large batch.
+        const maxArticles = 30;
+        final targets = newArticles.length <= maxArticles
+            ? newArticles
+            : newArticles.sublist(0, maxArticles);
+        await _cache.cacheArticles(targets);
+      } catch (_) {}
+    }
+
+    if (settings.syncWebPages) {
+      try {
+        await _syncWebPagesForArticles(
+          newArticles,
+          client: client,
+          preferServerFetch: preferServerFetch,
+          webUserAgent: appSettings.webUserAgent,
+          syncImages: settings.syncImages,
+        );
+      } catch (_) {}
+    }
+  }
+
+  static const int _maxWebPagesPerSync = 8;
+
+  Future<void> _syncWebPagesForArticles(
+    List<Article> articles, {
+    required MinifluxClient? client,
+    required bool preferServerFetch,
+    required String webUserAgent,
+    required bool syncImages,
+  }) async {
+    final pool = Pool(2);
+    final targets = articles.length <= _maxWebPagesPerSync
+        ? articles
+        : articles.sublist(0, _maxWebPagesPerSync);
+
+    final futures = <Future<void>>[];
+    for (final a in targets) {
+      futures.add(
+        pool.withResource(() async {
+          try {
+            // Skip if already extracted (common when re-syncing the same window).
+            if ((a.extractedContentHtml ?? '').trim().isNotEmpty) return;
+
+            String html = '';
+            if (preferServerFetch && client != null) {
+              final rid = int.tryParse((a.remoteId ?? '').trim());
+              if (rid != null) {
+                html = await client.fetchEntryContent(rid);
+              }
+            }
+            if (html.trim().isEmpty) {
+              final extracted = await _extractor.extract(
+                a.link,
+                userAgent: webUserAgent,
+              );
+              html = extracted.contentHtml;
+            }
+
+            if (html.trim().isEmpty) {
+              await _articles.markExtractionFailed(a.id);
+              return;
+            }
+            await _articles.setExtractedContent(a.id, html);
+
+            if (syncImages) {
+              await _cache.prefetchImagesFromHtml(
+                html,
+                baseUrl: Uri.tryParse(a.link),
+                maxConcurrent: 3,
+              );
+            }
+          } catch (_) {
+            // Best-effort: don't persist failure for transient network errors.
+          }
+        }),
+      );
+    }
+
+    await Future.wait(futures);
+    await pool.close();
   }
 }

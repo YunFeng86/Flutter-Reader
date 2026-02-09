@@ -70,7 +70,7 @@ Future<int?> showAddSubscriptionDialog(
   final account = ref.read(activeAccountProvider);
   if (account.type != AccountType.local) {
     if (context.mounted) {
-      context.showSnack(l10n.errorMessage('Only supported in Local account'));
+      context.showSnack(l10n.errorMessage(l10n.onlySupportedInLocalAccount));
     }
     return null;
   }

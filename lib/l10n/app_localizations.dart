@@ -849,6 +849,144 @@ abstract class AppLocalizations {
   /// **'Services'**
   String get services;
 
+  /// account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// local
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get local;
+
+  /// miniflux
+  ///
+  /// In en, this message translates to:
+  /// **'Miniflux'**
+  String get miniflux;
+
+  /// addLocal
+  ///
+  /// In en, this message translates to:
+  /// **'Add Local'**
+  String get addLocal;
+
+  /// addLocalAccount
+  ///
+  /// In en, this message translates to:
+  /// **'Add Local Account'**
+  String get addLocalAccount;
+
+  /// addMiniflux
+  ///
+  /// In en, this message translates to:
+  /// **'Add Miniflux'**
+  String get addMiniflux;
+
+  /// minifluxStrategy
+  ///
+  /// In en, this message translates to:
+  /// **'Miniflux strategy'**
+  String get minifluxStrategy;
+
+  /// minifluxStrategySubtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Controls how much data is fetched/prefetched during sync.'**
+  String get minifluxStrategySubtitle;
+
+  /// minifluxEntriesLimit
+  ///
+  /// In en, this message translates to:
+  /// **'Entries per sync'**
+  String get minifluxEntriesLimit;
+
+  /// minifluxWebFetchMode
+  ///
+  /// In en, this message translates to:
+  /// **'Web page fetching'**
+  String get minifluxWebFetchMode;
+
+  /// minifluxWebFetchModeSubtitle
+  ///
+  /// In en, this message translates to:
+  /// **'When \"Download Web Pages during Sync\" is enabled.'**
+  String get minifluxWebFetchModeSubtitle;
+
+  /// minifluxWebFetchModeClient
+  ///
+  /// In en, this message translates to:
+  /// **'Client (Readability)'**
+  String get minifluxWebFetchModeClient;
+
+  /// minifluxWebFetchModeServer
+  ///
+  /// In en, this message translates to:
+  /// **'Server (Miniflux fetch-content)'**
+  String get minifluxWebFetchModeServer;
+
+  /// unlimited
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get unlimited;
+
+  /// fieldName
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fieldName;
+
+  /// baseUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get baseUrl;
+
+  /// minifluxBaseUrlHint
+  ///
+  /// In en, this message translates to:
+  /// **'https://miniflux.example.com'**
+  String get minifluxBaseUrlHint;
+
+  /// apiToken
+  ///
+  /// In en, this message translates to:
+  /// **'API Token'**
+  String get apiToken;
+
+  /// show
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get show;
+
+  /// hide
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hide;
+
+  /// missingRequiredFields
+  ///
+  /// In en, this message translates to:
+  /// **'Missing required fields'**
+  String get missingRequiredFields;
+
+  /// invalidBaseUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid base URL'**
+  String get invalidBaseUrl;
+
+  /// onlySupportedInLocalAccount
+  ///
+  /// In en, this message translates to:
+  /// **'Only supported in Local account'**
+  String get onlySupportedInLocalAccount;
+
   /// autoRefresh
   ///
   /// In en, this message translates to:

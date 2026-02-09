@@ -157,7 +157,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 ),
                 const SizedBox(width: 8),
                 PopupMenuButton<String>(
-                  tooltip: 'Account',
+                  tooltip: l10n.account,
                   icon: const Icon(Icons.account_circle_outlined),
                   onSelected: (id) {
                     unawaited(

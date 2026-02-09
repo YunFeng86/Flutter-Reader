@@ -37,4 +37,3 @@ void main() {
     expect(a.categoryTitle, isNull);
   });
 }
-

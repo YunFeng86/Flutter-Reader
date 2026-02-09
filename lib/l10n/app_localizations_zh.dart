@@ -402,6 +402,75 @@ class AppLocalizationsZh extends AppLocalizations {
   String get services => '服务';
 
   @override
+  String get account => '账号';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get addLocal => '添加本地';
+
+  @override
+  String get addLocalAccount => '添加本地账号';
+
+  @override
+  String get addMiniflux => '添加 Miniflux';
+
+  @override
+  String get minifluxStrategy => 'Miniflux 策略';
+
+  @override
+  String get minifluxStrategySubtitle => '控制同步时拉取量与预取行为。';
+
+  @override
+  String get minifluxEntriesLimit => '每次同步拉取条数';
+
+  @override
+  String get minifluxWebFetchMode => '网页抓取方式';
+
+  @override
+  String get minifluxWebFetchModeSubtitle => '当订阅开启“同步时下载 Web 页面”时生效。';
+
+  @override
+  String get minifluxWebFetchModeClient => '客户端（Readability）';
+
+  @override
+  String get minifluxWebFetchModeServer => '服务端（Miniflux fetch-content）';
+
+  @override
+  String get unlimited => '无限制';
+
+  @override
+  String get fieldName => '名称';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get show => '显示';
+
+  @override
+  String get hide => '隐藏';
+
+  @override
+  String get missingRequiredFields => '请填写必填项';
+
+  @override
+  String get invalidBaseUrl => 'Base URL 无效';
+
+  @override
+  String get onlySupportedInLocalAccount => '仅本地账号支持此操作';
+
+  @override
   String get autoRefresh => '自动刷新';
 
   @override
@@ -949,6 +1018,75 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get services => '服務';
+
+  @override
+  String get account => '帳號';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get addLocal => '新增本地';
+
+  @override
+  String get addLocalAccount => '新增本地帳號';
+
+  @override
+  String get addMiniflux => '新增 Miniflux';
+
+  @override
+  String get minifluxStrategy => 'Miniflux 策略';
+
+  @override
+  String get minifluxStrategySubtitle => '控制同步時的拉取量與預取行為。';
+
+  @override
+  String get minifluxEntriesLimit => '每次同步拉取筆數';
+
+  @override
+  String get minifluxWebFetchMode => '網頁抓取方式';
+
+  @override
+  String get minifluxWebFetchModeSubtitle => '當訂閱開啟「同步時下載 Web 頁面」時生效。';
+
+  @override
+  String get minifluxWebFetchModeClient => '用戶端（Readability）';
+
+  @override
+  String get minifluxWebFetchModeServer => '伺服端（Miniflux fetch-content）';
+
+  @override
+  String get unlimited => '無限制';
+
+  @override
+  String get fieldName => '名稱';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get show => '顯示';
+
+  @override
+  String get hide => '隱藏';
+
+  @override
+  String get missingRequiredFields => '請填寫必填欄位';
+
+  @override
+  String get invalidBaseUrl => 'Base URL 無效';
+
+  @override
+  String get onlySupportedInLocalAccount => '僅本地帳號支援此操作';
 
   @override
   String get autoRefresh => '自動重新整理';

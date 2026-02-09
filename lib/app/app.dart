@@ -19,6 +19,7 @@ import '../providers/core_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/auto_refresh_providers.dart';
+import '../providers/outbox_flush_providers.dart';
 import '../providers/unread_providers.dart';
 import '../services/sync/sync_service.dart';
 import '../ui/layout.dart';
@@ -78,6 +79,7 @@ class App extends ConsumerWidget {
     final seedColorPreset =
         appSettings?.seedColorPreset ?? SeedColorPreset.blue;
     ref.watch(autoRefreshControllerProvider);
+    ref.watch(outboxFlushControllerProvider);
     unawaited(ref.watch(notificationServiceProvider).init().catchError((_) {}));
     unawaited(MacOSLocaleBridge.setPreferredLanguage(localeTag));
 

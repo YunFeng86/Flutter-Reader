@@ -545,6 +545,98 @@
   "@services": {
     "description": "services"
   },
+  "account": "账号",
+  "@account": {
+    "description": "account"
+  },
+  "local": "本地",
+  "@local": {
+    "description": "local"
+  },
+  "miniflux": "Miniflux",
+  "@miniflux": {
+    "description": "miniflux"
+  },
+  "addLocal": "添加本地",
+  "@addLocal": {
+    "description": "addLocal"
+  },
+  "addLocalAccount": "添加本地账号",
+  "@addLocalAccount": {
+    "description": "addLocalAccount"
+  },
+  "addMiniflux": "添加 Miniflux",
+  "@addMiniflux": {
+    "description": "addMiniflux"
+  },
+  "minifluxStrategy": "Miniflux 策略",
+  "@minifluxStrategy": {
+    "description": "minifluxStrategy"
+  },
+  "minifluxStrategySubtitle": "控制同步时拉取量与预取行为。",
+  "@minifluxStrategySubtitle": {
+    "description": "minifluxStrategySubtitle"
+  },
+  "minifluxEntriesLimit": "每次同步拉取条数",
+  "@minifluxEntriesLimit": {
+    "description": "minifluxEntriesLimit"
+  },
+  "minifluxWebFetchMode": "网页抓取方式",
+  "@minifluxWebFetchMode": {
+    "description": "minifluxWebFetchMode"
+  },
+  "minifluxWebFetchModeSubtitle": "当订阅开启“同步时下载 Web 页面”时生效。",
+  "@minifluxWebFetchModeSubtitle": {
+    "description": "minifluxWebFetchModeSubtitle"
+  },
+  "minifluxWebFetchModeClient": "客户端（Readability）",
+  "@minifluxWebFetchModeClient": {
+    "description": "minifluxWebFetchModeClient"
+  },
+  "minifluxWebFetchModeServer": "服务端（Miniflux fetch-content）",
+  "@minifluxWebFetchModeServer": {
+    "description": "minifluxWebFetchModeServer"
+  },
+  "unlimited": "无限制",
+  "@unlimited": {
+    "description": "unlimited"
+  },
+  "fieldName": "名称",
+  "@fieldName": {
+    "description": "fieldName"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "baseUrl"
+  },
+  "minifluxBaseUrlHint": "https://miniflux.example.com",
+  "@minifluxBaseUrlHint": {
+    "description": "minifluxBaseUrlHint"
+  },
+  "apiToken": "API Token",
+  "@apiToken": {
+    "description": "apiToken"
+  },
+  "show": "显示",
+  "@show": {
+    "description": "show"
+  },
+  "hide": "隐藏",
+  "@hide": {
+    "description": "hide"
+  },
+  "missingRequiredFields": "请填写必填项",
+  "@missingRequiredFields": {
+    "description": "missingRequiredFields"
+  },
+  "invalidBaseUrl": "Base URL 无效",
+  "@invalidBaseUrl": {
+    "description": "invalidBaseUrl"
+  },
+  "onlySupportedInLocalAccount": "仅本地账号支持此操作",
+  "@onlySupportedInLocalAccount": {
+    "description": "onlySupportedInLocalAccount"
+  },
   "autoRefresh": "自动刷新",
   "@autoRefresh": {
     "description": "autoRefresh"

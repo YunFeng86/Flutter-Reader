@@ -44,7 +44,11 @@ class MinifluxClient {
 
   Future<Map<String, Object?>> getEntries({
     required int limit,
-    required String status, // "unread" | "read" | "removed" | "all"
+    int offset = 0,
+    // Miniflux expects one or more "status" query params.
+    // Docs: status = read | unread | removed (can be repeated).
+    // We default to the common "all visible" set (unread + read).
+    List<String> statuses = const ['unread', 'read'],
     String order = 'published_at',
     String direction = 'desc',
   }) async {
@@ -53,7 +57,8 @@ class MinifluxClient {
       options: _options,
       queryParameters: <String, Object?>{
         'limit': limit,
-        'status': status,
+        if (offset > 0) 'offset': offset,
+        if (statuses.isNotEmpty) 'status': statuses,
         'order': order,
         'direction': direction,
       },
@@ -98,5 +103,22 @@ class MinifluxClient {
       '$_baseUrl/v1/categories/$categoryId/mark-all-as-read',
       options: _options,
     );
+  }
+
+  Future<String> fetchEntryContent(
+    int entryId, {
+    bool updateContent = false,
+  }) async {
+    final resp = await _dio.get(
+      '$_baseUrl/v1/entries/$entryId/fetch-content',
+      options: _options,
+      queryParameters: <String, Object?>{'update_content': updateContent},
+    );
+    final data = resp.data;
+    if (data is Map) {
+      final content = data['content'];
+      if (content is String) return content;
+    }
+    return '';
   }
 }

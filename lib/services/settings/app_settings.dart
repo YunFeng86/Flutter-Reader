@@ -7,6 +7,8 @@ enum ArticleGroupMode { none, day }
 
 enum ArticleSortOrder { newestFirst, oldestFirst }
 
+enum MinifluxWebFetchMode { clientReadability, serverFetchContent }
+
 class AppSettings {
   static const _Unset _unset = _Unset();
 
@@ -28,6 +30,8 @@ class AppSettings {
     this.syncImages = true,
     this.syncWebPages = false,
     this.showAiSummary = false,
+    this.minifluxEntriesLimit = 400,
+    this.minifluxWebFetchMode = MinifluxWebFetchMode.clientReadability,
     this.rssUserAgent = UserAgents.rss,
     // Keep legacy value as a const fallback; prefer [AppSettings.defaults].
     this.webUserAgent = UserAgents.web,
@@ -84,6 +88,16 @@ class AppSettings {
   final bool syncWebPages;
   final bool showAiSummary;
 
+  // --- Remote Service Strategy (Miniflux) ---
+  /// Max number of entries to pull per sync call.
+  ///
+  /// 0 means "unlimited" (paginate until server has no more).
+  final int minifluxEntriesLimit;
+
+  /// How to fetch full web content for Miniflux entries when "syncWebPages" is
+  /// enabled.
+  final MinifluxWebFetchMode minifluxWebFetchMode;
+
   /// User-Agent for RSS/Atom fetches.
   final String rssUserAgent;
 
@@ -108,6 +122,8 @@ class AppSettings {
     bool? syncImages,
     bool? syncWebPages,
     bool? showAiSummary,
+    int? minifluxEntriesLimit,
+    MinifluxWebFetchMode? minifluxWebFetchMode,
     String? rssUserAgent,
     String? webUserAgent,
   }) {
@@ -134,6 +150,8 @@ class AppSettings {
       syncImages: syncImages ?? this.syncImages,
       syncWebPages: syncWebPages ?? this.syncWebPages,
       showAiSummary: showAiSummary ?? this.showAiSummary,
+      minifluxEntriesLimit: minifluxEntriesLimit ?? this.minifluxEntriesLimit,
+      minifluxWebFetchMode: minifluxWebFetchMode ?? this.minifluxWebFetchMode,
       rssUserAgent: rssUserAgent ?? this.rssUserAgent,
       webUserAgent: webUserAgent ?? this.webUserAgent,
     );
@@ -157,6 +175,8 @@ class AppSettings {
     'syncImages': syncImages,
     'syncWebPages': syncWebPages,
     'showAiSummary': showAiSummary,
+    'minifluxEntriesLimit': minifluxEntriesLimit,
+    'minifluxWebFetchMode': minifluxWebFetchMode.name,
     'rssUserAgent': rssUserAgent,
     'webUserAgent': webUserAgent,
   };
@@ -186,6 +206,8 @@ class AppSettings {
     final syncImages = json['syncImages'];
     final syncWebPages = json['syncWebPages'];
     final showAiSummary = json['showAiSummary'];
+    final minifluxEntriesLimit = json['minifluxEntriesLimit'];
+    final minifluxWebFetchMode = json['minifluxWebFetchMode'];
     final rssUserAgent = json['rssUserAgent'];
     final webUserAgent = json['webUserAgent'];
 
@@ -211,6 +233,14 @@ class AppSettings {
         if (p.name == s) return p;
       }
       return SeedColorPreset.blue;
+    }
+
+    MinifluxWebFetchMode parseMinifluxWebFetchMode(Object? v) {
+      final s = v is String ? v : '';
+      for (final m in MinifluxWebFetchMode.values) {
+        if (m.name == s) return m;
+      }
+      return MinifluxWebFetchMode.clientReadability;
     }
 
     return AppSettings(
@@ -239,6 +269,10 @@ class AppSettings {
       syncImages: syncImages is! bool || syncImages,
       syncWebPages: syncWebPages is bool && syncWebPages,
       showAiSummary: showAiSummary is bool && showAiSummary,
+      minifluxEntriesLimit: minifluxEntriesLimit is num
+          ? minifluxEntriesLimit.toInt()
+          : 400,
+      minifluxWebFetchMode: parseMinifluxWebFetchMode(minifluxWebFetchMode),
       rssUserAgent: rssUserAgent is String && rssUserAgent.trim().isNotEmpty
           ? rssUserAgent
           : UserAgents.rss,

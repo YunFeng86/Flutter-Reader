@@ -99,7 +99,10 @@ class ArticleActionService {
   Future<void> markAllRead({int? feedId, int? categoryId}) async {
     final effectiveCategoryId = feedId == null ? categoryId : null;
     final ok = await _runLocalInt(
-      () => _articles.markAllRead(feedId: feedId, categoryId: effectiveCategoryId),
+      () => _articles.markAllRead(
+        feedId: feedId,
+        categoryId: effectiveCategoryId,
+      ),
     );
     if (ok == null) return;
 
@@ -111,11 +114,13 @@ class ArticleActionService {
     );
     // Safety guard: if user targeted a specific scope but we can't resolve the
     // identifier needed for remote replay, do NOT fall back to "all".
-    if (feedId != null && (action.feedUrl == null || action.feedUrl!.trim().isEmpty)) {
+    if (feedId != null &&
+        (action.feedUrl == null || action.feedUrl!.trim().isEmpty)) {
       return;
     }
     if (effectiveCategoryId != null &&
-        (action.categoryTitle == null || action.categoryTitle!.trim().isEmpty)) {
+        (action.categoryTitle == null ||
+            action.categoryTitle!.trim().isEmpty)) {
       return;
     }
     // "Action as fact": persist intent first, then try to apply remotely.
@@ -153,12 +158,17 @@ class ArticleActionService {
     );
   }
 
-  Future<void> _applyMarkAllRead(MinifluxClient client, OutboxAction action) async {
+  Future<void> _applyMarkAllRead(
+    MinifluxClient client,
+    OutboxAction action,
+  ) async {
     String normalizeFeedUrl(String url) {
       return url.trim().replaceAll(RegExp(r'/+$'), '');
     }
 
-    final feedUrl = action.feedUrl == null ? null : normalizeFeedUrl(action.feedUrl!);
+    final feedUrl = action.feedUrl == null
+        ? null
+        : normalizeFeedUrl(action.feedUrl!);
     final catTitle = action.categoryTitle?.trim();
     if (feedUrl != null && feedUrl.isNotEmpty) {
       final feeds = await client.getFeeds();
@@ -171,7 +181,9 @@ class ArticleActionService {
             ),
           )
           .firstWhere((x) => x.url == feedUrl, orElse: () => (id: -1, url: ''));
-      if (remote.id <= 0) throw StateError('Remote feed not found for url: $feedUrl');
+      if (remote.id <= 0) {
+        throw StateError('Remote feed not found for url: $feedUrl');
+      }
       await client.markFeedAllAsRead(remote.id);
       return;
     }
@@ -179,8 +191,13 @@ class ArticleActionService {
       final cats = await client.getCategories();
       final remote = cats
           .where((c) => c['id'] is int && c['title'] is String)
-          .map((c) => (id: c['id'] as int, title: (c['title'] as String).trim()))
-          .firstWhere((x) => x.title == catTitle, orElse: () => (id: -1, title: ''));
+          .map(
+            (c) => (id: c['id'] as int, title: (c['title'] as String).trim()),
+          )
+          .firstWhere(
+            (x) => x.title == catTitle,
+            orElse: () => (id: -1, title: ''),
+          );
       if (remote.id <= 0) {
         throw StateError('Remote category not found for title: $catTitle');
       }

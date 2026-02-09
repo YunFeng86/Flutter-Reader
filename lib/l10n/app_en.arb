@@ -544,6 +544,98 @@
   "@services": {
     "description": "services"
   },
+  "account": "Account",
+  "@account": {
+    "description": "account"
+  },
+  "local": "Local",
+  "@local": {
+    "description": "local"
+  },
+  "miniflux": "Miniflux",
+  "@miniflux": {
+    "description": "miniflux"
+  },
+  "addLocal": "Add Local",
+  "@addLocal": {
+    "description": "addLocal"
+  },
+  "addLocalAccount": "Add Local Account",
+  "@addLocalAccount": {
+    "description": "addLocalAccount"
+  },
+  "addMiniflux": "Add Miniflux",
+  "@addMiniflux": {
+    "description": "addMiniflux"
+  },
+  "minifluxStrategy": "Miniflux strategy",
+  "@minifluxStrategy": {
+    "description": "minifluxStrategy"
+  },
+  "minifluxStrategySubtitle": "Controls how much data is fetched/prefetched during sync.",
+  "@minifluxStrategySubtitle": {
+    "description": "minifluxStrategySubtitle"
+  },
+  "minifluxEntriesLimit": "Entries per sync",
+  "@minifluxEntriesLimit": {
+    "description": "minifluxEntriesLimit"
+  },
+  "minifluxWebFetchMode": "Web page fetching",
+  "@minifluxWebFetchMode": {
+    "description": "minifluxWebFetchMode"
+  },
+  "minifluxWebFetchModeSubtitle": "When \"Download Web Pages during Sync\" is enabled.",
+  "@minifluxWebFetchModeSubtitle": {
+    "description": "minifluxWebFetchModeSubtitle"
+  },
+  "minifluxWebFetchModeClient": "Client (Readability)",
+  "@minifluxWebFetchModeClient": {
+    "description": "minifluxWebFetchModeClient"
+  },
+  "minifluxWebFetchModeServer": "Server (Miniflux fetch-content)",
+  "@minifluxWebFetchModeServer": {
+    "description": "minifluxWebFetchModeServer"
+  },
+  "unlimited": "Unlimited",
+  "@unlimited": {
+    "description": "unlimited"
+  },
+  "fieldName": "Name",
+  "@fieldName": {
+    "description": "fieldName"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "baseUrl"
+  },
+  "minifluxBaseUrlHint": "https://miniflux.example.com",
+  "@minifluxBaseUrlHint": {
+    "description": "minifluxBaseUrlHint"
+  },
+  "apiToken": "API Token",
+  "@apiToken": {
+    "description": "apiToken"
+  },
+  "show": "Show",
+  "@show": {
+    "description": "show"
+  },
+  "hide": "Hide",
+  "@hide": {
+    "description": "hide"
+  },
+  "missingRequiredFields": "Missing required fields",
+  "@missingRequiredFields": {
+    "description": "missingRequiredFields"
+  },
+  "invalidBaseUrl": "Invalid base URL",
+  "@invalidBaseUrl": {
+    "description": "invalidBaseUrl"
+  },
+  "onlySupportedInLocalAccount": "Only supported in Local account",
+  "@onlySupportedInLocalAccount": {
+    "description": "onlySupportedInLocalAccount"
+  },
   "autoRefresh": "Auto refresh",
   "@autoRefresh": {
     "description": "autoRefresh"

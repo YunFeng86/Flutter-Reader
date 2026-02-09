@@ -545,6 +545,98 @@
   "@services": {
     "description": "services"
   },
+  "account": "帳號",
+  "@account": {
+    "description": "account"
+  },
+  "local": "本地",
+  "@local": {
+    "description": "local"
+  },
+  "miniflux": "Miniflux",
+  "@miniflux": {
+    "description": "miniflux"
+  },
+  "addLocal": "新增本地",
+  "@addLocal": {
+    "description": "addLocal"
+  },
+  "addLocalAccount": "新增本地帳號",
+  "@addLocalAccount": {
+    "description": "addLocalAccount"
+  },
+  "addMiniflux": "新增 Miniflux",
+  "@addMiniflux": {
+    "description": "addMiniflux"
+  },
+  "minifluxStrategy": "Miniflux 策略",
+  "@minifluxStrategy": {
+    "description": "minifluxStrategy"
+  },
+  "minifluxStrategySubtitle": "控制同步時的拉取量與預取行為。",
+  "@minifluxStrategySubtitle": {
+    "description": "minifluxStrategySubtitle"
+  },
+  "minifluxEntriesLimit": "每次同步拉取筆數",
+  "@minifluxEntriesLimit": {
+    "description": "minifluxEntriesLimit"
+  },
+  "minifluxWebFetchMode": "網頁抓取方式",
+  "@minifluxWebFetchMode": {
+    "description": "minifluxWebFetchMode"
+  },
+  "minifluxWebFetchModeSubtitle": "當訂閱開啟「同步時下載 Web 頁面」時生效。",
+  "@minifluxWebFetchModeSubtitle": {
+    "description": "minifluxWebFetchModeSubtitle"
+  },
+  "minifluxWebFetchModeClient": "用戶端（Readability）",
+  "@minifluxWebFetchModeClient": {
+    "description": "minifluxWebFetchModeClient"
+  },
+  "minifluxWebFetchModeServer": "伺服端（Miniflux fetch-content）",
+  "@minifluxWebFetchModeServer": {
+    "description": "minifluxWebFetchModeServer"
+  },
+  "unlimited": "無限制",
+  "@unlimited": {
+    "description": "unlimited"
+  },
+  "fieldName": "名稱",
+  "@fieldName": {
+    "description": "fieldName"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "baseUrl"
+  },
+  "minifluxBaseUrlHint": "https://miniflux.example.com",
+  "@minifluxBaseUrlHint": {
+    "description": "minifluxBaseUrlHint"
+  },
+  "apiToken": "API Token",
+  "@apiToken": {
+    "description": "apiToken"
+  },
+  "show": "顯示",
+  "@show": {
+    "description": "show"
+  },
+  "hide": "隱藏",
+  "@hide": {
+    "description": "hide"
+  },
+  "missingRequiredFields": "請填寫必填欄位",
+  "@missingRequiredFields": {
+    "description": "missingRequiredFields"
+  },
+  "invalidBaseUrl": "Base URL 無效",
+  "@invalidBaseUrl": {
+    "description": "invalidBaseUrl"
+  },
+  "onlySupportedInLocalAccount": "僅本地帳號支援此操作",
+  "@onlySupportedInLocalAccount": {
+    "description": "onlySupportedInLocalAccount"
+  },
   "autoRefresh": "自動重新整理",
   "@autoRefresh": {
     "description": "autoRefresh"

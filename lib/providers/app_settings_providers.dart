@@ -105,6 +105,16 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     await save(cur.copyWith(showAiSummary: value));
   }
 
+  Future<void> setMinifluxEntriesLimit(int limit) async {
+    final cur = state.valueOrNull ?? AppSettings.defaults();
+    await save(cur.copyWith(minifluxEntriesLimit: limit));
+  }
+
+  Future<void> setMinifluxWebFetchMode(MinifluxWebFetchMode mode) async {
+    final cur = state.valueOrNull ?? AppSettings.defaults();
+    await save(cur.copyWith(minifluxWebFetchMode: mode));
+  }
+
   Future<void> setRssUserAgent(String value) async {
     final cur = state.valueOrNull ?? AppSettings.defaults();
     await save(cur.copyWith(rssUserAgent: value));
