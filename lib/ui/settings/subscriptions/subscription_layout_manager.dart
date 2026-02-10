@@ -9,7 +9,9 @@ import 'subscription_toolbar.dart';
 import '../../layout.dart';
 
 class SubscriptionLayoutManager extends ConsumerWidget {
-  const SubscriptionLayoutManager({super.key});
+  const SubscriptionLayoutManager({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,34 +26,13 @@ class SubscriptionLayoutManager extends ConsumerWidget {
         final selection = ref.watch(subscriptionSelectionProvider);
         final notifier = ref.read(subscriptionSelectionProvider.notifier);
 
-        // Handle Back Button in Narrow Mode
-        // If selection exists, PopScope should prevent backing out of app and instead go up a level.
-        final canPopInternal =
-            selection.selectedFeedId != null ||
-            selection.activeCategoryId != null;
-
-        // Callback to handle back navigation
-        void handleBack() {
-          if (selection.selectedFeedId != null) {
-            notifier.clearFeedSelection();
-          } else if (selection.activeCategoryId != null) {
-            notifier.selectCategory(null);
-          }
-        }
-
-        return PopScope(
-          canPop: !canPopInternal,
-          onPopInvokedWithResult: (didPop, _) {
-            if (didPop) return;
-            handleBack();
-          },
-          child: Builder(
-            builder: (context) {
+        final content = Builder(
+          builder: (context) {
               if (width >= 1000) {
                 // 3 Columns
                 return Column(
                   children: [
-                    const SubscriptionToolbar(),
+                    SubscriptionToolbar(showPageTitle: showPageTitle),
                     const SizedBox(height: 8),
                     Expanded(
                       child: Row(
@@ -79,7 +60,7 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                 // User requested Tree View for Medium
                 return Column(
                   children: [
-                    const SubscriptionToolbar(),
+                    SubscriptionToolbar(showPageTitle: showPageTitle),
                     const SizedBox(height: 8),
                     Expanded(
                       child: Row(
@@ -97,18 +78,39 @@ class SubscriptionLayoutManager extends ConsumerWidget {
                 );
               } else {
                 // Narrow: 1 Column (Stack)
-                if (selection.selectedFeedId != null) {
-                  return const SettingsDetailPanel();
-                }
+                final showDetails =
+                    selection.showGlobalSettings ||
+                    selection.showCategorySettings ||
+                    selection.selectedFeedId != null;
+                final body = showDetails
+                    ? const SettingsDetailPanel()
+                    : const SubscriptionTreeView(showDetailButtons: true);
 
-                if (selection.activeCategoryId != null) {
-                  return const FeedListComponent();
-                }
-
-                return const CategoryListComponent();
+                return Column(
+                  children: [
+                    SubscriptionToolbar(showPageTitle: showPageTitle),
+                    const SizedBox(height: 8),
+                    Expanded(child: body),
+                  ],
+                );
               }
-            },
-          ),
+          },
+        );
+
+        // If the parent page is already providing title/back handling, avoid
+        // installing a nested PopScope here. This prevents "double back" when
+        // the Subscriptions tab is embedded in a stacked Settings detail page.
+        if (!showPageTitle) return content;
+
+        return PopScope(
+          // If selection exists, PopScope prevents backing out and instead goes
+          // up a level within the in-page navigation.
+          canPop: !selection.canHandleBack,
+          onPopInvokedWithResult: (didPop, _) {
+            if (didPop) return;
+            notifier.handleBack();
+          },
+          child: content,
         );
       },
     );

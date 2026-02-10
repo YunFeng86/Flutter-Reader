@@ -27,7 +27,7 @@ class CategoryListComponent extends ConsumerWidget {
         }
 
         return ListView(
-          controller: ScrollController(),
+          primary: false,
           children: [
             // List actual categories
             for (final category in categories)

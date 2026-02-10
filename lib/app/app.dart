@@ -206,6 +206,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
             sidebarVisible &&
             desktopSidebarInDrawer(mode) &&
             !isArticleSeparatePage;
+        final canPop = widget.router.canPop();
 
         Future<BatchRefreshResult> refreshAll() async {
           final feedId = ref.read(selectedFeedIdProvider);
@@ -239,19 +240,25 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
               );
         }
 
-        final leading = switch (mode) {
-          _ when drawerEnabled => Builder(
-            builder: (context) {
-              return IconButton(
-                tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
-                onPressed: () => Scaffold.of(context).openDrawer(),
-                icon: const Icon(Icons.menu),
-              );
-            },
-          ),
-          _ when desktopSidebarInline(mode) => null,
-          _ => null,
-        };
+        final leading = canPop
+            ? IconButton(
+                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                onPressed: () => widget.router.pop(),
+                icon: const Icon(Icons.arrow_back),
+              )
+            : (drawerEnabled
+                  ? Builder(
+                      builder: (context) {
+                        return IconButton(
+                          tooltip: MaterialLocalizations.of(
+                            context,
+                          ).openAppDrawerTooltip,
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                          icon: const Icon(Icons.menu),
+                        );
+                      },
+                    )
+                  : null);
 
         return Scaffold(
           drawer: drawerEnabled

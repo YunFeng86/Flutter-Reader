@@ -23,6 +23,11 @@ class SettingsDetailPanel extends ConsumerWidget {
     final selection = ref.watch(subscriptionSelectionProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    // Global Settings explicitly requested (do not lose current selection context).
+    if (selection.showGlobalSettings) {
+      return const _GlobalSettings();
+    }
+
     // 1. Feed Selected -> Show Feed Settings
     if (selection.selectedFeedId != null) {
       final feedId = selection.selectedFeedId!;
@@ -86,11 +91,6 @@ class _GlobalSettings extends ConsumerWidget {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              l10n.subscriptions,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
             ListTile(
               leading: const Icon(Icons.add),
               title: Text(l10n.addSubscription),

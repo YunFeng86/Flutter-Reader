@@ -13,7 +13,9 @@ import '../../../utils/path_manager.dart';
 import '../widgets/section_header.dart';
 
 class AboutTab extends StatefulWidget {
-  const AboutTab({super.key});
+  const AboutTab({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   State<AboutTab> createState() => _AboutTabState();
@@ -115,7 +117,7 @@ class _AboutTabState extends State<AboutTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    SectionHeader(title: l10n.about),
+                    if (widget.showPageTitle) SectionHeader(title: l10n.about),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(

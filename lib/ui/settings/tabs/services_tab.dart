@@ -17,7 +17,9 @@ import '../widgets/section_header.dart';
 import '../../../widgets/account_manager_sheet.dart';
 
 class ServicesTab extends ConsumerWidget {
-  const ServicesTab({super.key});
+  const ServicesTab({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -151,7 +153,7 @@ class ServicesTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SectionHeader(title: l10n.services),
+                if (showPageTitle) SectionHeader(title: l10n.services),
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(

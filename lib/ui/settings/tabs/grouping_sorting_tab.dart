@@ -10,7 +10,9 @@ import '../../../theme/app_theme.dart';
 import '../widgets/section_header.dart';
 
 class GroupingSortingTab extends ConsumerWidget {
-  const GroupingSortingTab({super.key});
+  const GroupingSortingTab({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -26,8 +28,10 @@ class GroupingSortingTab extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            SectionHeader(title: l10n.groupingAndSorting),
-            const SizedBox(height: 8),
+            if (showPageTitle) ...[
+              SectionHeader(title: l10n.groupingAndSorting),
+              const SizedBox(height: 8),
+            ],
 
             // Group by
             Text(l10n.groupBy, style: Theme.of(context).textTheme.labelLarge),
