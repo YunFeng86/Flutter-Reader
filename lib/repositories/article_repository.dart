@@ -359,8 +359,16 @@ class ArticleRepository {
     bool preserveUserState = true,
   }) {
     if (incoming.isEmpty) return Future.value(<Article>[]);
-    for (final a in incoming) {
-      a.contentHash = ContentHash.compute(a.contentHtml);
+    if (preserveUserState) {
+      for (final a in incoming) {
+        a.contentHash = ContentHash.compute(a.contentHtml);
+      }
+    } else {
+      // Remote-authoritative sync (e.g. Miniflux): skip expensive hashing here.
+      // ReaderView can compute a correct hash on-demand when needed.
+      for (final a in incoming) {
+        a.contentHash = null;
+      }
     }
     return _isar.writeTxn(() async {
       final newArticles = <Article>[];
@@ -417,8 +425,11 @@ class ArticleRepository {
       for (final a in incoming) {
         // Link already normalized above
 
-        // [V2.0] Compute content hash for change detection
-        final newHash = a.contentHash ?? '';
+        // [V2.0] Content hash is only required when we preserve local user state
+        // (to detect content changes and mark items unread).
+        final String? newHash = preserveUserState
+            ? (a.contentHash ?? '')
+            : null;
 
         // Dual-key O(1) lookup: remoteId takes priority over link
         // This prevents duplicates when URLs change but guid remains the same
@@ -436,22 +447,22 @@ class ArticleRepository {
         if (existing != null) {
           a.id = existing.id;
 
-          // [V2.0] Only update if content changed
-          if (existing.contentHash != newHash) {
-            a.contentHash = newHash;
-            if (preserveUserState) {
+          if (preserveUserState) {
+            // [V2.0] Only update if content changed.
+            if (existing.contentHash != newHash) {
+              a.contentHash = newHash;
               a.isRead = false; // Content changed -> mark unread
-            }
-          } else {
-            // Content unchanged -> preserve user state
-            if (preserveUserState) {
+            } else {
+              // Content unchanged -> preserve user state.
               a.isRead = existing.isRead;
               a.contentHash = existing.contentHash;
             }
-          }
 
-          if (preserveUserState) {
             a.isStarred = existing.isStarred;
+          } else {
+            // We didn't compute a hash for this update, so clear it to avoid
+            // stale hashes being used as a progress key.
+            a.contentHash = null;
           }
           // Read-later is currently local-only; always preserve.
           a.isReadLater = existing.isReadLater;
@@ -466,7 +477,7 @@ class ArticleRepository {
           }
         } else {
           isNew = true;
-          a.contentHash = newHash;
+          a.contentHash = preserveUserState ? newHash : null;
           if (a.publishedAt.millisecondsSinceEpoch == 0) {
             // Some feeds omit pubDate/updated; use fetchedAt for reasonable sorting.
             a.publishedAt = now.toUtc();

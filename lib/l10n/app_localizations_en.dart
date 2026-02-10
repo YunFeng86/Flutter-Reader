@@ -571,6 +571,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncWebPages => 'Download Web Pages during Sync';
 
   @override
+  String get syncStatusSyncing => 'Syncing';
+
+  @override
+  String get syncStatusSyncingFeeds => 'Syncing feeds';
+
+  @override
+  String get syncStatusSyncingSubscriptions => 'Syncing subscriptions';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => 'Syncing unread articles';
+
+  @override
+  String get syncStatusUploadingChanges => 'Uploading changes';
+
+  @override
+  String get syncStatusCompleted => 'Sync complete';
+
+  @override
+  String get syncStatusFailed => 'Sync failed';
+
+  @override
   String get showAiSummary => 'Show AI Summary';
 
   @override

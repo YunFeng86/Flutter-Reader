@@ -14,6 +14,8 @@ import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar_pane_hero.dart';
 import '../widgets/staggered_reveal.dart';
+import '../widgets/sync_status_capsule.dart';
+import '../ui/global_nav.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key, required this.selectedArticleId});
@@ -94,6 +96,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final showSyncCapsule =
+            LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
         final width = constraints.maxWidth;
         final spec = LayoutSpec.fromContentSize(
           contentWidth: width,
@@ -220,10 +224,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               const SizedBox(height: 8),
               Expanded(
                 child: showResults
-                    ? ArticleList(
-                        selectedArticleId: widget.selectedArticleId,
-                        baseLocation: '/search',
-                        articleRoutePrefix: '/search',
+                    ? SyncStatusCapsuleHost(
+                        enabled: showSyncCapsule,
+                        child: ArticleList(
+                          selectedArticleId: widget.selectedArticleId,
+                          baseLocation: '/search',
+                          articleRoutePrefix: '/search',
+                        ),
                       )
                     : Container(
                         color: Theme.of(context).colorScheme.surface,

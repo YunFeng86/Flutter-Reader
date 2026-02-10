@@ -19,6 +19,7 @@ import '../../settings/app_settings_store.dart';
 import '../effective_feed_settings.dart';
 import '../outbox/outbox_store.dart';
 import '../sync_service.dart';
+import '../sync_status_reporter.dart';
 import 'miniflux_client.dart';
 
 class MinifluxSyncService implements SyncServiceBase {
@@ -33,6 +34,7 @@ class MinifluxSyncService implements SyncServiceBase {
     required AppSettingsStore appSettingsStore,
     required ArticleCacheService cache,
     required ArticleExtractor extractor,
+    SyncStatusReporter? statusReporter,
   }) : _dio = dio,
        _credentials = credentials,
        _feeds = feeds,
@@ -41,7 +43,8 @@ class MinifluxSyncService implements SyncServiceBase {
        _outbox = outbox,
        _appSettingsStore = appSettingsStore,
        _cache = cache,
-       _extractor = extractor;
+       _extractor = extractor,
+       _statusReporter = statusReporter ?? const NoopSyncStatusReporter();
 
   final Account account;
 
@@ -54,6 +57,7 @@ class MinifluxSyncService implements SyncServiceBase {
   final AppSettingsStore _appSettingsStore;
   final ArticleCacheService _cache;
   final ArticleExtractor _extractor;
+  final SyncStatusReporter _statusReporter;
 
   @override
   Future<int> offlineCacheFeed(int feedId) async {
@@ -115,10 +119,15 @@ class MinifluxSyncService implements SyncServiceBase {
     bool notify = true,
   }) async {
     // For Miniflux, syncing is not "per local feed"; we sync the account once.
+    final status = _statusReporter.startTask(
+      label: SyncStatusLabel.syncing,
+      detail: account.name.trim().isEmpty ? null : account.name.trim(),
+    );
     try {
-      await syncNow();
+      await syncNow(status: status);
       final total = feedIds.length;
       onProgress?.call(total, total);
+      status.complete(success: true);
       return BatchRefreshResult([
         FeedRefreshResult(
           feedId: feedIds.isEmpty ? -1 : feedIds.first,
@@ -129,6 +138,7 @@ class MinifluxSyncService implements SyncServiceBase {
     } catch (e) {
       final total = feedIds.length;
       onProgress?.call(total, total);
+      status.complete(success: false);
       return BatchRefreshResult([
         FeedRefreshResult(
           feedId: feedIds.isEmpty ? -1 : feedIds.first,
@@ -140,8 +150,9 @@ class MinifluxSyncService implements SyncServiceBase {
     }
   }
 
-  Future<void> syncNow({int? entriesLimit}) async {
+  Future<void> syncNow({int? entriesLimit, SyncStatusTask? status}) async {
     final client = await _buildClient();
+    status?.update(label: SyncStatusLabel.uploadingChanges);
     await _flushOutbox(client);
     final appSettings = await _appSettingsStore.load();
     final effectiveEntriesLimit =
@@ -160,11 +171,20 @@ class MinifluxSyncService implements SyncServiceBase {
       remoteCatIdToLocalId[id] = localId;
     }
 
+    status?.update(label: SyncStatusLabel.syncingSubscriptions);
     final feeds = await client.getFeeds();
+    status?.update(
+      label: SyncStatusLabel.syncingSubscriptions,
+      current: 0,
+      total: feeds.length,
+    );
     final remoteFeedIdToLocalFeed = <int, Feed>{};
     final localFeedIdToFeed = <int, Feed>{};
     final localFeedIdToSettings = <int, EffectiveFeedSettings>{};
+    var feedProcessed = 0;
     for (final f in feeds) {
+      feedProcessed += 1;
+      status?.update(current: feedProcessed, total: feeds.length);
       final id = f['id'];
       final feedUrl = f['feed_url'];
       if (id is! int || feedUrl is! String) continue;
@@ -197,6 +217,11 @@ class MinifluxSyncService implements SyncServiceBase {
     if (effectiveEntriesLimit == 0) {
       const pageSize = 1000;
       var offset = 0;
+      status?.update(
+        label: SyncStatusLabel.syncingUnreadArticles,
+        current: 0,
+        total: null,
+      );
       while (true) {
         final r = await _syncEntriesBatch(
           client,
@@ -210,14 +235,24 @@ class MinifluxSyncService implements SyncServiceBase {
         );
         if (r.processed == 0) break;
         offset += r.processed;
+        status?.update(current: offset, total: r.total);
         if (r.total != null && offset >= r.total!) break;
         if (r.processed < pageSize) break;
+
+        // Yield to the event loop between pages to keep the app responsive on
+        // very large imports (tens of thousands of entries).
+        await Future<void>.delayed(Duration.zero);
       }
       return;
     }
 
     if (effectiveEntriesLimit < 0) return;
-    await _syncEntriesBatch(
+    status?.update(
+      label: SyncStatusLabel.syncingUnreadArticles,
+      current: 0,
+      total: effectiveEntriesLimit,
+    );
+    final r = await _syncEntriesBatch(
       client,
       appSettings,
       remoteFeedIdToLocalFeed: remoteFeedIdToLocalFeed,
@@ -226,6 +261,10 @@ class MinifluxSyncService implements SyncServiceBase {
       limit: effectiveEntriesLimit,
       offset: 0,
       preferServerFetch: preferServerFetch,
+    );
+    status?.update(
+      current: r.processed,
+      total: r.total ?? effectiveEntriesLimit,
     );
   }
 
@@ -287,6 +326,7 @@ class MinifluxSyncService implements SyncServiceBase {
       byLocalFeedId.putIfAbsent(localFeed.id, () => []).add(a);
     }
 
+    var feedGroupsProcessed = 0;
     for (final entry in byLocalFeedId.entries) {
       // Remote-backed: we want remote read/star state to be authoritative.
       final newArticles = await _articles.upsertMany(
@@ -311,6 +351,12 @@ class MinifluxSyncService implements SyncServiceBase {
             preferServerFetch: preferServerFetch,
           );
         }
+      }
+
+      // Don't hog the UI isolate when a batch fans out to many feeds.
+      feedGroupsProcessed += 1;
+      if (byLocalFeedId.length > 8 && feedGroupsProcessed % 5 == 0) {
+        await Future<void>.delayed(Duration.zero);
       }
     }
 

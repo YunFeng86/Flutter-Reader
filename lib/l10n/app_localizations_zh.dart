@@ -560,6 +560,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncWebPages => '同步时下载 Web 页面';
 
   @override
+  String get syncStatusSyncing => '同步中';
+
+  @override
+  String get syncStatusSyncingFeeds => '同步订阅源';
+
+  @override
+  String get syncStatusSyncingSubscriptions => '同步订阅';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => '同步未读文章';
+
+  @override
+  String get syncStatusUploadingChanges => '上传更改';
+
+  @override
+  String get syncStatusCompleted => '同步完成';
+
+  @override
+  String get syncStatusFailed => '同步失败';
+
+  @override
   String get showAiSummary => 'Show AI Summary';
 
   @override
@@ -1191,6 +1212,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get syncWebPages => '同步時下載網頁';
+
+  @override
+  String get syncStatusSyncing => '同步中';
+
+  @override
+  String get syncStatusSyncingFeeds => '同步訂閱源';
+
+  @override
+  String get syncStatusSyncingSubscriptions => '同步訂閱';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => '同步未讀文章';
+
+  @override
+  String get syncStatusUploadingChanges => '上傳變更';
+
+  @override
+  String get syncStatusCompleted => '同步完成';
+
+  @override
+  String get syncStatusFailed => '同步失敗';
 
   @override
   String get showAiSummary => '顯示 AI 摘要';

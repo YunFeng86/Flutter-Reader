@@ -20,6 +20,7 @@ import '../cache/article_cache_service.dart';
 import '../extract/article_extractor.dart';
 import '../../utils/keyword_filter.dart';
 import 'effective_feed_settings.dart';
+import 'sync_status_reporter.dart';
 
 const int _parseInIsolateThreshold = 50000;
 
@@ -136,6 +137,7 @@ class SyncService implements SyncServiceBase {
     required ArticleCacheService cache,
     required ArticleExtractor extractor,
     required AppSettingsStore appSettingsStore,
+    SyncStatusReporter? statusReporter,
   }) : _feeds = feeds,
        _categories = categories,
        _articles = articles,
@@ -144,7 +146,8 @@ class SyncService implements SyncServiceBase {
        _notifications = notifications,
        _cache = cache,
        _extractor = extractor,
-       _appSettingsStore = appSettingsStore;
+       _appSettingsStore = appSettingsStore,
+       _statusReporter = statusReporter ?? const NoopSyncStatusReporter();
 
   final FeedRepository _feeds;
   final CategoryRepository _categories;
@@ -155,6 +158,7 @@ class SyncService implements SyncServiceBase {
   final ArticleCacheService _cache;
   final ArticleExtractor _extractor;
   final AppSettingsStore _appSettingsStore;
+  final SyncStatusReporter _statusReporter;
   Future<void> _batchRefreshQueue = Future.value();
 
   @override
@@ -304,6 +308,7 @@ class SyncService implements SyncServiceBase {
     int maxAttempts = 2,
     AppSettings? appSettings,
     bool notify = true,
+    bool reportStatus = true,
   }) async {
     final feed = await _feeds.getById(feedId);
     if (feed == null) {
@@ -315,79 +320,105 @@ class SyncService implements SyncServiceBase {
       );
     }
 
-    final resolvedAppSettings = appSettings ?? await _appSettingsStore.load();
-    final settings = await _resolveSettings(
-      feed,
-      appSettings: resolvedAppSettings,
-    );
-    if (!settings.syncEnabled) {
-      // Skip network refresh when sync is disabled for this feed (effective).
-      return FeedRefreshResult(feedId: feedId, incomingCount: 0, newCount: 0);
+    SyncStatusTask? task;
+    if (reportStatus) {
+      final title = (feed.userTitle ?? feed.title ?? '').trim();
+      task = _statusReporter.startTask(
+        label: SyncStatusLabel.syncingFeeds,
+        detail: title.isEmpty ? null : title,
+      );
     }
 
-    Object? lastError;
-    final attempts = maxAttempts < 1 ? 1 : maxAttempts;
-    final sw = Stopwatch()..start();
-    for (var i = 0; i < attempts; i++) {
-      final checkedAt = DateTime.now();
-      try {
-        final out = await _refreshFeedOnce(
-          feed,
-          settings,
-          resolvedAppSettings,
-          notify,
-        );
-        sw.stop();
+    var success = false;
+    try {
+      final resolvedAppSettings = appSettings ?? await _appSettingsStore.load();
+      final settings = await _resolveSettings(
+        feed,
+        appSettings: resolvedAppSettings,
+      );
+      if (!settings.syncEnabled) {
+        // Skip network refresh when sync is disabled for this feed (effective).
+        success = true;
+        return FeedRefreshResult(feedId: feedId, incomingCount: 0, newCount: 0);
+      }
 
-        await _feeds.updateSyncState(
-          id: feedId,
-          lastCheckedAt: checkedAt,
-          lastStatusCode: out.statusCode,
-          lastDurationMs: sw.elapsedMilliseconds,
-          lastIncomingCount: out.incomingCount,
-          etag: out.etag,
-          lastModified: out.lastModified,
-          clearError: true,
-        );
+      Object? lastError;
+      final attempts = maxAttempts < 1 ? 1 : maxAttempts;
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < attempts; i++) {
+        final checkedAt = DateTime.now();
+        try {
+          final out = await _refreshFeedOnce(
+            feed,
+            settings,
+            resolvedAppSettings,
+            notify,
+          );
+          sw.stop();
 
-        return FeedRefreshResult(
-          feedId: feedId,
-          incomingCount: out.incomingCount,
-          newCount: out.newCount,
-        );
-      } catch (e) {
-        lastError = e;
-        // Keep duration per attempt; store the last attempt duration.
-        sw.stop();
-        final statusCode = e is DioException ? e.response?.statusCode : null;
-        await _feeds.updateSyncState(
-          id: feedId,
-          lastCheckedAt: checkedAt,
-          lastStatusCode: statusCode,
-          lastDurationMs: sw.elapsedMilliseconds,
-          lastIncomingCount: 0,
-          lastError: e.toString(),
-          lastErrorAt: DateTime.now(),
-          clearError: false,
-        );
+          await _feeds.updateSyncState(
+            id: feedId,
+            lastCheckedAt: checkedAt,
+            lastStatusCode: out.statusCode,
+            lastDurationMs: sw.elapsedMilliseconds,
+            lastIncomingCount: out.incomingCount,
+            etag: out.etag,
+            lastModified: out.lastModified,
+            clearError: true,
+          );
 
-        // Exponential backoff: 500ms, 1000ms, 2000ms...
-        // Gives network/DNS failures time to recover without wasting time on persistent errors
-        if (i < attempts - 1) {
-          final delayMs = 500 * (1 << i); // 2^i exponential growth
-          await Future<void>.delayed(Duration(milliseconds: delayMs));
-          sw
-            ..reset()
-            ..start();
+          success = true;
+          return FeedRefreshResult(
+            feedId: feedId,
+            incomingCount: out.incomingCount,
+            newCount: out.newCount,
+          );
+        } catch (e) {
+          lastError = e;
+          // Keep duration per attempt; store the last attempt duration.
+          sw.stop();
+          final statusCode = e is DioException ? e.response?.statusCode : null;
+          await _feeds.updateSyncState(
+            id: feedId,
+            lastCheckedAt: checkedAt,
+            lastStatusCode: statusCode,
+            lastDurationMs: sw.elapsedMilliseconds,
+            lastIncomingCount: 0,
+            lastError: e.toString(),
+            lastErrorAt: DateTime.now(),
+            clearError: false,
+          );
+
+          // Exponential backoff: 500ms, 1000ms, 2000ms...
+          // Gives network/DNS failures time to recover without wasting time on persistent errors
+          if (i < attempts - 1) {
+            final delayMs = 500 * (1 << i); // 2^i exponential growth
+            await Future<void>.delayed(Duration(milliseconds: delayMs));
+            sw
+              ..reset()
+              ..start();
+          }
         }
       }
+      return FeedRefreshResult(
+        feedId: feedId,
+        incomingCount: 0,
+        newCount: 0,
+        error: lastError ?? Exception('Unknown sync error'),
+      );
+    } catch (e) {
+      // Guard against unexpected errors (settings load/category lookup, etc.)
+      // so the "safe" API never leaks exceptions, and the status capsule never
+      // gets stuck in a running state.
+      return FeedRefreshResult(
+        feedId: feedId,
+        incomingCount: 0,
+        newCount: 0,
+        error: e,
+      );
+    } finally {
+      task?.complete(success: success);
     }
-    return FeedRefreshResult(
-      feedId: feedId,
-      incomingCount: 0,
-      newCount: 0,
-      error: lastError ?? Exception('Unknown sync error'),
-    );
   }
 
   @override
@@ -398,14 +429,32 @@ class SyncService implements SyncServiceBase {
     void Function(int current, int total)? onProgress,
     bool notify = true,
   }) {
-    final task = _batchRefreshQueue.then((_) {
-      return _refreshFeedsSafeImpl(
-        feedIds,
-        maxConcurrent: maxConcurrent,
-        maxAttemptsPerFeed: maxAttemptsPerFeed,
-        onProgress: onProgress,
-        notify: notify,
+    final ids = feedIds.toList(growable: false);
+    final task = _batchRefreshQueue.then((_) async {
+      if (ids.isEmpty) return const BatchRefreshResult([]);
+
+      final status = _statusReporter.startTask(
+        label: SyncStatusLabel.syncingFeeds,
+        current: 0,
+        total: ids.length,
       );
+      try {
+        final batch = await _refreshFeedsSafeImpl(
+          ids,
+          maxConcurrent: maxConcurrent,
+          maxAttemptsPerFeed: maxAttemptsPerFeed,
+          onProgress: (current, total) {
+            onProgress?.call(current, total);
+            status.update(current: current, total: total);
+          },
+          notify: notify,
+        );
+        status.complete(success: batch.errorCount == 0);
+        return batch;
+      } catch (e) {
+        status.complete(success: false);
+        rethrow;
+      }
     });
     _batchRefreshQueue = task.then((_) {}).catchError((_) {});
     return task;
@@ -440,6 +489,7 @@ class SyncService implements SyncServiceBase {
         maxAttempts: maxAttemptsPerFeed,
         appSettings: appSettings,
         notify: notify,
+        reportStatus: false,
       );
       return BatchRefreshResult([r]);
     }
@@ -460,6 +510,7 @@ class SyncService implements SyncServiceBase {
               maxAttempts: maxAttemptsPerFeed,
               appSettings: appSettings,
               notify: false, // aggregate notification at the batch level
+              reportStatus: false,
             );
             results.add(r);
             completed++;

@@ -14,9 +14,12 @@ import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/sidebar_pane_hero.dart';
+import '../widgets/sync_status_capsule.dart';
 import '../utils/platform.dart';
 import '../ui/layout.dart';
+import '../ui/layout_spec.dart';
 import '../ui/hero_tags.dart';
+import '../ui/global_nav.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.selectedArticleId});
@@ -28,6 +31,8 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
+    final showSyncCapsule =
+        LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
 
     Future<void> refreshAll() async {
       Object? err;
@@ -135,7 +140,10 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
-            body: ArticleList(selectedArticleId: selectedArticleId),
+            body: SyncStatusCapsuleHost(
+              enabled: showSyncCapsule,
+              child: ArticleList(selectedArticleId: selectedArticleId),
+            ),
           );
         }
 
@@ -316,17 +324,25 @@ class HomeScreen extends ConsumerWidget {
                     if (columns == 3) ...[
                       SizedBox(
                         width: kHomeSidebarWidth,
-                        child: Sidebar(
-                          onSelectFeed: (_) {
-                            if (selectedArticleId != null) context.go('/');
-                          },
+                        child: SyncStatusCapsuleHost(
+                          enabled: showSyncCapsule,
+                          child: Sidebar(
+                            onSelectFeed: (_) {
+                              if (selectedArticleId != null) context.go('/');
+                            },
+                          ),
                         ),
                       ),
                       const SizedBox(width: kPaneGap),
                     ],
                     SizedBox(
                       width: kHomeListWidth,
-                      child: ArticleList(selectedArticleId: selectedArticleId),
+                      child: SyncStatusCapsuleHost(
+                        enabled: showSyncCapsule && columns != 3,
+                        child: ArticleList(
+                          selectedArticleId: selectedArticleId,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: kPaneGap),
                     Expanded(
@@ -363,6 +379,8 @@ class HomeScreen extends ConsumerWidget {
     Future<void> Function() refreshAll,
     Future<void> Function() markAllRead,
   ) {
+    final showSyncCapsule =
+        LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
     // Desktop keyboard shortcuts stay enabled across all layouts.
     final shortcuts = <ShortcutActivator, Intent>{
       const SingleActivator(LogicalKeyboardKey.keyJ):
@@ -423,17 +441,23 @@ class HomeScreen extends ConsumerWidget {
                 fit: StackFit.expand,
                 children: [
                   const SidebarPaneHero(),
-                  Sidebar(
-                    onSelectFeed: (_) {
-                      if (selectedArticleId != null) context.go('/');
-                    },
+                  SyncStatusCapsuleHost(
+                    enabled: showSyncCapsule,
+                    child: Sidebar(
+                      onSelectFeed: (_) {
+                        if (selectedArticleId != null) context.go('/');
+                      },
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: kPaneGap),
           ],
-          listPane(width: kDesktopListWidth),
+          SyncStatusCapsuleHost(
+            enabled: showSyncCapsule && !sidebarVisible,
+            child: listPane(width: kDesktopListWidth),
+          ),
           const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
@@ -441,12 +465,18 @@ class HomeScreen extends ConsumerWidget {
       DesktopPaneMode.splitListReader => Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          listPane(width: kDesktopListWidth),
+          SyncStatusCapsuleHost(
+            enabled: showSyncCapsule,
+            child: listPane(width: kDesktopListWidth),
+          ),
           const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
       ),
-      DesktopPaneMode.listOnly => listPane(),
+      DesktopPaneMode.listOnly => SyncStatusCapsuleHost(
+        enabled: showSyncCapsule,
+        child: listPane(),
+      ),
     };
 
     final content = Shortcuts(

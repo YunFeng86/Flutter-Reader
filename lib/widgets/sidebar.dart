@@ -12,12 +12,19 @@ import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../providers/sync_status_providers.dart';
 import '../services/accounts/account.dart';
+import '../services/sync/sync_status_reporter.dart';
 import '../ui/actions/subscription_actions.dart';
+import '../ui/layout_spec.dart';
+import '../ui/global_nav.dart';
 import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
+import 'account_avatar.dart';
+import 'account_manager_sheet.dart';
 import 'favicon_circle.dart';
+import 'overflow_marquee.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
   const Sidebar({super.key, required this.onSelectFeed, this.router});
@@ -118,8 +125,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final selectedTagId = ref.watch(selectedTagIdProvider);
     final tags = ref.watch(tagsProvider);
-    final accountsState = ref.watch(accountsControllerProvider).valueOrNull;
     final activeAccount = ref.watch(activeAccountProvider);
+    final navMode = LayoutSpec.fromContext(context).globalNavMode;
+    final showAccountFooter = navMode == GlobalNavMode.bottom;
+    final syncStatus = ref.watch(syncStatusControllerProvider);
 
     final starredOnly = ref.watch(starredOnlyProvider);
     final readLaterOnly = ref.watch(readLaterOnlyProvider);
@@ -156,38 +165,6 @@ class _SidebarState extends ConsumerState<Sidebar> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  tooltip: l10n.account,
-                  icon: const Icon(Icons.account_circle_outlined),
-                  onSelected: (id) {
-                    unawaited(
-                      ref
-                          .read(accountsControllerProvider.notifier)
-                          .setActive(id),
-                    );
-                  },
-                  itemBuilder: (context) {
-                    final accounts =
-                        accountsState?.accounts ?? const <Account>[];
-                    return accounts
-                        .map(
-                          (a) => PopupMenuItem<String>(
-                            value: a.id,
-                            child: Row(
-                              children: [
-                                if (a.id == activeAccount.id)
-                                  const Icon(Icons.check, size: 18)
-                                else
-                                  const SizedBox(width: 18),
-                                const SizedBox(width: 8),
-                                Expanded(child: Text(a.name)),
-                              ],
-                            ),
-                          ),
-                        )
-                        .toList(growable: false);
-                  },
-                ),
               ],
             ),
           ),
@@ -403,6 +380,18 @@ class _SidebarState extends ConsumerState<Sidebar> {
               },
             ),
           ),
+          if (showAccountFooter)
+            _AccountFooter(
+              account: activeAccount,
+              sync: syncStatus,
+              onTap: () {
+                unawaited(
+                  _showModalBottomSheet<void>(
+                    builder: (_) => const AccountManagerSheet(),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -1077,6 +1066,133 @@ class _SidebarItem extends StatelessWidget {
         // Visual adjustments to match "denser" look
         visualDensity: VisualDensity.compact,
         contentPadding: EdgeInsets.only(left: 12 + indent, right: 12),
+      ),
+    );
+  }
+}
+
+class _AccountFooter extends StatelessWidget {
+  const _AccountFooter({
+    required this.account,
+    required this.sync,
+    required this.onTap,
+  });
+
+  final Account account;
+  final SyncStatusState sync;
+  final VoidCallback onTap;
+
+  String _syncText(AppLocalizations l10n) {
+    String labelFor(SyncStatusLabel label) => switch (label) {
+      SyncStatusLabel.syncing => l10n.syncStatusSyncing,
+      SyncStatusLabel.syncingFeeds => l10n.syncStatusSyncingFeeds,
+      SyncStatusLabel.syncingSubscriptions =>
+        l10n.syncStatusSyncingSubscriptions,
+      SyncStatusLabel.syncingUnreadArticles =>
+        l10n.syncStatusSyncingUnreadArticles,
+      SyncStatusLabel.uploadingChanges => l10n.syncStatusUploadingChanges,
+      SyncStatusLabel.completed => l10n.syncStatusCompleted,
+      SyncStatusLabel.failed => l10n.syncStatusFailed,
+    };
+
+    final label = labelFor(sync.label);
+    final base = label;
+    final cur = sync.current;
+    final total = sync.total;
+    if (cur != null && total != null && total > 0) {
+      return '$base（$cur/$total）';
+    }
+    return base;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final showSync = sync.visible;
+    final syncText = _syncText(l10n);
+
+    return Material(
+      color: scheme.surfaceContainerLow,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              AccountAvatar(account: account, radius: 18, showTypeBadge: true),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      account.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return SizeTransition(
+                          sizeFactor: animation,
+                          axisAlignment: -1,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: showSync
+                          ? Padding(
+                              key: const ValueKey('sync'),
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                children: [
+                                  if (sync.running)
+                                    const SizedBox(
+                                      width: 10,
+                                      height: 10,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  else
+                                    Icon(
+                                      sync.label == SyncStatusLabel.failed
+                                          ? Icons.error_outline
+                                          : Icons.check,
+                                      size: 12,
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: OverflowMarquee(
+                                      text: syncText,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox(key: ValueKey('empty')),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.unfold_more, size: 18, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

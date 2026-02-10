@@ -12,9 +12,9 @@ import '../../../services/accounts/account.dart';
 import '../../../services/settings/app_settings.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
+import '../../dialogs/add_account_dialogs.dart';
 import '../widgets/section_header.dart';
-
-enum _MinifluxAuthMode { apiToken, basicAuth }
+import '../../../widgets/account_manager_sheet.dart';
 
 class ServicesTab extends ConsumerWidget {
   const ServicesTab({super.key});
@@ -102,227 +102,43 @@ class ServicesTab extends ConsumerWidget {
       }
     }
 
-    Future<void> addMiniflux() async {
-      final nameCtrl = TextEditingController(text: l10n.miniflux);
-      final baseUrlCtrl = TextEditingController();
-      final tokenCtrl = TextEditingController();
-      final usernameCtrl = TextEditingController();
-      final passwordCtrl = TextEditingController();
-      bool obscureToken = true;
-      bool obscurePassword = true;
-      var authMode = _MinifluxAuthMode.apiToken;
-
-      Future<void> submit(StateSetter setState) async {
-        final name = nameCtrl.text.trim();
-        final baseUrl = baseUrlCtrl.text.trim();
-        final token = tokenCtrl.text.trim();
-        final username = usernameCtrl.text.trim();
-        final password = passwordCtrl.text;
-        final uri = Uri.tryParse(baseUrl);
-        final hasCreds = switch (authMode) {
-          _MinifluxAuthMode.apiToken => token.isNotEmpty,
-          _MinifluxAuthMode.basicAuth =>
-            username.isNotEmpty && password.isNotEmpty,
-        };
-        if (name.isEmpty || baseUrl.isEmpty || !hasCreds) {
-          context.showSnack(l10n.errorMessage(l10n.missingRequiredFields));
-          return;
-        }
-        if (uri == null || !(uri.scheme == 'http' || uri.scheme == 'https')) {
-          context.showSnack(l10n.errorMessage(l10n.invalidBaseUrl));
-          return;
-        }
-
-        final id = await ref
-            .read(accountsControllerProvider.notifier)
-            .addAccount(
-              type: AccountType.miniflux,
-              name: name,
-              baseUrl: baseUrl,
-            );
-        final store = ref.read(credentialStoreProvider);
-        switch (authMode) {
-          case _MinifluxAuthMode.apiToken:
-            await store.setApiToken(id, AccountType.miniflux, token);
-            // Strict mode: only keep one auth mechanism on disk.
-            await store.deleteBasicAuth(id, AccountType.miniflux);
-            break;
-          case _MinifluxAuthMode.basicAuth:
-            await store.setBasicAuth(
-              id,
-              AccountType.miniflux,
-              username: username,
-              password: password,
-            );
-            await store.deleteApiToken(id, AccountType.miniflux);
-            break;
-        }
-        await ref.read(accountsControllerProvider.notifier).setActive(id);
-        if (!context.mounted) return;
-        Navigator.of(context).pop();
-        context.showSnack(l10n.done);
-      }
-
-      if (!context.mounted) return;
-      await showDialog<void>(
+    Future<void> addAccount() async {
+      final picked = await showModalBottomSheet<AccountType>(
         context: context,
+        showDragHandle: true,
         builder: (context) {
-          return StatefulBuilder(
-            builder: (context, setState) {
-              return AlertDialog(
-                title: Text(l10n.addMiniflux),
-                content: SizedBox(
-                  width: 520,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        controller: nameCtrl,
-                        decoration: InputDecoration(labelText: l10n.fieldName),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: baseUrlCtrl,
-                        decoration: InputDecoration(
-                          labelText: l10n.baseUrl,
-                          hintText: l10n.minifluxBaseUrlHint,
-                        ),
-                        keyboardType: TextInputType.url,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        l10n.authenticationMethod,
-                        style: Theme.of(context).textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          ChoiceChip(
-                            label: Text(l10n.apiToken),
-                            selected: authMode == _MinifluxAuthMode.apiToken,
-                            onSelected: (v) {
-                              if (!v) return;
-                              setState(
-                                () => authMode = _MinifluxAuthMode.apiToken,
-                              );
-                            },
-                          ),
-                          ChoiceChip(
-                            label: Text(l10n.usernamePassword),
-                            selected: authMode == _MinifluxAuthMode.basicAuth,
-                            onSelected: (v) {
-                              if (!v) return;
-                              setState(
-                                () => authMode = _MinifluxAuthMode.basicAuth,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.minifluxAuthHint,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 12),
-                      if (authMode == _MinifluxAuthMode.apiToken) ...[
-                        TextField(
-                          controller: tokenCtrl,
-                          obscureText: obscureToken,
-                          decoration: InputDecoration(
-                            labelText: l10n.apiToken,
-                            suffixIcon: IconButton(
-                              tooltip: obscureToken ? l10n.show : l10n.hide,
-                              icon: Icon(
-                                obscureToken
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                              ),
-                              onPressed: () =>
-                                  setState(() => obscureToken = !obscureToken),
-                            ),
-                          ),
-                        ),
-                      ] else ...[
-                        TextField(
-                          controller: usernameCtrl,
-                          decoration: InputDecoration(labelText: l10n.username),
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: passwordCtrl,
-                          obscureText: obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: l10n.password,
-                            suffixIcon: IconButton(
-                              tooltip: obscurePassword ? l10n.show : l10n.hide,
-                              icon: Icon(
-                                obscurePassword
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                              ),
-                              onPressed: () => setState(
-                                () => obscurePassword = !obscurePassword,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+          return SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.rss_feed),
+                  title: Text(l10n.addLocal),
+                  onTap: () => Navigator.of(context).pop(AccountType.local),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(l10n.cancel),
-                  ),
-                  FilledButton(
-                    onPressed: () => submit(setState),
-                    child: Text(l10n.add),
-                  ),
-                ],
-              );
-            },
-          );
-        },
-      );
-    }
-
-    Future<void> addLocal() async {
-      final nameCtrl = TextEditingController(text: l10n.local);
-      if (!context.mounted) return;
-      final name = await showDialog<String?>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text(l10n.addLocalAccount),
-            content: TextField(
-              controller: nameCtrl,
-              decoration: InputDecoration(labelText: l10n.fieldName),
-              autofocus: true,
+                ListTile(
+                  leading: const Icon(Icons.cloud_outlined),
+                  title: Text(l10n.addMiniflux),
+                  onTap: () => Navigator.of(context).pop(AccountType.miniflux),
+                ),
+              ],
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(null),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(nameCtrl.text),
-                child: Text(l10n.add),
-              ),
-            ],
           );
         },
       );
-      if (name == null || name.trim().isEmpty) return;
-      final id = await ref
-          .read(accountsControllerProvider.notifier)
-          .addAccount(type: AccountType.local, name: name.trim());
-      await ref.read(accountsControllerProvider.notifier).setActive(id);
-      if (!context.mounted) return;
-      context.showSnack(l10n.done);
+      if (picked == null || !context.mounted) return;
+      switch (picked) {
+        case AccountType.local:
+          await showAddLocalAccountDialog(context, ref);
+          return;
+        case AccountType.miniflux:
+          await showAddMinifluxAccountDialog(context, ref);
+          return;
+        case AccountType.fever:
+          context.showSnack(l10n.comingSoon);
+          return;
+      }
     }
 
     return SingleChildScrollView(
@@ -381,14 +197,24 @@ class ServicesTab extends ConsumerWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: addLocal,
-                            child: Text(l10n.addLocal),
+                          OutlinedButton.icon(
+                            onPressed: addAccount,
+                            icon: const Icon(Icons.add),
+                            label: Text(l10n.add),
                           ),
-                          const SizedBox(width: 8),
-                          OutlinedButton(
-                            onPressed: addMiniflux,
-                            child: Text(l10n.addMiniflux),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            tooltip: l10n.more,
+                            onPressed: () async {
+                              await showModalBottomSheet<void>(
+                                context: context,
+                                useRootNavigator: true,
+                                showDragHandle: true,
+                                builder: (context) =>
+                                    const AccountManagerSheet(),
+                              );
+                            },
+                            icon: const Icon(Icons.manage_accounts_outlined),
                           ),
                         ],
                       ),

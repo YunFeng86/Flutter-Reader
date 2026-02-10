@@ -10,6 +10,7 @@ import '../services/rss/rss_client.dart';
 import '../services/sync/sync_service.dart';
 import '../services/sync/miniflux/miniflux_sync_service.dart';
 import '../services/sync/outbox/outbox_store.dart';
+import 'sync_status_providers.dart';
 import '../services/actions/article_action_service.dart';
 import '../services/extract/article_extractor.dart';
 import '../services/cache/article_cache_service.dart';
@@ -62,6 +63,7 @@ final syncServiceProvider = Provider<SyncServiceBase>(
     final feeds = ref.watch(feedRepositoryProvider);
     final categories = ref.watch(categoryRepositoryProvider);
     final articles = ref.watch(articleRepositoryProvider);
+    final reporter = ref.watch(syncStatusReporterProvider);
 
     switch (account.type) {
       case AccountType.local:
@@ -75,6 +77,7 @@ final syncServiceProvider = Provider<SyncServiceBase>(
           cache: ref.watch(articleCacheServiceProvider),
           extractor: ref.watch(articleExtractorProvider),
           appSettingsStore: ref.watch(appSettingsStoreProvider),
+          statusReporter: reporter,
         );
       case AccountType.miniflux:
         return MinifluxSyncService(
@@ -88,6 +91,7 @@ final syncServiceProvider = Provider<SyncServiceBase>(
           appSettingsStore: ref.watch(appSettingsStoreProvider),
           cache: ref.watch(articleCacheServiceProvider),
           extractor: ref.watch(articleExtractorProvider),
+          statusReporter: reporter,
         );
       case AccountType.fever:
         // TODO: implement Fever adapter (M2).
@@ -101,6 +105,7 @@ final syncServiceProvider = Provider<SyncServiceBase>(
           cache: ref.watch(articleCacheServiceProvider),
           extractor: ref.watch(articleExtractorProvider),
           appSettingsStore: ref.watch(appSettingsStoreProvider),
+          statusReporter: reporter,
         );
     }
   },
@@ -118,6 +123,7 @@ final syncServiceProvider = Provider<SyncServiceBase>(
     dioProvider,
     credentialStoreProvider,
     outboxStoreProvider,
+    syncStatusReporterProvider,
   ],
 );
 

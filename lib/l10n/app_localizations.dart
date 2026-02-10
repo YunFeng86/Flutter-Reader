@@ -1161,6 +1161,48 @@ abstract class AppLocalizations {
   /// **'Download Web Pages during Sync'**
   String get syncWebPages;
 
+  /// Sync status: syncing (generic)
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStatusSyncing;
+
+  /// Sync status: syncing feeds
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing feeds'**
+  String get syncStatusSyncingFeeds;
+
+  /// Sync status: syncing subscriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing subscriptions'**
+  String get syncStatusSyncingSubscriptions;
+
+  /// Sync status: syncing unread articles
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing unread articles'**
+  String get syncStatusSyncingUnreadArticles;
+
+  /// Sync status: uploading local/outbox changes
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading changes'**
+  String get syncStatusUploadingChanges;
+
+  /// Sync status: completed
+  ///
+  /// In en, this message translates to:
+  /// **'Sync complete'**
+  String get syncStatusCompleted;
+
+  /// Sync status: failed
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStatusFailed;
+
   /// showAiSummary
   ///
   /// In en, this message translates to:

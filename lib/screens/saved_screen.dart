@@ -13,6 +13,8 @@ import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/sidebar_pane_hero.dart';
 import '../widgets/staggered_reveal.dart';
+import '../widgets/sync_status_capsule.dart';
+import '../ui/global_nav.dart';
 
 enum _SavedMode { starred, readLater }
 
@@ -93,6 +95,8 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final showSyncCapsule =
+            LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
         final width = constraints.maxWidth;
         final spec = LayoutSpec.fromContentSize(
           contentWidth: width,
@@ -192,12 +196,15 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               header,
               const SizedBox(height: 8),
               Expanded(
-                child: ArticleList(
-                  selectedArticleId: widget.selectedArticleId,
-                  baseLocation: '/saved',
-                  articleRoutePrefix: '/saved',
-                  emptyBuilder: (context, state) =>
-                      _buildEmptyState(context, l10n, state),
+                child: SyncStatusCapsuleHost(
+                  enabled: showSyncCapsule,
+                  child: ArticleList(
+                    selectedArticleId: widget.selectedArticleId,
+                    baseLocation: '/saved',
+                    articleRoutePrefix: '/saved',
+                    emptyBuilder: (context, state) =>
+                        _buildEmptyState(context, l10n, state),
+                  ),
                 ),
               ),
             ],

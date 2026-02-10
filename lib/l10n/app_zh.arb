@@ -758,6 +758,34 @@
   "@syncWebPages": {
     "description": "syncWebPages"
   },
+  "syncStatusSyncing": "同步中",
+  "@syncStatusSyncing": {
+    "description": "Sync status: syncing (generic)"
+  },
+  "syncStatusSyncingFeeds": "同步订阅源",
+  "@syncStatusSyncingFeeds": {
+    "description": "Sync status: syncing feeds"
+  },
+  "syncStatusSyncingSubscriptions": "同步订阅",
+  "@syncStatusSyncingSubscriptions": {
+    "description": "Sync status: syncing subscriptions"
+  },
+  "syncStatusSyncingUnreadArticles": "同步未读文章",
+  "@syncStatusSyncingUnreadArticles": {
+    "description": "Sync status: syncing unread articles"
+  },
+  "syncStatusUploadingChanges": "上传更改",
+  "@syncStatusUploadingChanges": {
+    "description": "Sync status: uploading local/outbox changes"
+  },
+  "syncStatusCompleted": "同步完成",
+  "@syncStatusCompleted": {
+    "description": "Sync status: completed"
+  },
+  "syncStatusFailed": "同步失败",
+  "@syncStatusFailed": {
+    "description": "Sync status: failed"
+  },
   "showAiSummary": "Show AI Summary",
   "@showAiSummary": {
     "description": "showAiSummary"

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/accounts/account.dart';
+import '../services/accounts/account_cleanup_service.dart';
 import '../services/accounts/account_store.dart';
 import '../services/accounts/credential_store.dart';
 
@@ -57,6 +60,59 @@ class AccountsController extends AsyncNotifier<AccountsState> {
     state = AsyncValue.data(next);
     await ref.read(accountStoreProvider).save(next);
     return id;
+  }
+
+  Future<void> renameAccount(String accountId, String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return;
+
+    final cur = state.valueOrNull ?? await future;
+    final idx = cur.accounts.indexWhere((a) => a.id == accountId);
+    if (idx < 0) return;
+
+    final now = DateTime.now();
+    final nextAccounts = [...cur.accounts];
+    nextAccounts[idx] = nextAccounts[idx].copyWith(
+      name: trimmed,
+      updatedAt: now,
+    );
+    final next = AccountsState(
+      version: cur.version,
+      activeAccountId: cur.activeAccountId,
+      accounts: nextAccounts,
+    );
+    state = AsyncValue.data(next);
+    await ref.read(accountStoreProvider).save(next);
+  }
+
+  Future<void> deleteAccount(String accountId) async {
+    final cur = state.valueOrNull ?? await future;
+    final target = cur.findById(accountId);
+    if (target == null) return;
+    if (target.isPrimary) return;
+
+    final remaining = cur.accounts.where((a) => a.id != accountId).toList();
+    if (remaining.isEmpty) return;
+
+    var nextActiveId = cur.activeAccountId;
+    if (nextActiveId == accountId) {
+      nextActiveId = remaining.first.id;
+    }
+
+    final next = AccountsState(
+      version: cur.version,
+      activeAccountId: nextActiveId,
+      accounts: remaining,
+    );
+    state = AsyncValue.data(next);
+    await ref.read(accountStoreProvider).save(next);
+
+    // Best-effort cleanup: credentials/state/db for the deleted account.
+    unawaited(
+      AccountCleanupService(
+        credentials: ref.read(credentialStoreProvider),
+      ).deleteAccountData(target).catchError((_) {}),
+    );
   }
 }
 

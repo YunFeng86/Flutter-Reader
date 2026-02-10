@@ -757,6 +757,34 @@
   "@syncWebPages": {
     "description": "syncWebPages"
   },
+  "syncStatusSyncing": "Syncing",
+  "@syncStatusSyncing": {
+    "description": "Sync status: syncing (generic)"
+  },
+  "syncStatusSyncingFeeds": "Syncing feeds",
+  "@syncStatusSyncingFeeds": {
+    "description": "Sync status: syncing feeds"
+  },
+  "syncStatusSyncingSubscriptions": "Syncing subscriptions",
+  "@syncStatusSyncingSubscriptions": {
+    "description": "Sync status: syncing subscriptions"
+  },
+  "syncStatusSyncingUnreadArticles": "Syncing unread articles",
+  "@syncStatusSyncingUnreadArticles": {
+    "description": "Sync status: syncing unread articles"
+  },
+  "syncStatusUploadingChanges": "Uploading changes",
+  "@syncStatusUploadingChanges": {
+    "description": "Sync status: uploading local/outbox changes"
+  },
+  "syncStatusCompleted": "Sync complete",
+  "@syncStatusCompleted": {
+    "description": "Sync status: completed"
+  },
+  "syncStatusFailed": "Sync failed",
+  "@syncStatusFailed": {
+    "description": "Sync status: failed"
+  },
   "showAiSummary": "Show AI Summary",
   "@showAiSummary": {
     "description": "showAiSummary"

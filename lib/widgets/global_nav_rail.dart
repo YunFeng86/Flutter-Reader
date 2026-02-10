@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/nav_destination.dart';
+import '../providers/account_providers.dart';
 import '../ui/actions/global_nav_actions.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../ui/global_nav.dart';
+import 'account_avatar.dart';
+import 'account_manager_sheet.dart';
 
 class GlobalNavRail extends ConsumerWidget {
   const GlobalNavRail({super.key, required this.currentUri});
@@ -18,6 +21,7 @@ class GlobalNavRail extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final dest = destinationForUri(currentUri);
     final selectedIndex = globalDestinationIndex(dest);
+    final activeAccount = ref.watch(activeAccountProvider);
 
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainer,
@@ -75,6 +79,26 @@ class GlobalNavRail extends ConsumerWidget {
                   if (context.mounted) context.go('/');
                 },
                 icon: const Icon(Icons.add),
+              ),
+              const SizedBox(height: 8),
+              Tooltip(
+                message: activeAccount.name,
+                child: InkResponse(
+                  radius: 24,
+                  onTap: () async {
+                    await showModalBottomSheet<void>(
+                      context: context,
+                      useRootNavigator: true,
+                      showDragHandle: true,
+                      builder: (context) => const AccountManagerSheet(),
+                    );
+                  },
+                  child: AccountAvatar(
+                    account: activeAccount,
+                    radius: 18,
+                    showTypeBadge: true,
+                  ),
+                ),
               ),
             ],
           ),
