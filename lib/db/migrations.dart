@@ -2,6 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/article.dart';
+import '../models/feed.dart';
+
 /// Migration definition.
 class Migration {
   const Migration({
@@ -35,10 +38,18 @@ class Migration {
 /// - Each migration must be idempotent (safe to run multiple times)
 Future<void> runPendingMigrations(Isar isar) async {
   final prefs = await SharedPreferences.getInstance();
-  final executed = prefs.getStringList('executed_migrations') ?? <String>[];
+  final key = _executedMigrationsPrefsKey(isar);
+  await _migrateLegacyExecutedMigrationsKeyIfNeeded(prefs, isar: isar, key: key);
+  final executed = prefs.getStringList(key) ?? <String>[];
 
   // Define migrations here - only add when truly needed!
   final migrations = <Migration>[
+    Migration(
+      id: '2026-02-16_backfill_article_category_id',
+      description:
+          'Backfill Article.categoryId from Feed.categoryId (denormalized field).',
+      run: _backfillArticleCategoryId,
+    ),
     // Example migration (commented out):
     // Migration(
     //   id: '2024-01-29_rename_content_field',
@@ -56,7 +67,7 @@ Future<void> runPendingMigrations(Isar isar) async {
       try {
         await migration.run(isar);
         executed.add(migration.id);
-        await prefs.setStringList('executed_migrations', executed);
+        await prefs.setStringList(key, executed);
         debugPrint('✅ Migration completed: ${migration.id}');
       } catch (e, stackTrace) {
         debugPrint('❌ Migration failed: ${migration.id}');
@@ -67,6 +78,101 @@ Future<void> runPendingMigrations(Isar isar) async {
       }
     }
   }
+}
+
+String _executedMigrationsPrefsKey(Isar isar) {
+  // Migrations must run per database instance (multi-account support).
+  // Use the Isar instance name as a stable key suffix.
+  final name = isar.name.trim().isEmpty ? 'default' : isar.name.trim();
+  return 'executed_migrations:$name';
+}
+
+Future<void> _migrateLegacyExecutedMigrationsKeyIfNeeded(
+  SharedPreferences prefs, {
+  required Isar isar,
+  required String key,
+}) async {
+  // Legacy builds used a global key shared by all Isar instances.
+  // Newer builds store migration state per instance name.
+  //
+  // Only migrate for the primary DB instance names to avoid "leaking" a global
+  // executed list into per-account databases (multi-account correctness).
+  const primaryInstanceNames = <String>{'default', 'fleur', 'flutter_reader'};
+  final instanceName = isar.name.trim().isEmpty ? 'default' : isar.name.trim();
+  if (!primaryInstanceNames.contains(instanceName)) return;
+
+  if (prefs.containsKey(key)) return;
+
+  const legacyKey = 'executed_migrations';
+  if (!prefs.containsKey(legacyKey)) return;
+
+  final legacyExecuted = prefs.getStringList(legacyKey) ?? const <String>[];
+  if (legacyExecuted.isEmpty) return;
+
+  await prefs.setStringList(key, legacyExecuted);
+  debugPrint('✅ Migrated legacy migration records to $key');
+}
+
+Future<void> _backfillArticleCategoryId(Isar isar) async {
+  final feeds = await isar.feeds.where().findAll();
+  if (feeds.isEmpty) return;
+
+  var fixed = 0;
+  var processedFeeds = 0;
+  for (final feed in feeds) {
+    // Find articles where categoryId doesn't match the feed's categoryId
+    // (covers both null backfill and mismatch repair).
+    final ids = await isar.articles
+        .filter()
+        .feedIdEqualTo(feed.id)
+        .not()
+        .group((q) {
+          return feed.categoryId == null
+              ? q.categoryIdIsNull()
+              : q.categoryIdEqualTo(feed.categoryId);
+        })
+        .idProperty()
+        .findAll();
+    if (ids.isEmpty) continue;
+
+    const batchSize = 200;
+    var batchCount = 0;
+    for (var i = 0; i < ids.length; i += batchSize) {
+      final end = (i + batchSize > ids.length) ? ids.length : i + batchSize;
+      final batchIds = ids.sublist(i, end);
+
+      await isar.writeTxn(() async {
+        final items = await isar.articles.getAll(batchIds);
+        final now = DateTime.now();
+        final updates = <Article>[];
+        for (final a in items) {
+          if (a == null) continue;
+          a.categoryId = feed.categoryId;
+          a.updatedAt = now;
+          updates.add(a);
+        }
+        if (updates.isNotEmpty) {
+          await isar.articles.putAll(updates);
+        }
+      });
+
+      batchCount++;
+      // Yield periodically to keep the event loop responsive when migrations run
+      // while the UI is active (e.g., opening a secondary account).
+      if (batchCount % 10 == 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+
+    fixed += ids.length;
+    processedFeeds++;
+    if (processedFeeds % 25 == 0) {
+      debugPrint('   Backfill progress: $processedFeeds/${feeds.length} feeds');
+      await Future<void>.delayed(Duration.zero);
+    }
+  }
+
+  debugPrint('   Backfilled $fixed articles');
 }
 
 // ============================================================================

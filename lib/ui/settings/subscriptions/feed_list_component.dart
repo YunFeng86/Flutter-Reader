@@ -21,7 +21,7 @@ class FeedListComponent extends ConsumerWidget {
       error: (e, _) => Center(child: Text(e.toString())),
       data: (allFeeds) {
         List<Feed> visibleFeeds;
-        if (selection.activeCategoryId == null) {
+        if (selection.isAll) {
           // If no folder selected, show empty or maybe all?
           // Per requirements: "No folder -> Show feeds".
           // If layout logic says we are visible, we should show all if uncategorized isn't explicitly active?

@@ -196,6 +196,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       byCat.putIfAbsent(f.categoryId, () => []).add(f);
                     }
 
+                    final feedUnreadCounts = allUnreadCounts.value;
+                    final unreadByCategoryId = <int, int>{};
+                    if (feedUnreadCounts != null) {
+                      // Aggregate category unread counts from per-feed counts to avoid
+                      // spinning up one DB watcher per category.
+                      for (final f in feedItems) {
+                        final cid = f.categoryId;
+                        if (cid == null) continue;
+                        final c = feedUnreadCounts[f.id] ?? 0;
+                        if (c <= 0) continue;
+                        unreadByCategoryId[cid] =
+                            (unreadByCategoryId[cid] ?? 0) + c;
+                      }
+                    }
+
                     final children = <Widget>[];
 
                     // All Articles Tile
@@ -343,6 +358,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                           feeds: catFeeds,
                           selectedFeedId: selectedFeedId,
                           selectedCategoryId: selectedCategoryId,
+                          unreadCount: unreadByCategoryId[c.id] ?? 0,
                           unreadCounts: allUnreadCounts.value,
                         ),
                       );
@@ -404,10 +420,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     required List<Feed> feeds,
     required int? selectedFeedId,
     required int? selectedCategoryId,
+    required int unreadCount,
     Map<int?, int>? unreadCounts,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final unread = ref.watch(unreadCountByCategoryProvider(category.id));
     final starredOnly = ref.watch(starredOnlyProvider);
     final selected =
         !starredOnly &&
@@ -424,11 +440,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              unread.when(
-                data: (c) => _UnreadBadge(c),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
+              _UnreadBadge(unreadCount),
               if (isDesktop)
                 MenuAnchor(
                   menuChildren: [
@@ -857,37 +869,41 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: c.name);
-    final next = await _showDialog<String?>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.rename),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: l10n.name),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.done),
-            ),
-          ],
-        );
-      },
-    );
-    if (next == null) return;
     try {
-      await ref.read(categoryRepositoryProvider).rename(c.id, next);
-    } catch (e) {
-      if (!context.mounted) return;
-      final msg = e.toString().contains('already exists')
-          ? l10n.nameAlreadyExists
-          : e.toString();
-      context.showErrorMessage(l10n.errorMessage(msg));
+      final next = await _showDialog<String?>(
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.rename),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(labelText: l10n.name),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: Text(l10n.done),
+              ),
+            ],
+          );
+        },
+      );
+      if (next == null) return;
+      try {
+        await ref.read(categoryRepositoryProvider).rename(c.id, next);
+      } catch (e) {
+        if (!context.mounted) return;
+        final msg = e.toString().contains('already exists')
+            ? l10n.nameAlreadyExists
+            : e.toString();
+        context.showErrorMessage(l10n.errorMessage(msg));
+      }
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -898,36 +914,40 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: f.userTitle ?? '');
-    final next = await _showDialog<String?>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.edit),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: l10n.name),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text(l10n.cancel),
+    try {
+      final next = await _showDialog<String?>(
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.edit),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(labelText: l10n.name),
+              autofocus: true,
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(''),
-              child: Text(l10n.delete),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.done),
-            ),
-          ],
-        );
-      },
-    );
-    if (next == null) return;
-    await ref
-        .read(feedRepositoryProvider)
-        .setUserTitle(feedId: f.id, userTitle: next);
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(''),
+                child: Text(l10n.delete),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: Text(l10n.done),
+              ),
+            ],
+          );
+        },
+      );
+      if (next == null) return;
+      await ref
+          .read(feedRepositoryProvider)
+          .setUserTitle(feedId: f.id, userTitle: next);
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _moveFeedToCategory(

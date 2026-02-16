@@ -1,14 +1,30 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Special ID representing the "Uncategorized" pseudo-category.
-const kUncategorizedId = -1;
+sealed class SubscriptionCategoryScope {
+  const SubscriptionCategoryScope();
+}
+
+final class SubscriptionCategoryAll extends SubscriptionCategoryScope {
+  const SubscriptionCategoryAll();
+}
+
+final class SubscriptionCategoryUncategorized
+    extends SubscriptionCategoryScope {
+  const SubscriptionCategoryUncategorized();
+}
+
+final class SubscriptionCategoryId extends SubscriptionCategoryScope {
+  const SubscriptionCategoryId(this.id);
+
+  final int id;
+}
 
 class SubscriptionState {
-  /// The currently active category for the middle column (Feed List).
-  /// - `null`: No category selected (Layout dependent: might hide middle column or show empty).
-  /// - [kUncategorizedId]: The "Uncategorized" folder.
-  /// - `> 0`: A valid Category ID.
-  final int? activeCategoryId;
+  /// The currently active category scope for the middle column (Feed List).
+  ///
+  /// This is intentionally *not* an `int?` to avoid sentinel values like `-1`
+  /// for "Uncategorized".
+  final SubscriptionCategoryScope categoryScope;
 
   /// The currently selected feed for the right column (Settings/Details).
   /// - `null`: No feed selected.
@@ -29,21 +45,21 @@ class SubscriptionState {
   final bool showCategorySettings;
 
   const SubscriptionState({
-    this.activeCategoryId,
+    this.categoryScope = const SubscriptionCategoryAll(),
     this.selectedFeedId,
     this.showGlobalSettings = false,
     this.showCategorySettings = false,
   });
 
   SubscriptionState copyWith({
-    int? activeCategoryId,
+    SubscriptionCategoryScope? categoryScope,
     int? selectedFeedId,
     bool clearFeed = false,
     bool? showGlobalSettings,
     bool? showCategorySettings,
   }) {
     return SubscriptionState(
-      activeCategoryId: activeCategoryId ?? this.activeCategoryId,
+      categoryScope: categoryScope ?? this.categoryScope,
       selectedFeedId: clearFeed
           ? null
           : (selectedFeedId ?? this.selectedFeedId),
@@ -52,11 +68,19 @@ class SubscriptionState {
     );
   }
 
+  int? get activeCategoryId => switch (categoryScope) {
+    SubscriptionCategoryId(:final id) => id,
+    _ => null,
+  };
+
   /// Whether we are currently viewing the "Uncategorized" folder.
-  bool get isUncategorized => activeCategoryId == kUncategorizedId;
+  bool get isUncategorized =>
+      categoryScope is SubscriptionCategoryUncategorized;
+
+  bool get isAll => categoryScope is SubscriptionCategoryAll;
 
   /// Whether a real, editable category is selected.
-  bool get isRealCategory => activeCategoryId != null && activeCategoryId! > 0;
+  bool get isRealCategory => categoryScope is SubscriptionCategoryId;
 
   /// Whether the current state represents an in-page selection that can be
   /// cleared via back navigation.
@@ -64,7 +88,7 @@ class SubscriptionState {
       showGlobalSettings ||
       showCategorySettings ||
       selectedFeedId != null ||
-      activeCategoryId != null;
+      !isAll;
 }
 
 class SubscriptionSelectionNotifier extends StateNotifier<SubscriptionState> {
@@ -77,7 +101,9 @@ class SubscriptionSelectionNotifier extends StateNotifier<SubscriptionState> {
       return;
     }
     state = SubscriptionState(
-      activeCategoryId: id,
+      categoryScope: (id == null)
+          ? const SubscriptionCategoryAll()
+          : SubscriptionCategoryId(id),
       selectedFeedId: null,
       showGlobalSettings: false,
       showCategorySettings: false,
@@ -85,19 +111,26 @@ class SubscriptionSelectionNotifier extends StateNotifier<SubscriptionState> {
   }
 
   void selectUncategorized() {
-    selectCategory(kUncategorizedId);
+    if (state.isUncategorized && state.selectedFeedId == null) {
+      state = const SubscriptionState();
+      return;
+    }
+    state = const SubscriptionState(
+      categoryScope: SubscriptionCategoryUncategorized(),
+      selectedFeedId: null,
+      showGlobalSettings: false,
+      showCategorySettings: false,
+    );
   }
 
-  void selectFeed(int feedId, [int? categoryId]) {
+  void selectFeed(int feedId, {SubscriptionCategoryScope? categoryScope}) {
     // If clicking the currently selected feed, toggle it off.
     if (state.selectedFeedId == feedId) {
       state = state.copyWith(clearFeed: true, showGlobalSettings: false);
       return;
     }
-    // If categoryId is provided, we switch context.
-    // Otherwise we keep existing category.
     state = SubscriptionState(
-      activeCategoryId: categoryId ?? state.activeCategoryId,
+      categoryScope: categoryScope ?? state.categoryScope,
       selectedFeedId: feedId,
       showGlobalSettings: false,
       showCategorySettings: false,
@@ -114,7 +147,7 @@ class SubscriptionSelectionNotifier extends StateNotifier<SubscriptionState> {
 
   void openCategorySettings(int categoryId) {
     state = SubscriptionState(
-      activeCategoryId: categoryId,
+      categoryScope: SubscriptionCategoryId(categoryId),
       selectedFeedId: null,
       showGlobalSettings: false,
       showCategorySettings: true,
@@ -152,8 +185,8 @@ class SubscriptionSelectionNotifier extends StateNotifier<SubscriptionState> {
       clearFeedSelection();
       return false;
     }
-    if (state.activeCategoryId != null) {
-      selectCategory(null);
+    if (!state.isAll) {
+      state = const SubscriptionState();
       return false;
     }
     return true;

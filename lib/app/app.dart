@@ -221,9 +221,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
           final feeds = await ref.read(feedRepositoryProvider).getAll();
           final filtered = (categoryId == null)
               ? feeds
-              : (categoryId < 0
-                    ? feeds.where((f) => f.categoryId == null)
-                    : feeds.where((f) => f.categoryId == categoryId));
+              : feeds.where((f) => f.categoryId == categoryId);
           return ref
               .read(syncServiceProvider)
               .refreshFeedsSafe(filtered.map((f) => f.id));

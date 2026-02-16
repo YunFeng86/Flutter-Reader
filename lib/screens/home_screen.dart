@@ -45,9 +45,7 @@ class HomeScreen extends ConsumerWidget {
         final feeds = await ref.read(feedRepositoryProvider).getAll();
         final filtered = (categoryId == null)
             ? feeds
-            : (categoryId < 0
-                  ? feeds.where((f) => f.categoryId == null)
-                  : feeds.where((f) => f.categoryId == categoryId));
+            : feeds.where((f) => f.categoryId == categoryId);
         final batch = await ref
             .read(syncServiceProvider)
             .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -215,9 +213,9 @@ class HomeScreen extends ConsumerWidget {
                     final feeds = await ref
                         .read(feedRepositoryProvider)
                         .getAll();
-                    final filtered = categoryId < 0
-                        ? feeds.where((f) => f.categoryId == null)
-                        : feeds.where((f) => f.categoryId == categoryId);
+                    final filtered = feeds.where(
+                      (f) => f.categoryId == categoryId,
+                    );
                     await ref
                         .read(syncServiceProvider)
                         .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -519,9 +517,7 @@ class HomeScreen extends ConsumerWidget {
                 await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
               } else if (categoryId != null) {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
-                final filtered = categoryId < 0
-                    ? feeds.where((f) => f.categoryId == null)
-                    : feeds.where((f) => f.categoryId == categoryId);
+                final filtered = feeds.where((f) => f.categoryId == categoryId);
                 await ref
                     .read(syncServiceProvider)
                     .refreshFeedsSafe(filtered.map((f) => f.id));
