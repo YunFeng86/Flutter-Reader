@@ -38,6 +38,7 @@ class PathManager {
   static Directory _settingsDir() =>
       Directory(p.join(_supportDir.path, 'settings'));
   static Directory _stateDir() => Directory(p.join(_supportDir.path, 'state'));
+  static Directory _logsDir() => Directory(p.join(_supportDir.path, 'logs'));
 
   @visibleForTesting
   static void resetForTests() {
@@ -282,8 +283,16 @@ class PathManager {
     return dir;
   }
 
+  static Future<Directory> getLogsDir() async {
+    await _ensureInitialized();
+    final dir = _logsDir();
+    await dir.create(recursive: true);
+    return dir;
+  }
+
   static Future<String> getSupportPath() async => (await getSupportDir()).path;
   static Future<String> getCachePath() async => (await getCacheDir()).path;
+  static Future<String> getLogsPath() async => (await getLogsDir()).path;
 
   static Future<File> appSettingsFile() async {
     final dir = await getSettingsDir();

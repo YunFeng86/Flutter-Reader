@@ -226,6 +226,10 @@
   "@fullText": {
     "description": "fullText"
   },
+  "fullTextRetry": "获取全文失败，重试",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
+  },
   "readerSettings": "阅读设置",
   "@readerSettings": {
     "description": "readerSettings"
@@ -348,6 +352,10 @@
   "autoColor": "自动",
   "@autoColor": {
     "description": "autoColor"
+  },
+  "tagsLoadingError": "加载标签失败",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
   },
   "deleteCategory": "删除分类",
   "@deleteCategory": {
@@ -697,6 +705,30 @@
   "openFolder": "打开文件夹",
   "@openFolder": {
     "description": "openFolder"
+  },
+  "logDirectory": "日志目录",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "打开日志",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "打开日志文件夹",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "导出日志",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "日志已导出",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "未找到日志文件",
+  "@noLogsFound": {
+    "description": "noLogsFound"
   },
   "keyboardShortcuts": "快捷键",
   "@keyboardShortcuts": {

@@ -239,8 +239,9 @@ Future<String?> showAddMinifluxAccountDialog(
             ),
             actions: [
               TextButton(
-                onPressed:
-                    submitting ? null : () => Navigator.of(dialogContext).pop(),
+                onPressed: submitting
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
                 child: Text(l10n.cancel),
               ),
               FilledButton(

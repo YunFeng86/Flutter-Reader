@@ -115,9 +115,21 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         if (!mounted) return;
         if (next.hasError) {
           final l10n = AppLocalizations.of(context)!;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
-          );
+          final error = next.error;
+          if (error == null) return;
+
+          String message;
+          if (error is ArticleExtractionException) {
+            switch (error.type) {
+              case ArticleExtractionErrorType.emptyContent:
+                message = l10n.fullTextRetry;
+            }
+          } else {
+            message = l10n.fullTextFailed(error.toString());
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       },
       fireImmediately: false,

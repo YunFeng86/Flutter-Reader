@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show compute, debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart' show compute;
 import 'package:pool/pool.dart';
 
 import '../../models/article.dart';
@@ -10,6 +10,7 @@ import '../../models/feed.dart';
 import '../../repositories/article_repository.dart';
 import '../../repositories/category_repository.dart';
 import '../../repositories/feed_repository.dart';
+import '../logging/app_logger.dart';
 import '../settings/app_settings.dart';
 import '../settings/app_settings_store.dart';
 import '../rss/feed_parser.dart';
@@ -286,9 +287,7 @@ class SyncService implements SyncServiceBase {
         );
       } catch (e) {
         // Don't let notification failures (permissions/plugin issues) break sync.
-        if (kDebugMode) {
-          debugPrint('Per-feed notification failed: $e');
-        }
+        AppLogger.w('Per-feed notification failed', tag: 'sync', error: e);
       }
     }
 
@@ -538,9 +537,7 @@ class SyncService implements SyncServiceBase {
         );
       } catch (e) {
         // Don't let notification failures (permissions/plugin issues) break sync.
-        if (kDebugMode) {
-          debugPrint('Summary notification failed: $e');
-        }
+        AppLogger.w('Summary notification failed', tag: 'sync', error: e);
       }
     }
     return batch;

@@ -226,6 +226,10 @@
   "@fullText": {
     "description": "fullText"
   },
+  "fullTextRetry": "取得全文失敗，重試",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
+  },
   "readerSettings": "閱讀設定",
   "@readerSettings": {
     "description": "readerSettings"
@@ -340,6 +344,10 @@
   "autoColor": "自動",
   "@autoColor": {
     "description": "autoColor"
+  },
+  "tagsLoadingError": "載入標籤失敗",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
   },
   "@cachingArticles": {
     "placeholders": {
@@ -697,6 +705,30 @@
   "openFolder": "打開資料夾",
   "@openFolder": {
     "description": "openFolder"
+  },
+  "logDirectory": "日誌目錄",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "打開日誌",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "打開日誌資料夾",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "匯出日誌",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "日誌已匯出",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "未找到日誌檔案",
+  "@noLogsFound": {
+    "description": "noLogsFound"
   },
   "keyboardShortcuts": "快速鍵",
   "@keyboardShortcuts": {

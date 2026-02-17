@@ -179,6 +179,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullText => 'Full text';
 
   @override
+  String get fullTextRetry => 'Full text failed. Retry';
+
+  @override
   String get readerSettings => 'Reader settings';
 
   @override
@@ -395,6 +398,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoColor => 'Auto';
 
   @override
+  String get tagsLoadingError => 'Error loading tags';
+
+  @override
   String cleanedArticles(int count) {
     return 'Cleaned $count articles';
   }
@@ -522,6 +528,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openFolder => 'Open folder';
+
+  @override
+  String get logDirectory => 'Log directory';
+
+  @override
+  String get openLog => 'Open log';
+
+  @override
+  String get openLogFolder => 'Open log folder';
+
+  @override
+  String get exportLogs => 'Export logs';
+
+  @override
+  String get exportedLogs => 'Logs exported';
+
+  @override
+  String get noLogsFound => 'No log files found';
 
   @override
   String get keyboardShortcuts => 'Keyboard shortcuts';

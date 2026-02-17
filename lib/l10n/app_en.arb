@@ -226,6 +226,10 @@
   "@fullText": {
     "description": "fullText"
   },
+  "fullTextRetry": "Full text failed. Retry",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
+  },
   "readerSettings": "Reader settings",
   "@readerSettings": {
     "description": "readerSettings"
@@ -522,6 +526,10 @@
   "@autoColor": {
     "description": "autoColor"
   },
+  "tagsLoadingError": "Error loading tags",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
+  },
   "cleanedArticles": "Cleaned {count} articles",
   "@cleanedArticles": {
     "placeholders": {
@@ -696,6 +704,30 @@
   "openFolder": "Open folder",
   "@openFolder": {
     "description": "openFolder"
+  },
+  "logDirectory": "Log directory",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "Open log",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "Open log folder",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "Export logs",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "Logs exported",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "No log files found",
+  "@noLogsFound": {
+    "description": "noLogsFound"
   },
   "keyboardShortcuts": "Keyboard shortcuts",
   "@keyboardShortcuts": {

@@ -423,6 +423,12 @@ abstract class AppLocalizations {
   /// **'Full text'**
   String get fullText;
 
+  /// fullTextRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Full text failed. Retry'**
+  String get fullTextRetry;
+
   /// readerSettings
   ///
   /// In en, this message translates to:
@@ -831,6 +837,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get autoColor;
 
+  /// Error message displayed when tags fail to load in the dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading tags'**
+  String get tagsLoadingError;
+
   /// cleanedArticles
   ///
   /// In en, this message translates to:
@@ -1070,6 +1082,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open folder'**
   String get openFolder;
+
+  /// logDirectory
+  ///
+  /// In en, this message translates to:
+  /// **'Log directory'**
+  String get logDirectory;
+
+  /// openLog
+  ///
+  /// In en, this message translates to:
+  /// **'Open log'**
+  String get openLog;
+
+  /// openLogFolder
+  ///
+  /// In en, this message translates to:
+  /// **'Open log folder'**
+  String get openLogFolder;
+
+  /// exportLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Export logs'**
+  String get exportLogs;
+
+  /// exportedLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Logs exported'**
+  String get exportedLogs;
+
+  /// noLogsFound
+  ///
+  /// In en, this message translates to:
+  /// **'No log files found'**
+  String get noLogsFound;
 
   /// keyboardShortcuts
   ///

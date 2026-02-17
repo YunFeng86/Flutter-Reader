@@ -175,6 +175,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get fullText => '阅读全文';
 
   @override
+  String get fullTextRetry => '获取全文失败，重试';
+
+  @override
   String get readerSettings => '阅读设置';
 
   @override
@@ -389,6 +392,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoColor => '自动';
 
   @override
+  String get tagsLoadingError => '加载标签失败';
+
+  @override
   String cleanedArticles(int count) {
     return '已清理 $count 篇文章';
   }
@@ -513,6 +519,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openFolder => '打开文件夹';
+
+  @override
+  String get logDirectory => '日志目录';
+
+  @override
+  String get openLog => '打开日志';
+
+  @override
+  String get openLogFolder => '打开日志文件夹';
+
+  @override
+  String get exportLogs => '导出日志';
+
+  @override
+  String get exportedLogs => '日志已导出';
+
+  @override
+  String get noLogsFound => '未找到日志文件';
 
   @override
   String get keyboardShortcuts => '快捷键';
@@ -829,6 +853,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get fullText => '閱讀全文';
 
   @override
+  String get fullTextRetry => '取得全文失敗，重試';
+
+  @override
   String get readerSettings => '閱讀設定';
 
   @override
@@ -1043,6 +1070,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get autoColor => '自動';
 
   @override
+  String get tagsLoadingError => '載入標籤失敗';
+
+  @override
   String cleanedArticles(int count) {
     return '清理了 $count 篇文章';
   }
@@ -1167,6 +1197,24 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get openFolder => '打開資料夾';
+
+  @override
+  String get logDirectory => '日誌目錄';
+
+  @override
+  String get openLog => '打開日誌';
+
+  @override
+  String get openLogFolder => '打開日誌資料夾';
+
+  @override
+  String get exportLogs => '匯出日誌';
+
+  @override
+  String get exportedLogs => '日誌已匯出';
+
+  @override
+  String get noLogsFound => '未找到日誌檔案';
 
   @override
   String get keyboardShortcuts => '快速鍵';

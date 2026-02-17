@@ -65,6 +65,16 @@ class HtmlSanitizer {
     'bilibili.com',
   };
 
+  static bool _isAllowedIframeHost(String host) {
+    final h = host.toLowerCase().trim();
+    if (h.isEmpty) return false;
+    for (final d in _allowedIframeDomains) {
+      final domain = d.toLowerCase();
+      if (h == domain || h.endsWith('.$domain')) return true;
+    }
+    return false;
+  }
+
   /// Sanitize HTML content.
   ///
   /// Returns cleaned HTML with dangerous elements removed.
@@ -91,8 +101,7 @@ class HtmlSanitizer {
         if (tag == 'iframe') {
           final src = child.attributes['src'] ?? '';
           final uri = Uri.tryParse(src);
-          if (uri != null &&
-              _allowedIframeDomains.any((d) => uri.host.contains(d))) {
+          if (uri != null && _isAllowedIframeHost(uri.host)) {
             // Keep iframe but clean attributes
             child.attributes.clear();
             child.attributes['src'] = src;

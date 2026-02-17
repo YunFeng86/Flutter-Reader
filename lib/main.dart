@@ -1,31 +1,79 @@
+import 'dart:async';
+import 'dart:ui';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:window_manager/window_manager.dart';
 
 import 'app/account_gate.dart';
+import 'services/logging/app_logger.dart';
 import 'utils/platform.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  await runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Enable localized relative time strings in the article list.
-  timeago.setLocaleMessages('zh', timeago.ZhMessages());
-  timeago.setLocaleMessages('zh_CN', timeago.ZhCnMessages());
+      await AppLogger.ensureInitialized();
 
-  if (isDesktop) {
-    await windowManager.ensureInitialized();
-    const options = WindowOptions(
-      size: Size(1200, 800),
-      center: true,
-      minimumSize: Size(360, 520),
-      titleBarStyle: TitleBarStyle.hidden,
-    );
-    await windowManager.waitUntilReadyToShow(options, () async {
-      await windowManager.show();
-      await windowManager.focus();
-    });
-  }
+      FlutterError.onError = (details) {
+        if (kDebugMode) {
+          FlutterError.presentError(details);
+        }
+        AppLogger.e(
+          details.exceptionAsString(),
+          tag: 'flutter',
+          error: details.exception,
+          stackTrace: details.stack,
+        );
+      };
 
-  runApp(const ProviderScope(child: AccountGate()));
+      PlatformDispatcher.instance.onError = (error, stackTrace) {
+        AppLogger.e(
+          'Uncaught platform error',
+          tag: 'platform',
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return false;
+      };
+
+      // Enable localized relative time strings in the article list.
+      timeago.setLocaleMessages('zh', timeago.ZhMessages());
+      timeago.setLocaleMessages('zh_CN', timeago.ZhCnMessages());
+
+      if (isDesktop) {
+        await windowManager.ensureInitialized();
+        const options = WindowOptions(
+          size: Size(1200, 800),
+          center: true,
+          minimumSize: Size(360, 520),
+          titleBarStyle: TitleBarStyle.hidden,
+        );
+        await windowManager.waitUntilReadyToShow(options, () async {
+          await windowManager.show();
+          await windowManager.focus();
+        });
+      }
+
+      runApp(const ProviderScope(child: AccountGate()));
+    },
+    (error, stackTrace) {
+      AppLogger.e(
+        'Uncaught zone error',
+        tag: 'zone',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    },
+    zoneSpecification: ZoneSpecification(
+      print: (self, parent, zone, line) {
+        parent.print(zone, line);
+        if (line.trim().isEmpty) return;
+        AppLogger.i(line, tag: 'print');
+      },
+    ),
+  );
 }

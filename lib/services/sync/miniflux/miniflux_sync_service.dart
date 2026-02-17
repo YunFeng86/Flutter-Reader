@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:dio/dio.dart';
 import 'package:pool/pool.dart';
 
@@ -14,6 +13,7 @@ import '../../accounts/account.dart';
 import '../../accounts/credential_store.dart';
 import '../../cache/article_cache_service.dart';
 import '../../extract/article_extractor.dart';
+import '../../logging/app_logger.dart';
 import '../../settings/app_settings.dart';
 import '../../settings/app_settings_store.dart';
 import '../effective_feed_settings.dart';
@@ -497,9 +497,7 @@ class MinifluxSyncService implements SyncServiceBase {
             break;
         }
       } catch (e) {
-        if (kDebugMode) {
-          debugPrint('outbox flush failed: $e');
-        }
+        AppLogger.w('outbox flush failed', tag: 'sync', error: e);
         remaining.add(a);
       }
     }

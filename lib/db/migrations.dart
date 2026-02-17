@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/article.dart';
 import '../models/feed.dart';
+import '../services/logging/app_logger.dart';
 
 /// Migration definition.
 class Migration {
@@ -39,7 +39,11 @@ class Migration {
 Future<void> runPendingMigrations(Isar isar) async {
   final prefs = await SharedPreferences.getInstance();
   final key = _executedMigrationsPrefsKey(isar);
-  await _migrateLegacyExecutedMigrationsKeyIfNeeded(prefs, isar: isar, key: key);
+  await _migrateLegacyExecutedMigrationsKeyIfNeeded(
+    prefs,
+    isar: isar,
+    key: key,
+  );
   final executed = prefs.getStringList(key) ?? <String>[];
 
   // Define migrations here - only add when truly needed!
@@ -61,18 +65,23 @@ Future<void> runPendingMigrations(Isar isar) async {
   // Execute pending migrations
   for (final migration in migrations) {
     if (!executed.contains(migration.id)) {
-      debugPrint('🔄 Running migration: ${migration.id}');
-      debugPrint('   ${migration.description}');
+      AppLogger.i(
+        'Running migration: ${migration.id}\n${migration.description}',
+        tag: 'migration',
+      );
 
       try {
         await migration.run(isar);
         executed.add(migration.id);
         await prefs.setStringList(key, executed);
-        debugPrint('✅ Migration completed: ${migration.id}');
+        AppLogger.i('Migration completed: ${migration.id}', tag: 'migration');
       } catch (e, stackTrace) {
-        debugPrint('❌ Migration failed: ${migration.id}');
-        debugPrint('Error: $e');
-        debugPrint('StackTrace: $stackTrace');
+        AppLogger.e(
+          'Migration failed: ${migration.id}',
+          tag: 'migration',
+          error: e,
+          stackTrace: stackTrace,
+        );
         // Don't rethrow - allow app to start even if migration fails
         // Users can still use the app with potentially stale data
       }
@@ -110,7 +119,7 @@ Future<void> _migrateLegacyExecutedMigrationsKeyIfNeeded(
   if (legacyExecuted.isEmpty) return;
 
   await prefs.setStringList(key, legacyExecuted);
-  debugPrint('✅ Migrated legacy migration records to $key');
+  AppLogger.i('Migrated legacy migration records to $key', tag: 'migration');
 }
 
 Future<void> _backfillArticleCategoryId(Isar isar) async {
@@ -167,12 +176,15 @@ Future<void> _backfillArticleCategoryId(Isar isar) async {
     fixed += ids.length;
     processedFeeds++;
     if (processedFeeds % 25 == 0) {
-      debugPrint('   Backfill progress: $processedFeeds/${feeds.length} feeds');
+      AppLogger.i(
+        'Backfill progress: $processedFeeds/${feeds.length} feeds',
+        tag: 'migration',
+      );
       await Future<void>.delayed(Duration.zero);
     }
   }
 
-  debugPrint('   Backfilled $fixed articles');
+  AppLogger.i('Backfilled $fixed articles', tag: 'migration');
 }
 
 // ============================================================================
@@ -182,7 +194,7 @@ Future<void> _backfillArticleCategoryId(Isar isar) async {
 // 1. Be idempotent (safe to run multiple times)
 // 2. Handle missing/null data gracefully
 // 3. Use batch operations for performance
-// 4. Log progress with debugPrint
+// 4. Log progress with AppLogger
 //
 // Example migration template:
 //
@@ -200,6 +212,6 @@ Future<void> _backfillArticleCategoryId(Isar isar) async {
 //     }
 //
 //     await isar.articles.putAll(articles);
-//     debugPrint('   Migrated $count articles');
+//     AppLogger.i('Migrated $count articles', tag: 'migration');
 //   });
 // }
