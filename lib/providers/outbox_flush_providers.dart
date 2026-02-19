@@ -3,9 +3,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/accounts/account.dart';
+import '../services/sync/fever/fever_sync_service.dart';
 import '../services/sync/miniflux/miniflux_sync_service.dart';
 import '../utils/platform.dart';
 import 'account_providers.dart';
+import 'outbox_status_providers.dart';
 import 'service_providers.dart';
 
 class OutboxFlushController extends AutoDisposeNotifier<void> {
@@ -13,6 +15,7 @@ class OutboxFlushController extends AutoDisposeNotifier<void> {
   Duration _delay = const Duration(seconds: 3);
   bool _running = false;
   var _disposed = false;
+  var _stallCount = 0;
 
   @override
   void build() {
@@ -28,12 +31,17 @@ class OutboxFlushController extends AutoDisposeNotifier<void> {
     _timer?.cancel();
     _timer = null;
     _disposed = false;
+    _stallCount = 0;
+    ref.read(outboxFlushStallCountProvider.notifier).state = 0;
     ref.onDispose(() {
       _disposed = true;
       _timer?.cancel();
     });
 
-    if (account.type != AccountType.miniflux) return;
+    if (account.type != AccountType.miniflux &&
+        account.type != AccountType.fever) {
+      return;
+    }
 
     _schedule();
   }
@@ -52,7 +60,8 @@ class OutboxFlushController extends AutoDisposeNotifier<void> {
     var shouldReschedule = true;
     try {
       final account = ref.read(activeAccountProvider);
-      if (account.type != AccountType.miniflux) {
+      if (account.type != AccountType.miniflux &&
+          account.type != AccountType.fever) {
         _delay = const Duration(seconds: 30);
         shouldReschedule = false;
         return;
@@ -62,19 +71,43 @@ class OutboxFlushController extends AutoDisposeNotifier<void> {
       if (pending.isEmpty) {
         // Idle: poll slowly.
         _delay = const Duration(seconds: 30);
+        _stallCount = 0;
+        ref.read(outboxFlushStallCountProvider.notifier).state = 0;
         // Keep polling while the account is Miniflux.
         return;
       }
 
+      final beforeCount = pending.length;
       final svc = ref.read(syncServiceProvider);
-      final ok = svc is MinifluxSyncService && await svc.flushOutboxSafe();
+      final ok = switch (svc) {
+        MinifluxSyncService s => await s.flushOutboxSafe(),
+        FeverSyncService s => await s.flushOutboxSafe(),
+        _ => false,
+      };
 
-      if (ok) {
-        // If there are still pending actions, retry quickly; otherwise we will
-        // fall back to the idle delay on the next tick.
+      if (!ok) {
+        _delay = _nextBackoff(_delay);
+        _stallCount += 1;
+        ref.read(outboxFlushStallCountProvider.notifier).state = _stallCount;
+        return;
+      }
+
+      // `flushOutboxSafe()` may succeed but make no progress (e.g. permanent
+      // server errors, bad credentials, or unsupported actions). Detect this to
+      // avoid a fast-poll loop that burns battery/network.
+      final after = await ref.read(outboxStoreProvider).load(account.id);
+      if (after.isEmpty) {
+        _delay = const Duration(seconds: 30);
+        _stallCount = 0;
+        ref.read(outboxFlushStallCountProvider.notifier).state = 0;
+      } else if (after.length < beforeCount) {
         _delay = const Duration(seconds: 5);
+        _stallCount = 0;
+        ref.read(outboxFlushStallCountProvider.notifier).state = 0;
       } else {
         _delay = _nextBackoff(_delay);
+        _stallCount += 1;
+        ref.read(outboxFlushStallCountProvider.notifier).state = _stallCount;
       }
     } finally {
       _running = false;
@@ -82,7 +115,8 @@ class OutboxFlushController extends AutoDisposeNotifier<void> {
       if (doReschedule) {
         try {
           doReschedule =
-              ref.read(activeAccountProvider).type == AccountType.miniflux;
+              ref.read(activeAccountProvider).type == AccountType.miniflux ||
+              ref.read(activeAccountProvider).type == AccountType.fever;
         } catch (_) {
           doReschedule = false;
         }

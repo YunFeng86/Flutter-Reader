@@ -40,7 +40,7 @@ class AccountAvatar extends StatelessWidget {
   IconData _typeIcon(AccountType type) => switch (type) {
     AccountType.local => Icons.rss_feed,
     AccountType.miniflux => Icons.cloud_outlined,
-    AccountType.fever => Icons.cloud_queue_outlined,
+    AccountType.fever => Icons.local_fire_department_outlined,
   };
 
   @override

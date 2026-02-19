@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import workmanager_apple
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -7,6 +8,16 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    WorkmanagerPlugin.setPluginRegistrantCallback { registry in
+      GeneratedPluginRegistrant.register(with: registry)
+    }
+
+    // Must match `kBackgroundSyncUniqueName` in Dart.
+    WorkmanagerPlugin.registerPeriodicTask(
+      withIdentifier: "com.cloudwind.fleur.background.sync",
+      frequency: NSNumber(value: 15 * 60)
+    )
+
     if let controller = window?.rootViewController as? FlutterViewController {
       let shareChannel = FlutterMethodChannel(
         name: "com.cloudwind.fleur/ios_share",

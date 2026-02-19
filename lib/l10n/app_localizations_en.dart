@@ -156,6 +156,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSubscription => 'Add subscription';
 
   @override
+  String get selectCategory => 'Select a category';
+
+  @override
+  String get loadingCategories => 'Loading categories...';
+
+  @override
+  String get creatingCategory => 'Creating category...';
+
+  @override
+  String get feverAddSubscriptionNotSupported =>
+      'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.';
+
+  @override
   String get newCategory => 'New category';
 
   @override
@@ -234,6 +247,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rssAtomUrl => 'RSS/Atom URL';
 
   @override
+  String get feedOrWebsiteUrl => 'Feed / website URL';
+
+  @override
+  String get discoveringFeeds => 'Discovering feeds...';
+
+  @override
+  String get addingSubscription => 'Adding subscription...';
+
+  @override
+  String get selectFeed => 'Select a feed';
+
+  @override
+  String get noFeedsFound => 'No feeds found';
+
+  @override
   String get name => 'Name';
 
   @override
@@ -261,6 +289,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteCategoryConfirmContent =>
       'Feeds in this category will be moved to Uncategorized.';
+
+  @override
+  String get deleteTagConfirmTitle => 'Delete tag?';
+
+  @override
+  String get deleteTagConfirmContent =>
+      'This will remove it from all articles.';
 
   @override
   String get categoryDeleted => 'Category deleted';
@@ -322,6 +357,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInBrowser => 'Open in browser';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get share => 'Share';
 
   @override
   String get autoMarkRead => 'Auto-mark as read when opened';
@@ -423,6 +467,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get miniflux => 'Miniflux';
 
   @override
+  String get fever => 'Fever';
+
+  @override
   String get addLocal => 'Add Local';
 
   @override
@@ -430,6 +477,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get addMiniflux => 'Add Miniflux';
+
+  @override
+  String get addFever => 'Add Fever';
 
   @override
   String get minifluxStrategy => 'Miniflux strategy';
@@ -467,7 +517,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minifluxBaseUrlHint => 'https://miniflux.example.com';
 
   @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
   String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
 
   @override
   String get authenticationMethod => 'Authentication method';
@@ -478,6 +534,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get minifluxAuthHint =>
       'Use an API token (recommended) or username/password.';
+
+  @override
+  String get feverAuthHint =>
+      'Use an API key (recommended) or username/password.';
 
   @override
   String get username => 'Username';
@@ -616,7 +676,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncStatusFailed => 'Sync failed';
 
   @override
-  String get showAiSummary => 'Show AI Summary';
+  String get showAiSummary => 'Show Summary';
+
+  @override
+  String get summary => 'Summary';
 
   @override
   String get showImageTitle => 'Show Image Title';

@@ -495,6 +495,47 @@ class _SyncSection extends ConsumerWidget {
             }
           },
         ),
+        _TriStateSwitch(
+          title: l10n.showAiSummary,
+          currentValue: feed != null
+              ? feed!.showAiSummary
+              : category?.showAiSummary,
+          effectiveValue: SettingsInheritanceHelper.resolveShowAiSummary(
+            feed,
+            category,
+            appSettings,
+          ),
+          isGlobal: feed == null && category == null,
+          onChanged: (val) {
+            if (feed != null) {
+              unawaited(
+                SubscriptionActions.updateFeedSettings(
+                  context,
+                  ref,
+                  feedId: feed!.id,
+                  showAiSummary: val,
+                  updateShowAiSummary: true,
+                ),
+              );
+            } else if (category != null) {
+              unawaited(
+                SubscriptionActions.updateCategorySettings(
+                  context,
+                  ref,
+                  categoryId: category!.id,
+                  showAiSummary: val,
+                  updateShowAiSummary: true,
+                ),
+              );
+            } else {
+              unawaited(
+                ref
+                    .read(appSettingsProvider.notifier)
+                    .setShowAiSummary(val ?? false),
+              );
+            }
+          },
+        ),
       ],
     );
   }

@@ -161,4 +161,45 @@ class MinifluxClient {
     }
     return '';
   }
+
+  Future<Map<String, Object?>> createCategory(String title) async {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Category title is empty');
+    }
+
+    final resp = await _dio.post(
+      '$_baseUrl/v1/categories',
+      options: _options,
+      data: <String, Object?>{'title': trimmed},
+    );
+    final data = resp.data;
+    if (data is Map) return data.cast<String, Object?>();
+    throw StateError('Unexpected Miniflux response for create category');
+  }
+
+  Future<Map<String, Object?>> createFeed({
+    required String feedUrl,
+    required int categoryId,
+  }) async {
+    final normalized = feedUrl.trim();
+    if (normalized.isEmpty) {
+      throw ArgumentError('Feed url is empty');
+    }
+    if (categoryId <= 0) {
+      throw ArgumentError('Category id is invalid');
+    }
+
+    final resp = await _dio.post(
+      '$_baseUrl/v1/feeds',
+      options: _options,
+      data: <String, Object?>{
+        'feed_url': normalized,
+        'category_id': categoryId,
+      },
+    );
+    final data = resp.data;
+    if (data is Map) return data.cast<String, Object?>();
+    throw StateError('Unexpected Miniflux response for create feed');
+  }
 }

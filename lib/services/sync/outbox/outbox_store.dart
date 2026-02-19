@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import '../../../utils/path_manager.dart';
+import '../sync_mutex.dart';
 
 enum OutboxActionType { markRead, bookmark, markAllRead }
 
@@ -70,62 +72,229 @@ class OutboxAction {
 }
 
 class OutboxStore {
-  Future<List<OutboxAction>> load(String accountId) async {
-    final f = await _file(accountId);
+  static final StreamController<String> _changes =
+      StreamController<String>.broadcast();
+
+  static Stream<String> get changes => _changes.stream;
+
+  static void _emitChange(String accountId) {
     try {
-      if (!await f.exists()) return const [];
-      final raw = await f.readAsString();
-      final decoded = jsonDecode(raw);
-      if (decoded is! List) return const [];
-      final out = <OutboxAction>[];
-      for (final item in decoded) {
-        if (item is! Map) continue;
-        try {
-          out.add(OutboxAction.fromJson(item.cast<String, Object?>()));
-        } catch (_) {
-          // Skip malformed entries; keep the rest of the queue.
-        }
-      }
-      // Auto-compact legacy/duplicated actions.
-      final compacted = _compact(out);
-      if (compacted.length != out.length) {
-        try {
-          await save(accountId, compacted);
-        } catch (_) {
-          // ignore: best-effort cleanup
-        }
-      }
-      return compacted;
+      if (_changes.hasListener) _changes.add(accountId);
     } catch (_) {
-      return const [];
+      // ignore: best-effort notify
     }
   }
 
+  Future<List<OutboxAction>> load(String accountId) async {
+    return SyncMutex.instance.run('outbox:$accountId', () async {
+      final f = await _file(accountId);
+      final tmp = _tmpFile(f);
+      final bak = _bakFile(f);
+
+      try {
+        final decoded = await _readJsonListOrRecover(
+          primary: f,
+          tmp: tmp,
+          bak: bak,
+        );
+        if (decoded == null) return const [];
+        final out = <OutboxAction>[];
+        for (final item in decoded) {
+          if (item is! Map) continue;
+          try {
+            out.add(OutboxAction.fromJson(item.cast<String, Object?>()));
+          } catch (_) {
+            // Skip malformed entries; keep the rest of the queue.
+          }
+        }
+        // Auto-compact legacy/duplicated actions.
+        final compacted = _compact(out);
+        if (compacted.length != out.length || await tmp.exists()) {
+          try {
+            await save(accountId, compacted);
+          } catch (_) {
+            // ignore: best-effort cleanup
+          }
+        }
+        try {
+          if (await tmp.exists()) await tmp.delete();
+        } catch (_) {
+          // ignore: best-effort cleanup
+        }
+        return compacted;
+      } catch (_) {
+        return const [];
+      }
+    });
+  }
+
   Future<void> save(String accountId, List<OutboxAction> actions) async {
-    final f = await _file(accountId);
-    final compacted = _compact(actions);
-    final payload = compacted.map((a) => a.toJson()).toList(growable: false);
-    await f.writeAsString(jsonEncode(payload));
+    await SyncMutex.instance.run('outbox:$accountId', () async {
+      final f = await _file(accountId);
+      final compacted = _compact(actions);
+      final payload = compacted.map((a) => a.toJson()).toList(growable: false);
+      await _writeJsonAtomically(f, jsonEncode(payload));
+    });
+    _emitChange(accountId);
   }
 
   Future<void> enqueue(String accountId, OutboxAction action) async {
-    final cur = await load(accountId);
-    final next = [...cur, action];
-    await save(accountId, next);
+    await SyncMutex.instance.run('outbox:$accountId', () async {
+      final cur = await load(accountId);
+      final next = [...cur, action];
+      await save(accountId, next);
+    });
   }
 
   Future<void> remove(String accountId, OutboxAction action) async {
-    final cur = await load(accountId);
-    final next = [...cur];
-    final idx = next.indexWhere((a) => _sameAction(a, action));
-    if (idx < 0) return;
-    next.removeAt(idx);
-    await save(accountId, next);
+    await SyncMutex.instance.run('outbox:$accountId', () async {
+      final cur = await load(accountId);
+      final next = [...cur];
+      final idx = next.indexWhere((a) => _sameAction(a, action));
+      if (idx < 0) return;
+      next.removeAt(idx);
+      await save(accountId, next);
+    });
   }
 
   Future<File> _file(String accountId) async {
     final dir = await PathManager.getStateDir();
     return File('${dir.path}${Platform.pathSeparator}outbox_$accountId.json');
+  }
+
+  File _tmpFile(File primary) => File('${primary.path}.tmp');
+  File _bakFile(File primary) => File('${primary.path}.bak');
+
+  Future<List<Object?>?> _readJsonListOrRecover({
+    required File primary,
+    required File tmp,
+    required File bak,
+  }) async {
+    Future<List<Object?>?> tryRead(File file) async {
+      try {
+        if (!await file.exists()) return null;
+        final raw = await file.readAsString(encoding: utf8);
+        final decoded = jsonDecode(raw);
+        if (decoded is! List) return null;
+        return decoded.cast<Object?>();
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Prefer the primary file when it's valid.
+    final primaryDecoded = await tryRead(primary);
+    if (primaryDecoded != null) return primaryDecoded;
+
+    // Crash safety: if an atomic write was interrupted, `.tmp` may contain the
+    // new full payload; `.bak` may contain the previous valid payload.
+    final tmpDecoded = await tryRead(tmp);
+    if (tmpDecoded != null) {
+      try {
+        await _writeJsonAtomically(primary, jsonEncode(tmpDecoded));
+      } catch (_) {
+        // ignore: best-effort recovery
+      }
+      return tmpDecoded;
+    }
+
+    final bakDecoded = await tryRead(bak);
+    if (bakDecoded != null) {
+      try {
+        await _writeJsonAtomically(primary, jsonEncode(bakDecoded));
+      } catch (_) {
+        // ignore: best-effort recovery
+      }
+      return bakDecoded;
+    }
+
+    return null;
+  }
+
+  Future<void> _writeJsonAtomically(File primary, String contents) async {
+    final tmp = _tmpFile(primary);
+    final bak = _bakFile(primary);
+
+    try {
+      await tmp.writeAsString(contents, encoding: utf8);
+    } catch (_) {
+      // If we can't write a temp file, fall back to a best-effort direct write.
+      try {
+        await primary.writeAsString(contents, encoding: utf8);
+      } catch (_) {
+        // ignore: best-effort write
+      }
+      return;
+    }
+
+    // Rotate the previous file to `.bak` so a crash during replace can recover.
+    // Keep `.bak` as the last known-good payload (rotated on each successful write).
+    var backedUp = false;
+    try {
+      if (await primary.exists()) {
+        try {
+          if (await bak.exists()) await bak.delete();
+        } catch (_) {
+          // ignore: best-effort cleanup
+        }
+
+        try {
+          await primary.rename(bak.path);
+          backedUp = true;
+        } catch (_) {
+          // Best-effort fallback when rename is not possible (e.g. file lock).
+          try {
+            await primary.copy(bak.path);
+            backedUp = true;
+          } catch (_) {
+            // ignore: best-effort backup
+          }
+        }
+      }
+    } catch (_) {
+      // ignore: best-effort backup
+    }
+
+    var replaced = false;
+    try {
+      await tmp.rename(primary.path);
+      replaced = true;
+    } catch (_) {
+      // If the primary still exists (e.g. couldn't be renamed to `.bak`), only
+      // delete it if we have a backup already.
+      if (await primary.exists() && backedUp) {
+        try {
+          await primary.delete();
+        } catch (_) {
+          // ignore: best-effort delete
+        }
+        try {
+          await tmp.rename(primary.path);
+          replaced = true;
+        } catch (_) {
+          // fall through
+        }
+      }
+
+      // Fall back to a direct write; leave `.tmp` for recovery on next load if that fails.
+      if (!replaced) {
+        try {
+          await primary.writeAsString(contents, encoding: utf8);
+          replaced = true;
+        } catch (_) {
+          // ignore: best-effort write
+        }
+      }
+      if (replaced) {
+        try {
+          await tmp.delete();
+        } catch (_) {
+          // ignore: best-effort cleanup
+        }
+      }
+    }
+
+    // Keep `.bak` to allow recovery from a corrupted primary.
   }
 
   static bool _sameAction(OutboxAction a, OutboxAction b) {

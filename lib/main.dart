@@ -8,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:window_manager/window_manager.dart';
 
 import 'app/account_gate.dart';
+import 'services/background/background_sync_service.dart';
 import 'services/logging/app_logger.dart';
 import 'utils/platform.dart';
 
@@ -17,6 +18,7 @@ Future<void> main() async {
       WidgetsFlutterBinding.ensureInitialized();
 
       await AppLogger.ensureInitialized();
+      unawaited(BackgroundSyncService.ensureInitialized());
 
       FlutterError.onError = (details) {
         if (kDebugMode) {

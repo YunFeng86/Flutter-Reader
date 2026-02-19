@@ -124,6 +124,11 @@ class ServicesTab extends ConsumerWidget {
                   title: Text(l10n.addMiniflux),
                   onTap: () => Navigator.of(context).pop(AccountType.miniflux),
                 ),
+                ListTile(
+                  leading: const Icon(Icons.local_fire_department_outlined),
+                  title: Text(l10n.addFever),
+                  onTap: () => Navigator.of(context).pop(AccountType.fever),
+                ),
               ],
             ),
           );
@@ -138,7 +143,7 @@ class ServicesTab extends ConsumerWidget {
           await showAddMinifluxAccountDialog(context, ref);
           return;
         case AccountType.fever:
-          context.showSnack(l10n.comingSoon);
+          await showAddFeverAccountDialog(context, ref);
           return;
       }
     }

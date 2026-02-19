@@ -12,6 +12,7 @@ import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
+import '../widgets/outbox_status_action.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/sidebar_pane_hero.dart';
 import '../widgets/sync_status_capsule.dart';
@@ -126,6 +127,7 @@ class HomeScreen extends ConsumerWidget {
                     unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
                   ),
                 ),
+                const OutboxStatusAction(),
               ],
             ),
             drawer: Drawer(
@@ -298,6 +300,7 @@ class HomeScreen extends ConsumerWidget {
                               );
                             },
                           ),
+                          const OutboxStatusAction(),
                         ],
                       )
                     : null,
@@ -596,6 +599,7 @@ class HomeScreen extends ConsumerWidget {
               );
             },
           ),
+          const OutboxStatusAction(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

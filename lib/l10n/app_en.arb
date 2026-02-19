@@ -191,6 +191,22 @@
   "@addSubscription": {
     "description": "addSubscription"
   },
+  "selectCategory": "Select a category",
+  "@selectCategory": {
+    "description": "selectCategory"
+  },
+  "loadingCategories": "Loading categories...",
+  "@loadingCategories": {
+    "description": "loadingCategories"
+  },
+  "creatingCategory": "Creating category...",
+  "@creatingCategory": {
+    "description": "creatingCategory"
+  },
+  "feverAddSubscriptionNotSupported": "Fever accounts don't support adding subscriptions. Please manage subscriptions on the server.",
+  "@feverAddSubscriptionNotSupported": {
+    "description": "feverAddSubscriptionNotSupported"
+  },
   "newCategory": "New category",
   "@newCategory": {
     "description": "newCategory"
@@ -304,6 +320,26 @@
   "@rssAtomUrl": {
     "description": "rssAtomUrl"
   },
+  "feedOrWebsiteUrl": "Feed / website URL",
+  "@feedOrWebsiteUrl": {
+    "description": "feedOrWebsiteUrl"
+  },
+  "discoveringFeeds": "Discovering feeds...",
+  "@discoveringFeeds": {
+    "description": "discoveringFeeds"
+  },
+  "addingSubscription": "Adding subscription...",
+  "@addingSubscription": {
+    "description": "addingSubscription"
+  },
+  "selectFeed": "Select a feed",
+  "@selectFeed": {
+    "description": "selectFeed"
+  },
+  "noFeedsFound": "No feeds found",
+  "@noFeedsFound": {
+    "description": "noFeedsFound"
+  },
   "name": "Name",
   "@name": {
     "description": "name"
@@ -339,6 +375,14 @@
   "deleteCategoryConfirmContent": "Feeds in this category will be moved to Uncategorized.",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "deleteTagConfirmTitle": "Delete tag?",
+  "@deleteTagConfirmTitle": {
+    "description": "deleteTagConfirmTitle"
+  },
+  "deleteTagConfirmContent": "This will remove it from all articles.",
+  "@deleteTagConfirmContent": {
+    "description": "deleteTagConfirmContent"
   },
   "categoryDeleted": "Category deleted",
   "@categoryDeleted": {
@@ -425,6 +469,18 @@
   "openInBrowser": "Open in browser",
   "@openInBrowser": {
     "description": "openInBrowser"
+  },
+  "copyLink": "Copy link",
+  "@copyLink": {
+    "description": "copyLink"
+  },
+  "copiedToClipboard": "Copied to clipboard",
+  "@copiedToClipboard": {
+    "description": "copiedToClipboard"
+  },
+  "share": "Share",
+  "@share": {
+    "description": "share"
   },
   "autoMarkRead": "Auto-mark as read when opened",
   "@autoMarkRead": {
@@ -564,6 +620,10 @@
   "@miniflux": {
     "description": "miniflux"
   },
+  "fever": "Fever",
+  "@fever": {
+    "description": "fever"
+  },
   "addLocal": "Add Local",
   "@addLocal": {
     "description": "addLocal"
@@ -575,6 +635,10 @@
   "addMiniflux": "Add Miniflux",
   "@addMiniflux": {
     "description": "addMiniflux"
+  },
+  "addFever": "Add Fever",
+  "@addFever": {
+    "description": "addFever"
   },
   "minifluxStrategy": "Miniflux strategy",
   "@minifluxStrategy": {
@@ -620,9 +684,17 @@
   "@minifluxBaseUrlHint": {
     "description": "minifluxBaseUrlHint"
   },
+  "feverBaseUrlHint": "https://example.com/fever/",
+  "@feverBaseUrlHint": {
+    "description": "feverBaseUrlHint"
+  },
   "apiToken": "API Token",
   "@apiToken": {
     "description": "apiToken"
+  },
+  "apiKey": "API Key",
+  "@apiKey": {
+    "description": "apiKey"
   },
   "authenticationMethod": "Authentication method",
   "@authenticationMethod": {
@@ -635,6 +707,10 @@
   "minifluxAuthHint": "Use an API token (recommended) or username/password.",
   "@minifluxAuthHint": {
     "description": "minifluxAuthHint"
+  },
+  "feverAuthHint": "Use an API key (recommended) or username/password.",
+  "@feverAuthHint": {
+    "description": "feverAuthHint"
   },
   "username": "Username",
   "@username": {
@@ -817,9 +893,13 @@
   "@syncStatusFailed": {
     "description": "Sync status: failed"
   },
-  "showAiSummary": "Show AI Summary",
+  "showAiSummary": "Show Summary",
   "@showAiSummary": {
     "description": "showAiSummary"
+  },
+  "summary": "Summary",
+  "@summary": {
+    "description": "summary"
   },
   "showImageTitle": "Show Image Title",
   "@showImageTitle": {

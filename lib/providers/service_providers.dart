@@ -6,9 +6,11 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'account_providers.dart';
 import '../services/accounts/account.dart';
 import '../services/rss/feed_parser.dart';
+import '../services/rss/feed_discovery_service.dart';
 import '../services/rss/rss_client.dart';
 import '../services/sync/sync_service.dart';
 import '../services/sync/miniflux/miniflux_sync_service.dart';
+import '../services/sync/fever/fever_sync_service.dart';
 import '../services/sync/outbox/outbox_store.dart';
 import 'sync_status_providers.dart';
 import '../services/actions/article_action_service.dart';
@@ -50,6 +52,10 @@ final rssClientProvider = Provider<RssClient>((ref) {
 });
 
 final feedParserProvider = Provider<FeedParser>((ref) => FeedParser());
+
+final feedDiscoveryServiceProvider = Provider<FeedDiscoveryService>((ref) {
+  return FeedDiscoveryService(ref.watch(dioProvider));
+}, dependencies: [dioProvider]);
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
@@ -94,17 +100,17 @@ final syncServiceProvider = Provider<SyncServiceBase>(
           statusReporter: reporter,
         );
       case AccountType.fever:
-        // TODO: implement Fever adapter (M2).
-        return SyncService(
+        return FeverSyncService(
+          account: account,
+          dio: ref.watch(dioProvider),
+          credentials: ref.watch(credentialStoreProvider),
           feeds: feeds,
           categories: categories,
           articles: articles,
-          client: ref.watch(rssClientProvider),
-          parser: ref.watch(feedParserProvider),
+          outbox: ref.watch(outboxStoreProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
           notifications: ref.watch(notificationServiceProvider),
           cache: ref.watch(articleCacheServiceProvider),
-          extractor: ref.watch(articleExtractorProvider),
-          appSettingsStore: ref.watch(appSettingsStoreProvider),
           statusReporter: reporter,
         );
     }

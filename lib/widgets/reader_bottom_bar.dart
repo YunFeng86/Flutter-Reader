@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fleur/l10n/app_localizations.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/repository_providers.dart';
@@ -226,6 +230,32 @@ class ReaderBottomBar extends ConsumerWidget {
                   },
                   icon: const Icon(Icons.open_in_browser),
                 ),
+                IconButton(
+                  tooltip: l10n.copyLink,
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: article.link));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.copiedToClipboard)),
+                    );
+                  },
+                  icon: const Icon(Icons.content_copy),
+                ),
+                IconButton(
+                  tooltip: l10n.share,
+                  onPressed: () async {
+                    final uri = Uri.tryParse(article.link);
+                    final subject = (article.title ?? '').trim().isEmpty
+                        ? null
+                        : article.title!.trim();
+                    await SharePlus.instance.share(
+                      uri == null
+                          ? ShareParams(text: article.link, subject: subject)
+                          : ShareParams(uri: uri, subject: subject),
+                    );
+                  },
+                  icon: const Icon(Icons.share_outlined),
+                ),
               ],
             ),
           ],
@@ -295,6 +325,58 @@ class _TagsDialogState extends ConsumerState<_TagsDialog> {
     final hasError = allTagsAsync.hasError || articleTagsAsync.hasError;
 
     final articleRepo = ref.read(articleRepositoryProvider);
+    final tagRepo = ref.read(tagRepositoryProvider);
+
+    Future<void> toggleTag(Tag tag, bool nextSelected) async {
+      try {
+        if (nextSelected) {
+          await articleRepo.addTag(widget.articleId, tag);
+        } else {
+          await articleRepo.removeTag(widget.articleId, tag);
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+        );
+      }
+    }
+
+    Future<void> deleteTag(Tag tag) async {
+      try {
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(l10n.deleteTagConfirmTitle),
+              content: Text(l10n.deleteTagConfirmContent),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l10n.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(l10n.delete),
+                ),
+              ],
+            );
+          },
+        );
+        if (ok != true) return;
+
+        await tagRepo.delete(tag.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.deleted)));
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+        );
+      }
+    }
 
     Widget listChild;
     if (hasError) {
@@ -313,19 +395,29 @@ class _TagsDialogState extends ConsumerState<_TagsDialog> {
           itemBuilder: (context, index) {
             final tag = tags[index];
             final isSelected = selectedIds.contains(tag.id);
-            return CheckboxListTile(
-              title: Text(tag.name),
-              value: isSelected,
-              onChanged: (val) async {
-                if (val == true) {
-                  await articleRepo.addTag(widget.articleId, tag);
-                } else {
-                  await articleRepo.removeTag(widget.articleId, tag);
-                }
-              },
-              secondary: Icon(
+            return ListTile(
+              leading: Icon(
                 Icons.label,
                 color: resolveTagColor(tag.name, tag.color),
+              ),
+              title: Text(tag.name),
+              onTap: () => unawaited(toggleTag(tag, !isSelected)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: l10n.delete,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => unawaited(deleteTag(tag)),
+                  ),
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (val) {
+                      if (val == null) return;
+                      unawaited(toggleTag(tag, val));
+                    },
+                  ),
+                ],
               ),
             );
           },

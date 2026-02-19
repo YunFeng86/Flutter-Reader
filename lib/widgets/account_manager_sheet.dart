@@ -38,6 +38,11 @@ class AccountManagerSheet extends ConsumerWidget {
                 title: Text(l10n.addMiniflux),
                 onTap: () => Navigator.of(context).pop(AccountType.miniflux),
               ),
+              ListTile(
+                leading: const Icon(Icons.local_fire_department_outlined),
+                title: Text(l10n.addFever),
+                onTap: () => Navigator.of(context).pop(AccountType.fever),
+              ),
             ],
           ),
         );
@@ -53,7 +58,7 @@ class AccountManagerSheet extends ConsumerWidget {
         await showAddMinifluxAccountDialog(context, ref);
         return;
       case AccountType.fever:
-        context.showSnack(l10n.comingSoon);
+        await showAddFeverAccountDialog(context, ref);
         return;
     }
   }
@@ -175,7 +180,10 @@ class AccountManagerSheet extends ConsumerWidget {
                           (a.baseUrl ?? '').trim().isEmpty
                               ? l10n.miniflux
                               : a.baseUrl!.trim(),
-                        AccountType.fever => l10n.comingSoon,
+                        AccountType.fever =>
+                          (a.baseUrl ?? '').trim().isEmpty
+                              ? l10n.fever
+                              : a.baseUrl!.trim(),
                       };
 
                       return ListTile(

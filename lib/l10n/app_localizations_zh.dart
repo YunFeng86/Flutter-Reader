@@ -152,6 +152,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addSubscription => '添加订阅';
 
   @override
+  String get selectCategory => '选择分类';
+
+  @override
+  String get loadingCategories => '正在加载分类...';
+
+  @override
+  String get creatingCategory => '正在创建分类...';
+
+  @override
+  String get feverAddSubscriptionNotSupported => 'Fever 账号不支持添加订阅，请在服务端管理订阅。';
+
+  @override
   String get newCategory => '新建分类';
 
   @override
@@ -230,6 +242,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rssAtomUrl => 'RSS/Atom 地址';
 
   @override
+  String get feedOrWebsiteUrl => '订阅源或网站 URL';
+
+  @override
+  String get discoveringFeeds => '正在发现订阅源…';
+
+  @override
+  String get addingSubscription => '正在添加订阅…';
+
+  @override
+  String get selectFeed => '选择订阅源';
+
+  @override
+  String get noFeedsFound => '未找到可用的订阅源';
+
+  @override
   String get name => '名称';
 
   @override
@@ -255,6 +282,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteCategoryConfirmContent => '该分类下的订阅源将移动到未分类。';
+
+  @override
+  String get deleteTagConfirmTitle => '删除标签？';
+
+  @override
+  String get deleteTagConfirmContent => '这会从所有文章中移除该标签。';
 
   @override
   String get categoryDeleted => '分类已删除';
@@ -316,6 +349,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openInBrowser => '在浏览器打开';
+
+  @override
+  String get copyLink => '复制链接';
+
+  @override
+  String get copiedToClipboard => '已复制到剪贴板';
+
+  @override
+  String get share => '分享';
 
   @override
   String get autoMarkRead => '打开时自动标记为已读';
@@ -417,6 +459,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get miniflux => 'Miniflux';
 
   @override
+  String get fever => 'Fever';
+
+  @override
   String get addLocal => '添加本地';
 
   @override
@@ -424,6 +469,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get addMiniflux => '添加 Miniflux';
+
+  @override
+  String get addFever => '添加 Fever';
 
   @override
   String get minifluxStrategy => 'Miniflux 策略';
@@ -459,7 +507,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get minifluxBaseUrlHint => 'https://miniflux.example.com';
 
   @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
   String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
 
   @override
   String get authenticationMethod => '认证方式';
@@ -469,6 +523,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get minifluxAuthHint => '可填写 API Token（推荐）或用户名/密码。';
+
+  @override
+  String get feverAuthHint => '可填写 API Key（推荐）或用户名/密码。';
 
   @override
   String get username => '用户名';
@@ -605,7 +662,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncStatusFailed => '同步失败';
 
   @override
-  String get showAiSummary => 'Show AI Summary';
+  String get showAiSummary => '显示摘要';
+
+  @override
+  String get summary => '摘要';
 
   @override
   String get showImageTitle => '显示图片标题';
@@ -830,6 +890,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get addSubscription => '新增訂閱';
 
   @override
+  String get selectCategory => '選擇分類';
+
+  @override
+  String get loadingCategories => '正在載入分類...';
+
+  @override
+  String get creatingCategory => '正在建立分類...';
+
+  @override
+  String get feverAddSubscriptionNotSupported => 'Fever 帳號不支援新增訂閱，請在伺服器端管理訂閱。';
+
+  @override
   String get newCategory => '新增分類';
 
   @override
@@ -908,6 +980,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get rssAtomUrl => 'RSS/Atom 位址';
 
   @override
+  String get feedOrWebsiteUrl => '訂閱源或網站 URL';
+
+  @override
+  String get discoveringFeeds => '正在發現訂閱源…';
+
+  @override
+  String get addingSubscription => '正在新增訂閱…';
+
+  @override
+  String get selectFeed => '選擇訂閱源';
+
+  @override
+  String get noFeedsFound => '未找到可用的訂閱源';
+
+  @override
   String get name => '名稱';
 
   @override
@@ -933,6 +1020,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get deleteCategoryConfirmContent => '此分類下的訂閱源將移至未分類。';
+
+  @override
+  String get deleteTagConfirmTitle => '刪除標籤？';
+
+  @override
+  String get deleteTagConfirmContent => '這會從所有文章中移除該標籤。';
 
   @override
   String get categoryDeleted => '分類已刪除';
@@ -994,6 +1087,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get openInBrowser => '在瀏覽器打開';
+
+  @override
+  String get copyLink => '複製連結';
+
+  @override
+  String get copiedToClipboard => '已複製到剪貼簿';
+
+  @override
+  String get share => '分享';
 
   @override
   String get autoMarkRead => '打開時自動標記為已讀';
@@ -1095,6 +1197,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get miniflux => 'Miniflux';
 
   @override
+  String get fever => 'Fever';
+
+  @override
   String get addLocal => '新增本地';
 
   @override
@@ -1102,6 +1207,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get addMiniflux => '新增 Miniflux';
+
+  @override
+  String get addFever => '新增 Fever';
 
   @override
   String get minifluxStrategy => 'Miniflux 策略';
@@ -1137,7 +1245,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get minifluxBaseUrlHint => 'https://miniflux.example.com';
 
   @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
   String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
 
   @override
   String get authenticationMethod => '驗證方式';
@@ -1147,6 +1261,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get minifluxAuthHint => '可填寫 API Token（建議）或使用者名稱/密碼。';
+
+  @override
+  String get feverAuthHint => '可填寫 API Key（建議）或使用者名稱/密碼。';
 
   @override
   String get username => '使用者名稱';
@@ -1283,7 +1400,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get syncStatusFailed => '同步失敗';
 
   @override
-  String get showAiSummary => '顯示 AI 摘要';
+  String get showAiSummary => '顯示摘要';
+
+  @override
+  String get summary => '摘要';
 
   @override
   String get showImageTitle => '顯示圖片標題';
