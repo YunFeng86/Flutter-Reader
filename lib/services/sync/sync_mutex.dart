@@ -23,10 +23,7 @@ class SyncMutex {
   final Map<String, Future<void>> _queues = <String, Future<void>>{};
   final Map<String, Future<File?>> _lockFiles = <String, Future<File?>>{};
 
-  Future<T> run<T>(
-    String key,
-    Future<T> Function() op,
-  ) {
+  Future<T> run<T>(String key, Future<T> Function() op) {
     final held = _heldKeys;
     if (held.contains(key)) return op();
 
@@ -45,43 +42,40 @@ class SyncMutex {
     Set<String> held,
   ) async {
     final nextHeld = {...held, key};
-    return runZoned(
-      () async {
-        RandomAccessFile? raf;
-        try {
-          final lockFile = await _lockFileOrNull(key);
-          if (lockFile != null) {
-            try {
-              raf = await lockFile.open(mode: FileMode.append);
-            } catch (_) {
-              raf = null;
-            }
-            if (raf != null) {
-              try {
-                await raf.lock(FileLock.exclusive);
-              } catch (_) {
-                // ignore: best-effort file locking
-              }
-            }
+    return runZoned(() async {
+      RandomAccessFile? raf;
+      try {
+        final lockFile = await _lockFileOrNull(key);
+        if (lockFile != null) {
+          try {
+            raf = await lockFile.open(mode: FileMode.append);
+          } catch (_) {
+            raf = null;
           }
-          return await op();
-        } finally {
           if (raf != null) {
             try {
-              await raf.unlock();
+              await raf.lock(FileLock.exclusive);
             } catch (_) {
-              // ignore: best-effort unlock
-            }
-            try {
-              await raf.close();
-            } catch (_) {
-              // ignore: best-effort close
+              // ignore: best-effort file locking
             }
           }
         }
-      },
-      zoneValues: <Object, Object?>{_heldKeysZoneKey: nextHeld},
-    );
+        return await op();
+      } finally {
+        if (raf != null) {
+          try {
+            await raf.unlock();
+          } catch (_) {
+            // ignore: best-effort unlock
+          }
+          try {
+            await raf.close();
+          } catch (_) {
+            // ignore: best-effort close
+          }
+        }
+      }
+    }, zoneValues: <Object, Object?>{_heldKeysZoneKey: nextHeld});
   }
 
   Future<File?> _lockFileOrNull(String key) {

@@ -383,7 +383,9 @@ class SyncService implements SyncServiceBase {
             lastError = e;
             // Keep duration per attempt; store the last attempt duration.
             sw.stop();
-            final statusCode = e is DioException ? e.response?.statusCode : null;
+            final statusCode = e is DioException
+                ? e.response?.statusCode
+                : null;
             await _feeds.updateSyncState(
               id: feedId,
               lastCheckedAt: checkedAt,

@@ -81,9 +81,9 @@ void main() {
     final support = await Directory(
       '${tempDir!.path}/support',
     ).create(recursive: true);
-    final cache = await Directory('${tempDir!.path}/cache').create(
-      recursive: true,
-    );
+    final cache = await Directory(
+      '${tempDir!.path}/cache',
+    ).create(recursive: true);
     PathProviderPlatform.instance = _FakePathProviderPlatform(
       documentsPath: docs.path,
       supportPath: support.path,
