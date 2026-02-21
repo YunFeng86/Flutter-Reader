@@ -132,11 +132,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     onPressed: handleDetailBack,
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    item.label,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleLarge,
+                                  Expanded(
+                                    child: Text(
+                                      item.label,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ],
                               ),

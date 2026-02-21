@@ -137,9 +137,10 @@ Future<String?> showAddFeverAccountDialog(
       return StatefulBuilder(
         builder: (dialogContext, setState) {
           return AlertDialog(
+            scrollable: true,
             title: Text(l10n.addFever),
-            content: SizedBox(
-              width: 520,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -351,9 +352,10 @@ Future<String?> showAddMinifluxAccountDialog(
       return StatefulBuilder(
         builder: (dialogContext, setState) {
           return AlertDialog(
+            scrollable: true,
             title: Text(l10n.addMiniflux),
-            content: SizedBox(
-              width: 520,
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

@@ -150,14 +150,15 @@ class _AboutTabState extends State<AboutTab> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(l10n.openSourceLicense),
-          content: SizedBox(
-            width: 600,
-            height: 400,
-            child: SingleChildScrollView(
-              child: SelectableText(
-                licenseText,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 400),
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  licenseText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
             ),
@@ -264,7 +265,9 @@ class _AboutTabState extends State<AboutTab> {
                                   const SizedBox(height: 4),
                                   SelectableText(path ?? '...'),
                                   const SizedBox(height: 8),
-                                  Row(
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 12,
                                     children: [
                                       OutlinedButton(
                                         onPressed: path == null
@@ -278,7 +281,6 @@ class _AboutTabState extends State<AboutTab> {
                                               },
                                         child: Text(l10n.copyPath),
                                       ),
-                                      const SizedBox(width: 12),
                                       OutlinedButton(
                                         onPressed: path == null
                                             ? null
@@ -338,15 +340,23 @@ class _AboutTabState extends State<AboutTab> {
                                         },
                                         child: Text(l10n.openLog),
                                       ),
-                                      FilledButton.icon(
+                                      FilledButton(
                                         onPressed: () {
                                           unawaited(_exportLogs());
                                         },
-                                        icon: const Icon(
-                                          Icons.download_outlined,
-                                          size: 18,
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.download_outlined,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(l10n.exportLogs),
+                                            ),
+                                          ],
                                         ),
-                                        label: Text(l10n.exportLogs),
                                       ),
                                     ],
                                   ),
@@ -375,13 +385,19 @@ class _AboutTabState extends State<AboutTab> {
                             style: theme.textTheme.titleSmall,
                           ),
                           const SizedBox(height: 12),
-                          OutlinedButton.icon(
+                          OutlinedButton(
                             onPressed: _showLicenseDialog,
-                            icon: const Icon(
-                              Icons.description_outlined,
-                              size: 18,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.description_outlined,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text(l10n.viewLicense)),
+                              ],
                             ),
-                            label: Text(l10n.viewLicense),
                           ),
                         ],
                       ),
@@ -404,7 +420,7 @@ class _AboutTabState extends State<AboutTab> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 12),
-                          OutlinedButton.icon(
+                          OutlinedButton(
                             onPressed: () {
                               showLicensePage(
                                 context: context,
@@ -412,8 +428,16 @@ class _AboutTabState extends State<AboutTab> {
                                 applicationVersion: packageInfo?.version,
                               );
                             },
-                            icon: const Icon(Icons.article_outlined, size: 18),
-                            label: Text(l10n.viewThirdPartyLicenses),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.article_outlined, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(l10n.viewThirdPartyLicenses),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
