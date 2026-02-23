@@ -304,6 +304,11 @@ class PathManager {
     return File(p.join(dir.path, 'reader_settings.json'));
   }
 
+  static Future<File> translationAiSettingsFile() async {
+    final dir = await getSettingsDir();
+    return File(p.join(dir.path, 'translation_ai_settings.json'));
+  }
+
   static Future<File> readerProgressFile() async {
     final dir = await getStateDir();
     return File(p.join(dir.path, 'reader_progress.json'));

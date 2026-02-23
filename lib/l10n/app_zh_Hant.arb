@@ -1002,5 +1002,29 @@
   "windowClose": "關閉",
   "@windowClose": {
     "description": "桌面端視窗「關閉」按鈕提示"
+  },
+  "translationAndAiServices": "翻譯與 AI 服務",
+  "@translationAndAiServices": {
+    "description": "翻譯與 AI 服務設定頁標籤"
+  },
+  "translation": "翻譯",
+  "@translation": {
+    "description": "翻譯設定分組標題"
+  },
+  "translationProvider": "翻譯提供方",
+  "@translationProvider": {
+    "description": "選擇翻譯提供方的設定項標題"
+  },
+  "aiServices": "AI 服務",
+  "@aiServices": {
+    "description": "AI 服務設定分組標題"
+  },
+  "addAiService": "新增 AI 服務",
+  "@addAiService": {
+    "description": "新增 AI 服務按鈕/標題"
+  },
+  "aiService": "AI 服務",
+  "@aiService": {
+    "description": "AI 服務的通用標籤"
   }
 }

@@ -1001,5 +1001,29 @@
   "windowClose": "Close",
   "@windowClose": {
     "description": "Tooltip for the window close button on desktop"
+  },
+  "translationAndAiServices": "Translation & AI",
+  "@translationAndAiServices": {
+    "description": "Settings tab for translation and AI services"
+  },
+  "translation": "Translation",
+  "@translation": {
+    "description": "Translation section title"
+  },
+  "translationProvider": "Translation provider",
+  "@translationProvider": {
+    "description": "Setting title for selecting translation provider"
+  },
+  "aiServices": "AI services",
+  "@aiServices": {
+    "description": "AI services section title"
+  },
+  "addAiService": "Add AI service",
+  "@addAiService": {
+    "description": "Button/title for adding an AI service"
+  },
+  "aiService": "AI service",
+  "@aiService": {
+    "description": "Generic label for AI service"
   }
 }

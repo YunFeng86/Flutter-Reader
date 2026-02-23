@@ -740,6 +740,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get windowClose => '关闭';
+
+  @override
+  String get translationAndAiServices => '翻译与 AI 服务';
+
+  @override
+  String get translation => '翻译';
+
+  @override
+  String get translationProvider => '翻译提供方';
+
+  @override
+  String get aiServices => 'AI 服务';
+
+  @override
+  String get addAiService => '添加 AI 服务';
+
+  @override
+  String get aiService => 'AI 服务';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1478,4 +1496,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get windowClose => '關閉';
+
+  @override
+  String get translationAndAiServices => '翻譯與 AI 服務';
+
+  @override
+  String get translation => '翻譯';
+
+  @override
+  String get translationProvider => '翻譯提供方';
+
+  @override
+  String get aiServices => 'AI 服務';
+
+  @override
+  String get addAiService => '新增 AI 服務';
+
+  @override
+  String get aiService => 'AI 服務';
 }

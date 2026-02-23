@@ -1520,6 +1520,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get windowClose;
+
+  /// Settings tab for translation and AI services
+  ///
+  /// In en, this message translates to:
+  /// **'Translation & AI'**
+  String get translationAndAiServices;
+
+  /// Translation section title
+  ///
+  /// In en, this message translates to:
+  /// **'Translation'**
+  String get translation;
+
+  /// Setting title for selecting translation provider
+  ///
+  /// In en, this message translates to:
+  /// **'Translation provider'**
+  String get translationProvider;
+
+  /// AI services section title
+  ///
+  /// In en, this message translates to:
+  /// **'AI services'**
+  String get aiServices;
+
+  /// Button/title for adding an AI service
+  ///
+  /// In en, this message translates to:
+  /// **'Add AI service'**
+  String get addAiService;
+
+  /// Generic label for AI service
+  ///
+  /// In en, this message translates to:
+  /// **'AI service'**
+  String get aiService;
 }
 
 class _AppLocalizationsDelegate
