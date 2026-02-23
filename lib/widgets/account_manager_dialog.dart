@@ -204,12 +204,13 @@ class AccountManagerDialog extends ConsumerWidget {
                         icon: const Icon(Icons.add),
                         label: Text(l10n.add),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        icon: const Icon(Icons.check_circle_outline),
-                        label: Text(active.name),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.check_circle_outline),
+                          const SizedBox(width: 4),
+                          Text(active.name),
+                        ],
                       ),
                     ],
                   ),
