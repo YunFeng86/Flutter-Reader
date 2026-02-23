@@ -47,6 +47,10 @@ docs/
 **/*.g.dart
 **/*.freezed.dart
 
+# Keep Isar schema outputs checked-in so `flutter analyze`/`flutter test` work
+# out-of-the-box on a fresh checkout.
+!lib/models/*.g.dart
+
 # Web related
 lib/generated_plugin_registrant.dart
 
