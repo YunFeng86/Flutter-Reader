@@ -756,4 +756,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get windowClose => 'Close';
+
+  @override
+  String get translationAndAiServices => 'Translation & AI';
+
+  @override
+  String get translation => 'Translation';
+
+  @override
+  String get translationProvider => 'Translation provider';
+
+  @override
+  String get aiServices => 'AI services';
+
+  @override
+  String get addAiService => 'Add AI service';
+
+  @override
+  String get aiService => 'AI service';
 }

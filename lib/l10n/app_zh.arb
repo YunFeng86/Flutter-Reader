@@ -1002,5 +1002,29 @@
   "windowClose": "关闭",
   "@windowClose": {
     "description": "桌面端窗口“关闭”按钮提示"
+  },
+  "translationAndAiServices": "翻译与 AI 服务",
+  "@translationAndAiServices": {
+    "description": "翻译与 AI 服务设置页标签"
+  },
+  "translation": "翻译",
+  "@translation": {
+    "description": "翻译设置分组标题"
+  },
+  "translationProvider": "翻译提供方",
+  "@translationProvider": {
+    "description": "选择翻译提供方的设置项标题"
+  },
+  "aiServices": "AI 服务",
+  "@aiServices": {
+    "description": "AI 服务设置分组标题"
+  },
+  "addAiService": "添加 AI 服务",
+  "@addAiService": {
+    "description": "添加 AI 服务按钮/标题"
+  },
+  "aiService": "AI 服务",
+  "@aiService": {
+    "description": "AI 服务的通用标签"
   }
 }

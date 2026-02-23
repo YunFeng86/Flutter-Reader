@@ -8,6 +8,7 @@ import '../ui/settings/tabs/about_tab.dart';
 import '../ui/settings/tabs/app_preferences_tab.dart';
 import '../ui/settings/tabs/grouping_sorting_tab.dart';
 import '../ui/settings/tabs/services_tab.dart';
+import '../ui/settings/tabs/translation_ai_services_tab.dart';
 import '../providers/subscription_settings_provider.dart';
 import '../utils/platform.dart';
 
@@ -55,6 +56,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         selectedIcon: Icons.cloud,
         label: l10n.services,
         content: ServicesTab(showPageTitle: showPageTitle),
+      ),
+      _SettingsPageItem(
+        icon: Icons.translate_outlined,
+        selectedIcon: Icons.translate,
+        label: l10n.translationAndAiServices,
+        content: TranslationAiServicesTab(showPageTitle: showPageTitle),
       ),
       _SettingsPageItem(
         icon: Icons.info_outline,

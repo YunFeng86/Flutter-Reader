@@ -1,0 +1,44 @@
+import 'dart:convert';
+import 'dart:io';
+
+import '../../utils/path_manager.dart';
+import 'translation_ai_settings.dart';
+
+class TranslationAiSettingsStore {
+  Future<TranslationAiSettings> load() async {
+    try {
+      final f = await _file();
+      if (!await f.exists()) return TranslationAiSettings.defaults();
+      final raw = await f.readAsString();
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return TranslationAiSettings.defaults();
+      final loaded = TranslationAiSettings.fromJson(
+        decoded.cast<String, Object?>(),
+      );
+      final fixed = loaded.normalized();
+      if (_jsonEquals(loaded.toJson(), fixed.toJson())) return loaded;
+      try {
+        await save(fixed);
+      } catch (_) {
+        // ignore: best-effort fixup
+      }
+      return fixed;
+    } catch (_) {
+      return TranslationAiSettings.defaults();
+    }
+  }
+
+  Future<void> save(TranslationAiSettings settings) async {
+    final f = await _file();
+    await f.writeAsString(jsonEncode(settings.toJson()));
+  }
+
+  Future<File> _file() async {
+    return PathManager.translationAiSettingsFile();
+  }
+
+  bool _jsonEquals(Map<String, Object?> a, Map<String, Object?> b) {
+    // Stable stringify compare; small payload so ok.
+    return jsonEncode(a) == jsonEncode(b);
+  }
+}
