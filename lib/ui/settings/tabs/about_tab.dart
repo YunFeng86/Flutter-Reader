@@ -65,17 +65,6 @@ class _AboutTabState extends State<AboutTab> {
     }
   }
 
-  Future<void> _openLatestLog() async {
-    final file = await AppLogger.getLatestLogFile();
-    if (file == null) {
-      if (!mounted) return;
-      final l10n = AppLocalizations.of(context)!;
-      context.showSnack(l10n.noLogsFound);
-      return;
-    }
-    await _openFolder(file.path);
-  }
-
   Future<void> _exportLogs() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -181,6 +170,7 @@ class _AboutTabState extends State<AboutTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final isDesktopPlatform = isDesktop;
 
     return FutureBuilder<PackageInfo>(
       future: _packageInfoFuture,
@@ -251,119 +241,118 @@ class _AboutTabState extends State<AboutTab> {
                             ),
                             const SizedBox(height: 16),
                           ],
-                          FutureBuilder<String>(
-                            future: _appDataPathFuture,
-                            builder: (context, snapshot) {
-                              final path = snapshot.data;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.dataDirectory,
-                                    style: theme.textTheme.labelLarge,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  SelectableText(path ?? '...'),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 12,
-                                    runSpacing: 12,
-                                    children: [
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () async {
-                                                await Clipboard.setData(
-                                                  ClipboardData(text: path),
-                                                );
-                                                if (!context.mounted) return;
-                                                context.showSnack(l10n.done);
-                                              },
-                                        child: Text(l10n.copyPath),
-                                      ),
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () {
-                                                unawaited(_openFolder(path));
-                                              },
-                                        child: Text(l10n.openFolder),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          FutureBuilder<String>(
-                            future: _logsPathFuture,
-                            builder: (context, snapshot) {
-                              final path = snapshot.data;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.logDirectory,
-                                    style: theme.textTheme.labelLarge,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  SelectableText(path ?? '...'),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 12,
-                                    runSpacing: 12,
-                                    children: [
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () async {
-                                                await Clipboard.setData(
-                                                  ClipboardData(text: path),
-                                                );
-                                                if (!context.mounted) return;
-                                                context.showSnack(l10n.done);
-                                              },
-                                        child: Text(l10n.copyPath),
-                                      ),
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () {
-                                                unawaited(_openFolder(path));
-                                              },
-                                        child: Text(l10n.openLogFolder),
-                                      ),
-                                      OutlinedButton(
-                                        onPressed: () {
-                                          unawaited(_openLatestLog());
-                                        },
-                                        child: Text(l10n.openLog),
-                                      ),
-                                      FilledButton(
-                                        onPressed: () {
-                                          unawaited(_exportLogs());
-                                        },
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.download_outlined,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Flexible(
-                                              child: Text(l10n.exportLogs),
-                                            ),
-                                          ],
+                          if (isDesktopPlatform) ...[
+                            FutureBuilder<String>(
+                              future: _appDataPathFuture,
+                              builder: (context, snapshot) {
+                                final path = snapshot.data;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.dataDirectory,
+                                      style: theme.textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SelectableText(path ?? '...'),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () async {
+                                                  await Clipboard.setData(
+                                                    ClipboardData(text: path),
+                                                  );
+                                                  if (!context.mounted) return;
+                                                  context.showSnack(l10n.done);
+                                                },
+                                          child: Text(l10n.copyPath),
                                         ),
-                                      ),
-                                    ],
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () {
+                                                  unawaited(_openFolder(path));
+                                                },
+                                          child: Text(l10n.openFolder),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            FutureBuilder<String>(
+                              future: _logsPathFuture,
+                              builder: (context, snapshot) {
+                                final path = snapshot.data;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.logDirectory,
+                                      style: theme.textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SelectableText(path ?? '...'),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () async {
+                                                  await Clipboard.setData(
+                                                    ClipboardData(text: path),
+                                                  );
+                                                  if (!context.mounted) return;
+                                                  context.showSnack(l10n.done);
+                                                },
+                                          child: Text(l10n.copyPath),
+                                        ),
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () {
+                                                  unawaited(_openFolder(path));
+                                                },
+                                          child: Text(l10n.openLogFolder),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                          if (!isDesktopPlatform) ...[
+                            const SizedBox(height: 8),
+                            FilledButton(
+                              onPressed: () {
+                                unawaited(_exportLogs());
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.download_outlined,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(l10n.exportLogs),
                                   ),
                                 ],
-                              );
-                            },
-                          ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
