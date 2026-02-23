@@ -14,7 +14,7 @@ import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../../dialogs/add_account_dialogs.dart';
 import '../widgets/section_header.dart';
-import '../../../widgets/account_manager_sheet.dart';
+import '../../../widgets/account_manager_dialog.dart';
 
 class ServicesTab extends ConsumerWidget {
   const ServicesTab({super.key, this.showPageTitle = true});
@@ -105,32 +105,43 @@ class ServicesTab extends ConsumerWidget {
     }
 
     Future<void> addAccount() async {
-      final picked = await showModalBottomSheet<AccountType>(
+      final picked = await showDialog<AccountType>(
         context: context,
-        showDragHandle: true,
-        builder: (context) {
-          return SafeArea(
-            top: false,
-            child: Column(
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: Text(l10n.add),
+            content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
                   leading: const Icon(Icons.rss_feed),
                   title: Text(l10n.addLocal),
-                  onTap: () => Navigator.of(context).pop(AccountType.local),
+                  subtitle: Text(l10n.local),
+                  onTap: () =>
+                      Navigator.of(dialogContext).pop(AccountType.local),
                 ),
                 ListTile(
                   leading: const Icon(Icons.cloud_outlined),
                   title: Text(l10n.addMiniflux),
-                  onTap: () => Navigator.of(context).pop(AccountType.miniflux),
+                  subtitle: Text(l10n.miniflux),
+                  onTap: () =>
+                      Navigator.of(dialogContext).pop(AccountType.miniflux),
                 ),
                 ListTile(
                   leading: const Icon(Icons.local_fire_department_outlined),
                   title: Text(l10n.addFever),
-                  onTap: () => Navigator.of(context).pop(AccountType.fever),
+                  subtitle: Text(l10n.fever),
+                  onTap: () =>
+                      Navigator.of(dialogContext).pop(AccountType.fever),
                 ),
               ],
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: Text(l10n.cancel),
+              ),
+            ],
           );
         },
       );
@@ -213,12 +224,11 @@ class ServicesTab extends ConsumerWidget {
                           IconButton(
                             tooltip: l10n.more,
                             onPressed: () async {
-                              await showModalBottomSheet<void>(
+                              await showDialog<void>(
                                 context: context,
                                 useRootNavigator: true,
-                                showDragHandle: true,
                                 builder: (context) =>
-                                    const AccountManagerSheet(),
+                                    const AccountManagerDialog(),
                               );
                             },
                             icon: const Icon(Icons.manage_accounts_outlined),
