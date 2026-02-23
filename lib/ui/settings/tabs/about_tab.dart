@@ -341,14 +341,9 @@ class _AboutTabState extends State<AboutTab> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
-                                    Icons.download_outlined,
-                                    size: 18,
-                                  ),
+                                  const Icon(Icons.download_outlined, size: 18),
                                   const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(l10n.exportLogs),
-                                  ),
+                                  Flexible(child: Text(l10n.exportLogs)),
                                 ],
                               ),
                             ),
