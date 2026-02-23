@@ -30,22 +30,22 @@ class AccountManagerDialog extends ConsumerWidget {
               children: [
                 _AccountTypeCard(
                   icon: Icons.rss_feed,
-                  title: l10n.local,
-                  subtitle: l10n.addLocal,
+                  title: l10n.addLocal,
+                  subtitle: l10n.local,
                   onTap: () =>
                       Navigator.of(dialogContext).pop(AccountType.local),
                 ),
                 _AccountTypeCard(
                   icon: Icons.cloud_outlined,
-                  title: l10n.miniflux,
-                  subtitle: l10n.addMiniflux,
+                  title: l10n.addMiniflux,
+                  subtitle: l10n.miniflux,
                   onTap: () =>
                       Navigator.of(dialogContext).pop(AccountType.miniflux),
                 ),
                 _AccountTypeCard(
                   icon: Icons.local_fire_department_outlined,
-                  title: l10n.fever,
-                  subtitle: l10n.addFever,
+                  title: l10n.addFever,
+                  subtitle: l10n.fever,
                   onTap: () =>
                       Navigator.of(dialogContext).pop(AccountType.fever),
                 ),
