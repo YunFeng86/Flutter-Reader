@@ -28,4 +28,50 @@ void main() {
     expect(sanitized, isNot(contains('onclick')));
     expect(sanitized, contains('<p>Hi</p>'));
   });
+
+  test('allows trusted iframe embeds', () {
+    const html = '''
+<article>
+  <iframe src="https://www.youtube.com/embed/abc" width="560" height="315" onload="x()"></iframe>
+</article>
+''';
+    final sanitized = HtmlSanitizer.sanitize(html);
+    expect(sanitized, contains('<iframe'));
+    expect(sanitized, contains('src="https://www.youtube.com/embed/abc"'));
+    expect(sanitized, contains('frameborder="0"'));
+    expect(sanitized, contains('allowfullscreen="true"'));
+    expect(sanitized, isNot(contains('onload')));
+    expect(sanitized, isNot(contains('width=')));
+  });
+
+  test('rejects iframe domains that contain allowed domains as substrings', () {
+    const html = '''
+<article>
+  <iframe src="https://youtube.com.evil.com/embed/abc"></iframe>
+</article>
+''';
+    final sanitized = HtmlSanitizer.sanitize(html);
+    expect(sanitized, isNot(contains('<iframe')));
+  });
+
+  test('rejects iframe domains that look like allowed domains', () {
+    const html = '''
+<article>
+  <iframe src="https://myyoutube.com/embed/abc"></iframe>
+</article>
+''';
+    final sanitized = HtmlSanitizer.sanitize(html);
+    expect(sanitized, isNot(contains('<iframe')));
+  });
+
+  test('allows trusted iframe domains case-insensitively', () {
+    const html = '''
+<article>
+  <iframe src="https://WWW.YouTube.Com/embed/abc"></iframe>
+</article>
+''';
+    final sanitized = HtmlSanitizer.sanitize(html);
+    expect(sanitized, contains('<iframe'));
+    expect(sanitized, contains('src="https://WWW.YouTube.Com/embed/abc"'));
+  });
 }

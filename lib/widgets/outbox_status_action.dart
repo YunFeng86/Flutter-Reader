@@ -1,0 +1,76 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../l10n/app_localizations.dart';
+import '../providers/account_providers.dart';
+import '../providers/outbox_status_providers.dart';
+import '../providers/service_providers.dart';
+import '../services/accounts/account.dart';
+import '../services/sync/fever/fever_sync_service.dart';
+import '../services/sync/miniflux/miniflux_sync_service.dart';
+
+class OutboxStatusAction extends ConsumerWidget {
+  const OutboxStatusAction({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final account = ref.watch(activeAccountProvider);
+    if (account.type != AccountType.miniflux &&
+        account.type != AccountType.fever) {
+      return const SizedBox.shrink();
+    }
+
+    final pending = ref.watch(outboxPendingCountProvider).valueOrNull ?? 0;
+    if (pending <= 0) return const SizedBox.shrink();
+
+    final stalls = ref.watch(outboxFlushStallCountProvider);
+    final isWarning = stalls >= 2;
+    final scheme = Theme.of(context).colorScheme;
+    final badgeColor = isWarning ? scheme.error : scheme.primary;
+    final label = pending > 99 ? '99+' : pending.toString();
+
+    Future<void> flushNow() async {
+      final before = pending;
+      final svc = ref.read(syncServiceProvider);
+      final ok = switch (svc) {
+        MinifluxSyncService s => await s.flushOutboxSafe(),
+        FeverSyncService s => await s.flushOutboxSafe(),
+        _ => false,
+      };
+
+      final after = await ref.read(outboxStoreProvider).load(account.id);
+      final afterCount = after.length;
+
+      final stallNotifier = ref.read(outboxFlushStallCountProvider.notifier);
+      if (afterCount == 0 || afterCount < before) {
+        stallNotifier.state = 0;
+      } else {
+        stallNotifier.state = stallNotifier.state + 1;
+      }
+
+      if (!context.mounted) return;
+      final success = ok && afterCount < before;
+      final msg = (success || afterCount == 0)
+          ? l10n.done
+          : l10n.syncStatusFailed;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    }
+
+    return IconButton(
+      tooltip: isWarning
+          ? l10n.syncStatusFailed
+          : l10n.syncStatusUploadingChanges,
+      onPressed: () => unawaited(flushNow()),
+      icon: Badge(
+        backgroundColor: badgeColor,
+        label: Text(label, style: const TextStyle(fontSize: 10)),
+        child: Icon(
+          isWarning ? Icons.sync_problem : Icons.cloud_upload_outlined,
+        ),
+      ),
+    );
+  }
+}

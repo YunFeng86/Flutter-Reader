@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' hide Category;
 import 'package:dio/dio.dart';
 import 'package:pool/pool.dart';
 
@@ -14,11 +13,13 @@ import '../../accounts/account.dart';
 import '../../accounts/credential_store.dart';
 import '../../cache/article_cache_service.dart';
 import '../../extract/article_extractor.dart';
+import '../../logging/app_logger.dart';
 import '../../settings/app_settings.dart';
 import '../../settings/app_settings_store.dart';
 import '../effective_feed_settings.dart';
 import '../outbox/outbox_store.dart';
 import '../sync_service.dart';
+import '../sync_mutex.dart';
 import '../sync_status_reporter.dart';
 import 'miniflux_client.dart';
 
@@ -118,36 +119,38 @@ class MinifluxSyncService implements SyncServiceBase {
     void Function(int current, int total)? onProgress,
     bool notify = true,
   }) async {
-    // For Miniflux, syncing is not "per local feed"; we sync the account once.
-    final status = _statusReporter.startTask(
-      label: SyncStatusLabel.syncing,
-      detail: account.name.trim().isEmpty ? null : account.name.trim(),
-    );
-    try {
-      await syncNow(status: status);
-      final total = feedIds.length;
-      onProgress?.call(total, total);
-      status.complete(success: true);
-      return BatchRefreshResult([
-        FeedRefreshResult(
-          feedId: feedIds.isEmpty ? -1 : feedIds.first,
-          incomingCount: 0,
-          newCount: 0,
-        ),
-      ]);
-    } catch (e) {
-      final total = feedIds.length;
-      onProgress?.call(total, total);
-      status.complete(success: false);
-      return BatchRefreshResult([
-        FeedRefreshResult(
-          feedId: feedIds.isEmpty ? -1 : feedIds.first,
-          incomingCount: 0,
-          newCount: 0,
-          error: e,
-        ),
-      ]);
-    }
+    return SyncMutex.instance.run('sync', () async {
+      // For Miniflux, syncing is not "per local feed"; we sync the account once.
+      final status = _statusReporter.startTask(
+        label: SyncStatusLabel.syncing,
+        detail: account.name.trim().isEmpty ? null : account.name.trim(),
+      );
+      try {
+        await syncNow(status: status);
+        final total = feedIds.length;
+        onProgress?.call(total, total);
+        status.complete(success: true);
+        return BatchRefreshResult([
+          FeedRefreshResult(
+            feedId: feedIds.isEmpty ? -1 : feedIds.first,
+            incomingCount: 0,
+            newCount: 0,
+          ),
+        ]);
+      } catch (e) {
+        final total = feedIds.length;
+        onProgress?.call(total, total);
+        status.complete(success: false);
+        return BatchRefreshResult([
+          FeedRefreshResult(
+            feedId: feedIds.isEmpty ? -1 : feedIds.first,
+            incomingCount: 0,
+            newCount: 0,
+            error: e,
+          ),
+        ]);
+      }
+    });
   }
 
   Future<void> syncNow({int? entriesLimit, SyncStatusTask? status}) async {
@@ -364,13 +367,15 @@ class MinifluxSyncService implements SyncServiceBase {
   }
 
   Future<bool> flushOutboxSafe() async {
-    try {
-      final client = await _buildClient();
-      await _flushOutbox(client);
-      return true;
-    } catch (_) {
-      return false;
-    }
+    return SyncMutex.instance.run('sync', () async {
+      try {
+        final client = await _buildClient();
+        await _flushOutbox(client);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    });
   }
 
   Future<MinifluxClient> _buildClient() async {
@@ -497,9 +502,7 @@ class MinifluxSyncService implements SyncServiceBase {
             break;
         }
       } catch (e) {
-        if (kDebugMode) {
-          debugPrint('outbox flush failed: $e');
-        }
+        AppLogger.w('outbox flush failed', tag: 'sync', error: e);
         remaining.add(a);
       }
     }

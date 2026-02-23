@@ -1,0 +1,93 @@
+import 'dart:io';
+
+import 'package:flutter_test/flutter_test.dart';
+import 'package:isar/isar.dart';
+
+import 'package:fleur/models/article.dart';
+import 'package:fleur/models/category.dart';
+import 'package:fleur/models/feed.dart';
+import 'package:fleur/models/tag.dart';
+import 'package:fleur/repositories/category_repository.dart';
+
+import '../test_utils/isar_test_utils.dart';
+
+void main() {
+  Isar? isar;
+  Directory? tempDir;
+
+  setUpAll(() async {
+    await ensureIsarCoreInitialized();
+    tempDir = await Directory.systemTemp.createTemp('isar_category_repo_');
+    isar = await Isar.open([
+      FeedSchema,
+      ArticleSchema,
+      CategorySchema,
+      TagSchema,
+    ], directory: tempDir!.path);
+  });
+
+  tearDownAll(() async {
+    await isar?.close();
+    await tempDir?.delete(recursive: true);
+  });
+
+  setUp(() async {
+    await isar!.writeTxn(() async {
+      await isar!.articles.clear();
+      await isar!.feeds.clear();
+      await isar!.categorys.clear();
+      await isar!.tags.clear();
+    });
+  });
+
+  test('delete() unassigns feeds and updates Article.categoryId', () async {
+    final now = DateTime.now();
+    final repo = CategoryRepository(isar!);
+
+    await isar!.writeTxn(() async {
+      final category = Category()
+        ..id = 1
+        ..name = 'Cat 1'
+        ..createdAt = now
+        ..updatedAt = now;
+      await isar!.categorys.put(category);
+
+      final feed = Feed()
+        ..id = 1
+        ..url = 'https://example.com/feed.xml'
+        ..title = 'Feed 1'
+        ..categoryId = 1
+        ..createdAt = now
+        ..updatedAt = now;
+      await isar!.feeds.put(feed);
+
+      final a1 = Article()
+        ..feedId = 1
+        ..categoryId = 1
+        ..link = 'https://example.com/a1'
+        ..publishedAt = now.toUtc()
+        ..fetchedAt = now
+        ..updatedAt = now;
+      final a2 = Article()
+        ..feedId = 1
+        ..categoryId = 1
+        ..link = 'https://example.com/a2'
+        ..publishedAt = now.toUtc()
+        ..fetchedAt = now
+        ..updatedAt = now;
+      await isar!.articles.putAll([a1, a2]);
+    });
+
+    await repo.delete(1);
+
+    expect(await isar!.categorys.get(1), isNull);
+
+    final feed = await isar!.feeds.get(1);
+    expect(feed, isNotNull);
+    expect(feed!.categoryId, isNull);
+
+    final articles = await isar!.articles.filter().feedIdEqualTo(1).findAll();
+    expect(articles, isNotEmpty);
+    expect(articles.every((a) => a.categoryId == null), isTrue);
+  });
+}

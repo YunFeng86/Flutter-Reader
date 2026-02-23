@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -9,6 +7,8 @@ import 'package:fleur/models/article.dart';
 import 'package:fleur/models/category.dart';
 import 'package:fleur/models/feed.dart';
 import 'package:fleur/models/tag.dart';
+
+import '../test_utils/isar_test_utils.dart';
 
 /// Performance benchmark test to validate the value of categoryId denormalization.
 ///
@@ -23,32 +23,7 @@ void main() {
   Directory? tempDir;
 
   setUpAll(() async {
-    // This benchmark relies on Isar Core native binaries. In unit tests,
-    // Isar Core might be missing from the working directory, so we load it
-    // from `isar_flutter_libs` (bundled in pub cache) to keep `flutter test`
-    // runnable offline.
-    final coreLibName = switch (true) {
-      _ when Platform.isWindows => 'isar.dll',
-      _ when Platform.isMacOS => 'libisar.dylib',
-      _ => 'libisar.so',
-    };
-    final platformDir = switch (true) {
-      _ when Platform.isWindows => 'windows',
-      _ when Platform.isMacOS => 'macos',
-      _ => 'linux',
-    };
-
-    final isarFlutterLibsRoot = await _resolvePackageRoot('isar_flutter_libs');
-    if (isarFlutterLibsRoot == null) {
-      throw StateError(
-        'Failed to locate isar_flutter_libs in the package config. '
-        'Add isar_flutter_libs to your dependencies.',
-      );
-    }
-    final isarCorePath =
-        '${isarFlutterLibsRoot.path}${Platform.pathSeparator}$platformDir'
-        '${Platform.pathSeparator}$coreLibName';
-    await Isar.initializeIsarCore(libraries: {Abi.current(): isarCorePath});
+    await ensureIsarCoreInitialized();
 
     // Create temporary directory for test database
     tempDir = await Directory.systemTemp.createTemp('isar_benchmark_');
@@ -139,35 +114,6 @@ void main() {
       );
     }
   });
-}
-
-Future<Directory?> _resolvePackageRoot(String packageName) async {
-  final configFile = File('.dart_tool/package_config.json');
-  // ignore: avoid_slow_async_io
-  if (!await configFile.exists()) return null;
-
-  final configUri = configFile.uri;
-  final raw =
-      jsonDecode(await configFile.readAsString()) as Map<String, Object?>;
-  final packages = (raw['packages'] as List<Object?>)
-      .whereType<Map<String, Object?>>()
-      .toList();
-
-  Map<String, Object?>? pkg;
-  for (final p in packages) {
-    if (p['name'] == packageName) {
-      pkg = p;
-      break;
-    }
-  }
-  if (pkg == null) return null;
-
-  final rootUriStr = pkg['rootUri'] as String?;
-  if (rootUriStr == null) return null;
-
-  // `rootUri` can be relative to the config file, so resolve against it.
-  final rootUri = configUri.resolve(rootUriStr);
-  return Directory.fromUri(rootUri);
 }
 
 /// Method 1: Query articles directly by categoryId (current implementation)

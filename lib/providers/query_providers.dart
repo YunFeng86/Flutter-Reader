@@ -50,6 +50,33 @@ final articleProvider = StreamProvider.family<Article?, int>((ref, id) {
   return ref.watch(articleRepositoryProvider).watchById(id);
 }, dependencies: [articleRepositoryProvider]);
 
+/// Watches the tags linked to an article, loading IsarLinks asynchronously.
+///
+/// Note: `watchObject` does not automatically load links, so the UI should use
+/// this provider instead of calling `loadSync()` in the widget tree.
+final articleTagsProvider = StreamProvider.autoDispose.family<List<Tag>, int>((
+  ref,
+  articleId,
+) {
+  var disposed = false;
+  ref.onDispose(() => disposed = true);
+
+  final repo = ref.watch(articleRepositoryProvider);
+  return repo.watchById(articleId).asyncMap((a) async {
+    if (a == null) return const <Tag>[];
+    if (!a.tags.isLoaded) {
+      try {
+        await a.tags.load();
+      } catch (_) {
+        if (disposed) return const <Tag>[];
+        rethrow;
+      }
+    }
+    if (disposed) return const <Tag>[];
+    return a.tags.toList(growable: false);
+  });
+}, dependencies: [articleRepositoryProvider]);
+
 final feedMapProvider = Provider<Map<int, Feed>>((ref) {
   final feeds = ref.watch(feedsProvider).valueOrNull ?? [];
   return {for (final feed in feeds) feed.id: feed};

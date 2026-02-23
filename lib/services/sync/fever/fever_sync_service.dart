@@ -1,0 +1,542 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
+
+import '../../../models/article.dart';
+import '../../../models/category.dart';
+import '../../../models/feed.dart';
+import '../../../repositories/article_repository.dart';
+import '../../../repositories/category_repository.dart';
+import '../../../repositories/feed_repository.dart';
+import '../../accounts/account.dart';
+import '../../accounts/credential_store.dart';
+import '../../cache/article_cache_service.dart';
+import '../../logging/app_logger.dart';
+import '../../notifications/notification_service.dart';
+import '../../settings/app_settings.dart';
+import '../../settings/app_settings_store.dart';
+import '../effective_feed_settings.dart';
+import '../outbox/outbox_store.dart';
+import '../sync_service.dart';
+import '../sync_mutex.dart';
+import '../sync_status_reporter.dart';
+import '../../../utils/keyword_filter.dart';
+import 'fever_client.dart';
+
+class FeverSyncService implements SyncServiceBase {
+  FeverSyncService({
+    required this.account,
+    required Dio dio,
+    required CredentialStore credentials,
+    required FeedRepository feeds,
+    required CategoryRepository categories,
+    required ArticleRepository articles,
+    required OutboxStore outbox,
+    required AppSettingsStore appSettingsStore,
+    required NotificationService notifications,
+    required ArticleCacheService cache,
+    SyncStatusReporter? statusReporter,
+  }) : _dio = dio,
+       _credentials = credentials,
+       _feeds = feeds,
+       _categories = categories,
+       _articles = articles,
+       _outbox = outbox,
+       _appSettingsStore = appSettingsStore,
+       _notifications = notifications,
+       _cache = cache,
+       _statusReporter = statusReporter ?? const NoopSyncStatusReporter();
+
+  final Account account;
+
+  final Dio _dio;
+  final CredentialStore _credentials;
+  final FeedRepository _feeds;
+  final CategoryRepository _categories;
+  final ArticleRepository _articles;
+  final OutboxStore _outbox;
+  final AppSettingsStore _appSettingsStore;
+  final NotificationService _notifications;
+  final ArticleCacheService _cache;
+  final SyncStatusReporter _statusReporter;
+
+  static int? _asInt(Object? v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v.trim());
+    return null;
+  }
+
+  @override
+  Future<int> offlineCacheFeed(int feedId) async {
+    final unread = await _articles.getUnread(feedId: feedId);
+    return _cache.cacheArticles(unread);
+  }
+
+  @override
+  Future<FeedRefreshResult> refreshFeedSafe(
+    int feedId, {
+    int maxAttempts = 2,
+    AppSettings? appSettings,
+    bool notify = true,
+  }) async {
+    final batch = await refreshFeedsSafe([feedId], notify: notify);
+    return batch.results.isEmpty
+        ? FeedRefreshResult(feedId: feedId, incomingCount: 0, newCount: 0)
+        : batch.results.first;
+  }
+
+  @override
+  Future<BatchRefreshResult> refreshFeedsSafe(
+    Iterable<int> feedIds, {
+    int maxConcurrent = 2,
+    int maxAttemptsPerFeed = 2,
+    void Function(int current, int total)? onProgress,
+    bool notify = true,
+  }) async {
+    return SyncMutex.instance.run('sync', () async {
+      final status = _statusReporter.startTask(
+        label: SyncStatusLabel.syncing,
+        detail: account.name.trim().isEmpty ? null : account.name.trim(),
+      );
+      try {
+        await syncNow(status: status, notify: notify);
+        final total = feedIds.length;
+        onProgress?.call(total, total);
+        status.complete(success: true);
+        return BatchRefreshResult([
+          FeedRefreshResult(
+            feedId: feedIds.isEmpty ? -1 : feedIds.first,
+            incomingCount: 0,
+            newCount: 0,
+          ),
+        ]);
+      } catch (e) {
+        final total = feedIds.length;
+        onProgress?.call(total, total);
+        status.complete(success: false);
+        return BatchRefreshResult([
+          FeedRefreshResult(
+            feedId: feedIds.isEmpty ? -1 : feedIds.first,
+            incomingCount: 0,
+            newCount: 0,
+            error: e,
+          ),
+        ]);
+      }
+    });
+  }
+
+  Future<void> syncNow({SyncStatusTask? status, bool notify = true}) async {
+    final client = await _buildClient();
+    status?.update(label: SyncStatusLabel.uploadingChanges);
+    await _flushOutbox(client);
+
+    final appSettings = await _appSettingsStore.load();
+    final entriesLimit = appSettings.minifluxEntriesLimit;
+
+    status?.update(label: SyncStatusLabel.syncingSubscriptions);
+    final sub = await _syncSubscriptions(client, appSettings, status: status);
+
+    if (entriesLimit < 0) return;
+
+    status?.update(
+      label: SyncStatusLabel.syncingUnreadArticles,
+      current: 0,
+      total: null,
+    );
+    await _syncItems(
+      client,
+      appSettings,
+      remoteFeedIdToLocalFeed: sub.remoteFeedIdToLocalFeed,
+      localFeedIdToFeed: sub.localFeedIdToFeed,
+      localFeedIdToSettings: sub.localFeedIdToSettings,
+      entriesLimit: entriesLimit,
+      status: status,
+      notify: notify,
+    );
+  }
+
+  Future<bool> flushOutboxSafe() async {
+    return SyncMutex.instance.run('sync', () async {
+      try {
+        final client = await _buildClient();
+        await _flushOutbox(client);
+        return true;
+      } catch (_) {
+        return false;
+      }
+    });
+  }
+
+  Future<FeverClient> _buildClient() async {
+    final baseUrl = (account.baseUrl ?? '').trim();
+    if (baseUrl.isEmpty) {
+      throw StateError('Fever baseUrl is empty');
+    }
+
+    final token = await _credentials.getApiToken(account.id, AccountType.fever);
+    if (token != null && token.trim().isNotEmpty) {
+      return FeverClient(dio: _dio, baseUrl: baseUrl, apiKey: token);
+    }
+
+    final basic = await _credentials.getBasicAuth(
+      account.id,
+      AccountType.fever,
+    );
+    if (basic != null) {
+      final apiKey = md5
+          .convert(utf8.encode('${basic.username}:${basic.password}'))
+          .toString();
+      return FeverClient(dio: _dio, baseUrl: baseUrl, apiKey: apiKey);
+    }
+
+    throw StateError('Fever credentials are missing');
+  }
+
+  Future<
+    ({
+      Map<int, Feed> remoteFeedIdToLocalFeed,
+      Map<int, Feed> localFeedIdToFeed,
+      Map<int, EffectiveFeedSettings> localFeedIdToSettings,
+    })
+  >
+  _syncSubscriptions(
+    FeverClient client,
+    AppSettings appSettings, {
+    SyncStatusTask? status,
+  }) async {
+    final remoteGroups = await client.getGroups();
+    final remoteGroupIdToLocalId = <int, int>{};
+
+    for (final g in remoteGroups) {
+      final id = _asInt(g['id']);
+      final title = g['title'];
+      if (id == null || title is! String) continue;
+      final localId = await _categories.upsertByName(title);
+      remoteGroupIdToLocalId[id] = localId;
+    }
+
+    final remoteFeedIdToLocalCategoryId = <int, int>{};
+    try {
+      final mappings = await client.getFeedsGroups();
+      for (final m in mappings) {
+        final groupId = _asInt(m['group_id']);
+        final feedIds = m['feed_ids'];
+        if (groupId == null || feedIds is! String) continue;
+        final localCatId = remoteGroupIdToLocalId[groupId];
+        if (localCatId == null) continue;
+        final ids = feedIds
+            .split(',')
+            .map((s) => int.tryParse(s.trim()))
+            .whereType<int>();
+        for (final remoteFeedId in ids) {
+          remoteFeedIdToLocalCategoryId.putIfAbsent(
+            remoteFeedId,
+            () => localCatId,
+          );
+        }
+      }
+    } catch (e) {
+      AppLogger.w('Fever feeds_groups fetch failed', tag: 'sync', error: e);
+    }
+
+    final remoteFeeds = await client.getFeeds();
+    status?.update(
+      label: SyncStatusLabel.syncingSubscriptions,
+      current: 0,
+      total: remoteFeeds.length,
+    );
+
+    final remoteFeedIdToLocalFeed = <int, Feed>{};
+    final localFeedIdToFeed = <int, Feed>{};
+    final localFeedIdToSettings = <int, EffectiveFeedSettings>{};
+
+    var processed = 0;
+    for (final f in remoteFeeds) {
+      processed += 1;
+      status?.update(current: processed, total: remoteFeeds.length);
+
+      final id = _asInt(f['id']);
+      final feedUrl = f['url'];
+      if (id == null || feedUrl is! String) continue;
+
+      final localId = await _feeds.upsertUrl(feedUrl);
+      final localCatId = remoteFeedIdToLocalCategoryId[id];
+      if (localCatId != null) {
+        await _feeds.setCategory(feedId: localId, categoryId: localCatId);
+      }
+      final local = await _feeds.getById(localId);
+      if (local == null) continue;
+
+      final title = f['title'] as String?;
+      final siteUrl = f['site_url'] as String?;
+
+      await _feeds.updateMeta(
+        id: local.id,
+        title: title,
+        siteUrl: siteUrl,
+        description: null,
+        lastSyncedAt: DateTime.now(),
+      );
+
+      final refreshed = await _feeds.getById(localId);
+      if (refreshed == null) continue;
+      remoteFeedIdToLocalFeed[id] = refreshed;
+      localFeedIdToFeed[refreshed.id] = refreshed;
+    }
+
+    // Resolve effective settings after categories are applied.
+    for (final feed in localFeedIdToFeed.values) {
+      final categoryId = feed.categoryId;
+      final Category? category = categoryId == null
+          ? null
+          : await _categories.getById(categoryId);
+      localFeedIdToSettings[feed.id] = EffectiveFeedSettings.resolve(
+        feed,
+        category,
+        appSettings,
+      );
+    }
+
+    // Update lastSyncedAt based on syncEnabled.
+    for (final entry in localFeedIdToSettings.entries) {
+      if (!entry.value.syncEnabled) {
+        await _feeds.updateMeta(id: entry.key, lastSyncedAt: null);
+      }
+    }
+
+    return (
+      remoteFeedIdToLocalFeed: remoteFeedIdToLocalFeed,
+      localFeedIdToFeed: localFeedIdToFeed,
+      localFeedIdToSettings: localFeedIdToSettings,
+    );
+  }
+
+  Future<void> _syncItems(
+    FeverClient client,
+    AppSettings appSettings, {
+    required Map<int, Feed> remoteFeedIdToLocalFeed,
+    required Map<int, Feed> localFeedIdToFeed,
+    required Map<int, EffectiveFeedSettings> localFeedIdToSettings,
+    required int entriesLimit,
+    SyncStatusTask? status,
+    required bool notify,
+  }) async {
+    final unreadIds = await client.getUnreadItemIds();
+    final savedIds = await client.getSavedItemIds();
+
+    final unreadSet = unreadIds.toSet();
+    final savedSet = savedIds.toSet();
+
+    final allIds = <int>{...unreadSet, ...savedSet}.toList();
+    allIds.sort((a, b) => b.compareTo(a));
+
+    final effectiveLimit = entriesLimit == 0 ? allIds.length : entriesLimit;
+    final limitedIds = allIds.length > effectiveLimit
+        ? allIds.sublist(0, effectiveLimit)
+        : allIds;
+
+    var totalNew = 0;
+    var processed = 0;
+
+    for (var i = 0; i < limitedIds.length; i += 50) {
+      final end = i + 50 > limitedIds.length ? limitedIds.length : i + 50;
+      final batchIds = limitedIds.sublist(i, end);
+
+      final items = await client.getItemsWithIds(batchIds);
+      final byLocalFeedId = <int, List<Article>>{};
+
+      for (final it in items) {
+        final id = _asInt(it['id']);
+        final remoteFeedId = _asInt(it['feed_id']);
+        final url = it['url'];
+        if (id == null || remoteFeedId == null || url is! String) continue;
+
+        final localFeed = remoteFeedIdToLocalFeed[remoteFeedId];
+        if (localFeed == null) continue;
+
+        final settings = localFeedIdToSettings[localFeed.id];
+        if (settings != null && !settings.syncEnabled) continue;
+        if (settings != null &&
+            settings.filterEnabled &&
+            settings.filterKeywords.trim().isNotEmpty) {
+          final ok = ReservedKeywordFilter.matches(
+            pattern: settings.filterKeywords,
+            fields: [
+              it['title'] as String?,
+              it['author'] as String?,
+              url,
+              it['html'] as String?,
+            ],
+          );
+          if (!ok) continue;
+        }
+
+        final createdSeconds = _asInt(it['created_on_time']);
+        final publishedAt = createdSeconds == null
+            ? DateTime.now().toUtc()
+            : DateTime.fromMillisecondsSinceEpoch(
+                createdSeconds * 1000,
+                isUtc: true,
+              );
+
+        final article = Article()
+          ..remoteId = id.toString()
+          ..link = url
+          ..title = it['title'] as String?
+          ..author = it['author'] as String?
+          ..contentHtml = it['html'] as String?
+          ..publishedAt = publishedAt
+          ..isRead = !unreadSet.contains(id)
+          ..isStarred = savedSet.contains(id);
+
+        (byLocalFeedId[localFeed.id] ??= <Article>[]).add(article);
+      }
+
+      for (final entry in byLocalFeedId.entries) {
+        final newArticles = await _articles.upsertMany(
+          entry.key,
+          entry.value,
+          preserveUserState: false,
+        );
+        totalNew += newArticles.length;
+      }
+
+      processed += batchIds.length;
+      status?.update(current: processed, total: limitedIds.length);
+
+      // Keep the isolate responsive for long queues.
+      if (limitedIds.length > 200 && processed % 200 == 0) {
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+
+    if (notify && totalNew > 0) {
+      try {
+        await _notifications.showNewArticlesSummaryNotification(
+          totalNew,
+          localeTag: appSettings.localeTag,
+        );
+      } catch (e) {
+        AppLogger.w('Fever summary notification failed', tag: 'sync', error: e);
+      }
+    }
+  }
+
+  Future<void> _flushOutbox(FeverClient client) async {
+    final pending = await _outbox.load(account.id);
+    if (pending.isEmpty) return;
+
+    Map<String, int>? feedUrlToRemoteId;
+    Map<String, int>? groupTitleToRemoteId;
+
+    String normalizeFeedUrl(String url) {
+      return url.trim().replaceAll(RegExp(r'/+$'), '');
+    }
+
+    Future<Map<String, int>> getFeedUrlMap() async {
+      final cached = feedUrlToRemoteId;
+      if (cached != null) return cached;
+      final feeds = await client.getFeeds();
+      final map = <String, int>{};
+      for (final f in feeds) {
+        final id = _asInt(f['id']);
+        final url = f['url'];
+        if (id == null || url is! String) continue;
+        final key = normalizeFeedUrl(url);
+        if (key.isEmpty) continue;
+        map[key] = id;
+      }
+      feedUrlToRemoteId = map;
+      return map;
+    }
+
+    Future<Map<String, int>> getGroupTitleMap() async {
+      final cached = groupTitleToRemoteId;
+      if (cached != null) return cached;
+      final groups = await client.getGroups();
+      final map = <String, int>{};
+      for (final g in groups) {
+        final id = _asInt(g['id']);
+        final title = g['title'];
+        if (id == null || title is! String) continue;
+        final key = title.trim();
+        if (key.isEmpty) continue;
+        map[key] = id;
+      }
+      groupTitleToRemoteId = map;
+      return map;
+    }
+
+    final remaining = <OutboxAction>[];
+    for (final a in pending) {
+      try {
+        switch (a.type) {
+          case OutboxActionType.markRead:
+            final entryId = a.remoteEntryId;
+            final value = a.value;
+            if (entryId == null || value == null) continue;
+            await client.markItemRead(entryId, read: value);
+            break;
+          case OutboxActionType.bookmark:
+            final entryId = a.remoteEntryId;
+            final value = a.value;
+            if (entryId == null || value == null) continue;
+            await client.markItemSaved(entryId, saved: value);
+            break;
+          case OutboxActionType.markAllRead:
+            final beforeSeconds =
+                a.createdAt.toUtc().millisecondsSinceEpoch ~/ 1000;
+            final feedUrl = a.feedUrl == null
+                ? null
+                : normalizeFeedUrl(a.feedUrl!);
+            final groupTitle = a.categoryTitle?.trim();
+
+            if (feedUrl != null && feedUrl.isNotEmpty) {
+              final map = await getFeedUrlMap();
+              final remoteId = map[feedUrl];
+              if (remoteId == null) {
+                throw StateError('Remote feed not found for url: $feedUrl');
+              }
+              await client.markFeedRead(remoteId, beforeSeconds: beforeSeconds);
+              break;
+            }
+
+            if (groupTitle != null && groupTitle.isNotEmpty) {
+              final map = await getGroupTitleMap();
+              final remoteId = map[groupTitle];
+              if (remoteId == null) {
+                throw StateError(
+                  'Remote group not found for title: $groupTitle',
+                );
+              }
+              await client.markGroupRead(
+                remoteId,
+                beforeSeconds: beforeSeconds,
+              );
+              break;
+            }
+
+            // Fallback: apply to all feeds. This action is only created when the
+            // user explicitly tapped "Mark all read" without a scope.
+            final map = await getFeedUrlMap();
+            for (final remoteId in map.values) {
+              if (remoteId <= 0) continue;
+              await client.markFeedRead(remoteId, beforeSeconds: beforeSeconds);
+            }
+            break;
+        }
+      } catch (e) {
+        // Keep it for next sync attempt.
+        remaining.add(a);
+      }
+    }
+
+    if (remaining.length != pending.length) {
+      await _outbox.save(account.id, remaining);
+    }
+  }
+}

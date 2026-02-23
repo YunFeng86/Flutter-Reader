@@ -28,72 +28,69 @@ class SubscriptionLayoutManager extends ConsumerWidget {
 
         final content = Builder(
           builder: (context) {
-              if (width >= 1000) {
-                // 3 Columns
-                return Column(
-                  children: [
-                    SubscriptionToolbar(showPageTitle: showPageTitle),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 280,
-                            child: CategoryListComponent(),
-                          ),
-                          const SizedBox(width: kPaneGap),
-                          const SizedBox(
-                            width: 320,
-                            child: FeedListComponent(),
-                          ),
-                          const SizedBox(width: kPaneGap),
-                          const Expanded(child: SettingsDetailPanel()),
-                        ],
-                      ),
+            if (width >= 1000) {
+              // 3 Columns
+              return Column(
+                children: [
+                  SubscriptionToolbar(showPageTitle: showPageTitle),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 280,
+                          child: CategoryListComponent(),
+                        ),
+                        const SizedBox(width: kPaneGap),
+                        const SizedBox(width: 320, child: FeedListComponent()),
+                        const SizedBox(width: kPaneGap),
+                        const Expanded(child: SettingsDetailPanel()),
+                      ],
                     ),
-                  ],
-                );
-              } else if (width >= kCompactWidth) {
-                // 2 Columns: Nav (Tree) | Details
-                // User requested Tree View for Medium
-                // 2 Columns: Nav (Tree) | Details
-                // User requested Tree View for Medium
-                return Column(
-                  children: [
-                    SubscriptionToolbar(showPageTitle: showPageTitle),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 320,
-                            child: SubscriptionTreeView(),
-                          ),
-                          const SizedBox(width: kPaneGap),
-                          const Expanded(child: SettingsDetailPanel()),
-                        ],
-                      ),
+                  ),
+                ],
+              );
+            } else if (width >= kCompactWidth) {
+              // 2 Columns: Nav (Tree) | Details
+              // User requested Tree View for Medium
+              // 2 Columns: Nav (Tree) | Details
+              // User requested Tree View for Medium
+              return Column(
+                children: [
+                  SubscriptionToolbar(showPageTitle: showPageTitle),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const SizedBox(
+                          width: 320,
+                          child: SubscriptionTreeView(),
+                        ),
+                        const SizedBox(width: kPaneGap),
+                        const Expanded(child: SettingsDetailPanel()),
+                      ],
                     ),
-                  ],
-                );
-              } else {
-                // Narrow: 1 Column (Stack)
-                final showDetails =
-                    selection.showGlobalSettings ||
-                    selection.showCategorySettings ||
-                    selection.selectedFeedId != null;
-                final body = showDetails
-                    ? const SettingsDetailPanel()
-                    : const SubscriptionTreeView(showDetailButtons: true);
+                  ),
+                ],
+              );
+            } else {
+              // Narrow: 1 Column (Stack)
+              final showDetails =
+                  selection.showGlobalSettings ||
+                  selection.showCategorySettings ||
+                  selection.selectedFeedId != null;
+              final body = showDetails
+                  ? const SettingsDetailPanel()
+                  : const SubscriptionTreeView(showDetailButtons: true);
 
-                return Column(
-                  children: [
-                    SubscriptionToolbar(showPageTitle: showPageTitle),
-                    const SizedBox(height: 8),
-                    Expanded(child: body),
-                  ],
-                );
-              }
+              return Column(
+                children: [
+                  SubscriptionToolbar(showPageTitle: showPageTitle),
+                  const SizedBox(height: 8),
+                  Expanded(child: body),
+                ],
+              );
+            }
           },
         );
 

@@ -8,6 +8,7 @@ import '../db/isar_db.dart';
 import '../providers/account_providers.dart';
 import '../providers/core_providers.dart';
 import '../services/accounts/account.dart';
+import '../services/data_integrity_startup_service.dart';
 import 'app.dart';
 
 class AccountGate extends ConsumerStatefulWidget {
@@ -86,6 +87,7 @@ class _AccountGateState extends ConsumerState<AccountGate> {
       dbName: account.dbName,
       isPrimary: account.isPrimary,
     );
+    unawaited(const DataIntegrityStartupService().runIfNeeded(next));
     final prev = _isar;
     _isar = next;
     _openedForAccountId = account.id;

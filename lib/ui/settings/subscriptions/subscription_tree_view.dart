@@ -59,10 +59,16 @@ class SubscriptionTreeView extends ConsumerWidget {
                       notifier.openCategorySettings(category.id);
                     },
                     onFeedTap: (feedId) {
-                      notifier.selectFeed(feedId, category.id);
+                      notifier.selectFeed(
+                        feedId,
+                        categoryScope: SubscriptionCategoryId(category.id),
+                      );
                     },
                     onOpenFeedSettings: (feedId) {
-                      notifier.selectFeed(feedId, category.id);
+                      notifier.selectFeed(
+                        feedId,
+                        categoryScope: SubscriptionCategoryId(category.id),
+                      );
                     },
                   ),
                 ],
@@ -118,13 +124,20 @@ class SubscriptionTreeView extends ConsumerWidget {
                             left: 56,
                             right: 16,
                           ),
-                          onTap: () => notifier.selectFeed(feed.id, null),
+                          onTap: () => notifier.selectFeed(
+                            feed.id,
+                            categoryScope:
+                                const SubscriptionCategoryUncategorized(),
+                          ),
                           trailing: showDetailButtons
                               ? IconButton(
                                   tooltip: l10n.settings,
                                   icon: const Icon(Icons.chevron_right),
-                                  onPressed: () =>
-                                      notifier.selectFeed(feed.id, null),
+                                  onPressed: () => notifier.selectFeed(
+                                    feed.id,
+                                    categoryScope:
+                                        const SubscriptionCategoryUncategorized(),
+                                  ),
                                 )
                               : null,
                           dense: true,

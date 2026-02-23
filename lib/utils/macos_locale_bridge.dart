@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../services/logging/app_logger.dart';
 import 'platform.dart';
 
 class MacOSLocaleBridge {
@@ -19,9 +19,7 @@ class MacOSLocaleBridge {
       });
       _lastLocaleTag = normalized;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('macOS language bridge failed: $e');
-      }
+      AppLogger.w('macOS language bridge failed', tag: 'platform', error: e);
     }
   }
 

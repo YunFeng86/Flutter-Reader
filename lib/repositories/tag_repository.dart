@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import '../models/article.dart';
 import '../models/tag.dart';
 import '../utils/tag_colors.dart';
 
@@ -42,7 +43,44 @@ class TagRepository {
   }
 
   Future<void> delete(int id) async {
-    return _isar.writeTxn(() async {
+    final existing = await _isar.tags.get(id);
+    if (existing == null) return;
+
+    final articleIds = await _isar.articles
+        .filter()
+        .tags((t) => t.idEqualTo(id))
+        .idProperty()
+        .findAll();
+    if (articleIds.isNotEmpty) {
+      const batchSize = 200;
+      for (var i = 0; i < articleIds.length; i += batchSize) {
+        final end = (i + batchSize > articleIds.length)
+            ? articleIds.length
+            : i + batchSize;
+        final batchIds = articleIds.sublist(i, end);
+        await _isar.writeTxn(() async {
+          final tag = await _isar.tags.get(id);
+          if (tag == null) return;
+
+          final items = await _isar.articles.getAll(batchIds);
+          final updates = <Article>[];
+          final now = DateTime.now();
+          for (final a in items) {
+            if (a == null) continue;
+            a.tags.remove(tag);
+            a.updatedAt = now;
+            await a.tags.save();
+            updates.add(a);
+          }
+          if (updates.isNotEmpty) {
+            await _isar.articles.putAll(updates);
+          }
+        });
+        await Future<void>.delayed(Duration.zero);
+      }
+    }
+
+    await _isar.writeTxn(() async {
       await _isar.tags.delete(id);
     });
   }

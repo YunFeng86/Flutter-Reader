@@ -303,20 +303,21 @@ class SubscriptionActions {
     final cats = await ref.read(categoryRepositoryProvider).getAll();
     if (!context.mounted) return;
 
-    // Returns -1 for Uncategorized, categoryId for category, null for Cancel.
-    final selected = await showDialog<int?>(
+    final selected = await showDialog<_MoveFeedCategoryPick?>(
       context: context,
       builder: (context) {
         return SimpleDialog(
           title: Text(l10n.moveToCategory),
           children: [
             SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(-1),
+              onPressed: () =>
+                  Navigator.of(context).pop(const _MoveFeedToUncategorized()),
               child: Text(l10n.uncategorized),
             ),
             for (final c in cats)
               SimpleDialogOption(
-                onPressed: () => Navigator.of(context).pop(c.id),
+                onPressed: () =>
+                    Navigator.of(context).pop(_MoveFeedToCategory(c.id)),
                 child: Text(c.name),
               ),
           ],
@@ -326,7 +327,10 @@ class SubscriptionActions {
 
     if (selected == null) return;
 
-    final categoryId = selected == -1 ? null : selected;
+    final categoryId = switch (selected) {
+      _MoveFeedToUncategorized() => null,
+      _MoveFeedToCategory(:final categoryId) => categoryId,
+    };
     await ref
         .read(feedRepositoryProvider)
         .setCategory(feedId: feedId, categoryId: categoryId);
@@ -476,4 +480,18 @@ class SubscriptionActions {
     if (!context.mounted) return;
     context.showSnack(l10n.exportedOpml);
   }
+}
+
+sealed class _MoveFeedCategoryPick {
+  const _MoveFeedCategoryPick();
+}
+
+final class _MoveFeedToUncategorized extends _MoveFeedCategoryPick {
+  const _MoveFeedToUncategorized();
+}
+
+final class _MoveFeedToCategory extends _MoveFeedCategoryPick {
+  const _MoveFeedToCategory(this.categoryId);
+
+  final int categoryId;
 }

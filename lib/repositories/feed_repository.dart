@@ -20,6 +20,12 @@ class FeedRepository {
     return _isar.feeds.get(id);
   }
 
+  Future<Feed?> getByUrl(String url) {
+    final normalized = url.trim();
+    if (normalized.isEmpty) return Future.value(null);
+    return _isar.feeds.filter().urlEqualTo(normalized).findFirst();
+  }
+
   Stream<Feed?> watchById(int id) {
     return _isar.feeds.watchObject(id, fireImmediately: true);
   }

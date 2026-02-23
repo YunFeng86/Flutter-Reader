@@ -1,10 +1,25 @@
 import 'dart:ui' show Locale, PlatformDispatcher;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
 import '../../models/article.dart';
+
+sealed class NotificationTap {
+  const NotificationTap();
+}
+
+class NotificationTapHome extends NotificationTap {
+  const NotificationTapHome();
+}
+
+class NotificationTapArticle extends NotificationTap {
+  const NotificationTapArticle(this.articleId);
+
+  final int articleId;
+}
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
@@ -12,6 +27,19 @@ class NotificationService {
 
   bool _initialized = false;
   Future<void>? _initFuture;
+  bool _permissionRequested = false;
+
+  void Function(NotificationTap tap)? _onTap;
+  NotificationTap? _pendingTap;
+
+  void setOnNotificationTap(void Function(NotificationTap tap) handler) {
+    _onTap = handler;
+    final pending = _pendingTap;
+    if (pending != null) {
+      _pendingTap = null;
+      handler(pending);
+    }
+  }
 
   Future<void> init() async {
     if (_initialized) return;
@@ -41,10 +69,21 @@ class NotificationService {
 
       await _notificationsPlugin.initialize(
         initSettings,
-        onDidReceiveNotificationResponse: (response) {
-          // Handle notification tap
-        },
+        onDidReceiveNotificationResponse: _handleNotificationResponse,
       );
+
+      // Handle cold-start (app launched by tapping a notification).
+      try {
+        final launchDetails = await _notificationsPlugin
+            .getNotificationAppLaunchDetails();
+        final didLaunch = launchDetails?.didNotificationLaunchApp ?? false;
+        final response = launchDetails?.notificationResponse;
+        if (didLaunch && response != null) {
+          _handleNotificationResponse(response);
+        }
+      } catch (_) {
+        // ignore: best-effort
+      }
 
       _initialized = true;
     } on MissingPluginException {
@@ -66,6 +105,68 @@ class NotificationService {
       _initFuture = null;
       rethrow;
     }
+  }
+
+  Future<void> requestPermissions() async {
+    if (_permissionRequested) return;
+    _permissionRequested = true;
+    try {
+      await ensureInitialized();
+
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        final android = _notificationsPlugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        await android?.requestNotificationsPermission();
+      }
+
+      final ios = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      await ios?.requestPermissions(alert: true, badge: true, sound: true);
+
+      final macos = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            MacOSFlutterLocalNotificationsPlugin
+          >();
+      await macos?.requestPermissions(alert: true, badge: true, sound: true);
+    } on MissingPluginException {
+      _permissionRequested = false;
+    } catch (_) {
+      // ignore: best-effort; do not break app startup
+    }
+  }
+
+  void _handleNotificationResponse(NotificationResponse response) {
+    final payload = (response.payload ?? '').trim();
+    if (payload.isEmpty) return;
+
+    if (payload == 'home') {
+      _dispatchTap(const NotificationTapHome());
+      return;
+    }
+
+    if (payload.startsWith('article:')) {
+      final id = int.tryParse(payload.substring('article:'.length).trim());
+      if (id == null || id <= 0) return;
+      _dispatchTap(NotificationTapArticle(id));
+      return;
+    }
+
+    final id = int.tryParse(payload);
+    if (id == null || id <= 0) return;
+    _dispatchTap(NotificationTapArticle(id));
+  }
+
+  void _dispatchTap(NotificationTap tap) {
+    final handler = _onTap;
+    if (handler == null) {
+      _pendingTap = tap;
+      return;
+    }
+    handler(tap);
   }
 
   Locale _normalizeLocale(Locale locale) {
@@ -187,6 +288,7 @@ class NotificationService {
       l10n.notificationNewArticlesTitle,
       l10n.notificationNewArticlesBody(count),
       details,
+      payload: 'home',
     );
   }
 
@@ -239,6 +341,7 @@ class NotificationService {
         l10n.notificationNewArticlesTitle,
         l10n.notificationNewArticlesBody(newArticles.length),
         details,
+        payload: 'home',
       );
     }
   }

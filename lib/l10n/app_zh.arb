@@ -191,6 +191,22 @@
   "@addSubscription": {
     "description": "addSubscription"
   },
+  "selectCategory": "选择分类",
+  "@selectCategory": {
+    "description": "selectCategory"
+  },
+  "loadingCategories": "正在加载分类...",
+  "@loadingCategories": {
+    "description": "loadingCategories"
+  },
+  "creatingCategory": "正在创建分类...",
+  "@creatingCategory": {
+    "description": "creatingCategory"
+  },
+  "feverAddSubscriptionNotSupported": "Fever 账号不支持添加订阅，请在服务端管理订阅。",
+  "@feverAddSubscriptionNotSupported": {
+    "description": "feverAddSubscriptionNotSupported"
+  },
   "newCategory": "新建分类",
   "@newCategory": {
     "description": "newCategory"
@@ -225,6 +241,10 @@
   "fullText": "阅读全文",
   "@fullText": {
     "description": "fullText"
+  },
+  "fullTextRetry": "获取全文失败，重试",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
   },
   "readerSettings": "阅读设置",
   "@readerSettings": {
@@ -300,6 +320,26 @@
   "@rssAtomUrl": {
     "description": "rssAtomUrl"
   },
+  "feedOrWebsiteUrl": "订阅源或网站 URL",
+  "@feedOrWebsiteUrl": {
+    "description": "feedOrWebsiteUrl"
+  },
+  "discoveringFeeds": "正在发现订阅源…",
+  "@discoveringFeeds": {
+    "description": "discoveringFeeds"
+  },
+  "addingSubscription": "正在添加订阅…",
+  "@addingSubscription": {
+    "description": "addingSubscription"
+  },
+  "selectFeed": "选择订阅源",
+  "@selectFeed": {
+    "description": "selectFeed"
+  },
+  "noFeedsFound": "未找到可用的订阅源",
+  "@noFeedsFound": {
+    "description": "noFeedsFound"
+  },
   "name": "名称",
   "@name": {
     "description": "name"
@@ -349,6 +389,10 @@
   "@autoColor": {
     "description": "autoColor"
   },
+  "tagsLoadingError": "加载标签失败",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
+  },
   "deleteCategory": "删除分类",
   "@deleteCategory": {
     "description": "deleteCategory"
@@ -360,6 +404,14 @@
   "deleteCategoryConfirmContent": "该分类下的订阅源将移动到未分类。",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "deleteTagConfirmTitle": "删除标签？",
+  "@deleteTagConfirmTitle": {
+    "description": "deleteTagConfirmTitle"
+  },
+  "deleteTagConfirmContent": "这会从所有文章中移除该标签。",
+  "@deleteTagConfirmContent": {
+    "description": "deleteTagConfirmContent"
   },
   "categoryDeleted": "分类已删除",
   "@categoryDeleted": {
@@ -446,6 +498,18 @@
   "openInBrowser": "在浏览器打开",
   "@openInBrowser": {
     "description": "openInBrowser"
+  },
+  "copyLink": "复制链接",
+  "@copyLink": {
+    "description": "copyLink"
+  },
+  "copiedToClipboard": "已复制到剪贴板",
+  "@copiedToClipboard": {
+    "description": "copiedToClipboard"
+  },
+  "share": "分享",
+  "@share": {
+    "description": "share"
   },
   "autoMarkRead": "打开时自动标记为已读",
   "@autoMarkRead": {
@@ -557,6 +621,10 @@
   "@miniflux": {
     "description": "miniflux"
   },
+  "fever": "Fever",
+  "@fever": {
+    "description": "fever"
+  },
   "addLocal": "添加本地",
   "@addLocal": {
     "description": "addLocal"
@@ -568,6 +636,10 @@
   "addMiniflux": "添加 Miniflux",
   "@addMiniflux": {
     "description": "addMiniflux"
+  },
+  "addFever": "添加 Fever",
+  "@addFever": {
+    "description": "addFever"
   },
   "minifluxStrategy": "Miniflux 策略",
   "@minifluxStrategy": {
@@ -613,9 +685,17 @@
   "@minifluxBaseUrlHint": {
     "description": "minifluxBaseUrlHint"
   },
+  "feverBaseUrlHint": "https://example.com/fever/",
+  "@feverBaseUrlHint": {
+    "description": "feverBaseUrlHint"
+  },
   "apiToken": "API Token",
   "@apiToken": {
     "description": "apiToken"
+  },
+  "apiKey": "API Key",
+  "@apiKey": {
+    "description": "apiKey"
   },
   "authenticationMethod": "认证方式",
   "@authenticationMethod": {
@@ -628,6 +708,10 @@
   "minifluxAuthHint": "可填写 API Token（推荐）或用户名/密码。",
   "@minifluxAuthHint": {
     "description": "minifluxAuthHint"
+  },
+  "feverAuthHint": "可填写 API Key（推荐）或用户名/密码。",
+  "@feverAuthHint": {
+    "description": "feverAuthHint"
   },
   "username": "用户名",
   "@username": {
@@ -697,6 +781,30 @@
   "openFolder": "打开文件夹",
   "@openFolder": {
     "description": "openFolder"
+  },
+  "logDirectory": "日志目录",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "打开日志",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "打开日志文件夹",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "导出日志",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "日志已导出",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "未找到日志文件",
+  "@noLogsFound": {
+    "description": "noLogsFound"
   },
   "keyboardShortcuts": "快捷键",
   "@keyboardShortcuts": {
@@ -786,9 +894,13 @@
   "@syncStatusFailed": {
     "description": "Sync status: failed"
   },
-  "showAiSummary": "Show AI Summary",
+  "showAiSummary": "显示摘要",
   "@showAiSummary": {
     "description": "showAiSummary"
+  },
+  "summary": "摘要",
+  "@summary": {
+    "description": "summary"
   },
   "showImageTitle": "显示图片标题",
   "@showImageTitle": {

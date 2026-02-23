@@ -13,6 +13,7 @@ import '../providers/app_settings_providers.dart';
 import '../utils/macos_locale_bridge.dart';
 import '../utils/platform.dart';
 import '../widgets/desktop_title_bar.dart';
+import '../widgets/outbox_status_action.dart';
 import '../widgets/sidebar.dart';
 import '../providers/query_providers.dart';
 import '../providers/core_providers.dart';
@@ -20,7 +21,10 @@ import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/auto_refresh_providers.dart';
 import '../providers/outbox_flush_providers.dart';
+import '../providers/outbox_status_providers.dart';
+import '../providers/background_sync_providers.dart';
 import '../providers/unread_providers.dart';
+import '../services/notifications/notification_service.dart';
 import '../services/sync/sync_service.dart';
 import '../ui/layout.dart';
 import '../ui/global_nav.dart';
@@ -80,7 +84,22 @@ class App extends ConsumerWidget {
         appSettings?.seedColorPreset ?? SeedColorPreset.blue;
     ref.watch(autoRefreshControllerProvider);
     ref.watch(outboxFlushControllerProvider);
-    unawaited(ref.watch(notificationServiceProvider).init().catchError((_) {}));
+    ref.watch(backgroundSyncControllerProvider);
+    final notificationService = ref.watch(notificationServiceProvider);
+    notificationService.setOnNotificationTap((tap) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        switch (tap) {
+          case NotificationTapHome():
+            router.go('/');
+            return;
+          case NotificationTapArticle(articleId: final articleId):
+            router.go('/article/$articleId');
+            return;
+        }
+      });
+    });
+    unawaited(notificationService.init().catchError((_) {}));
+    unawaited(notificationService.requestPermissions().catchError((_) {}));
     unawaited(MacOSLocaleBridge.setPreferredLanguage(localeTag));
 
     return DynamicColorBuilder(
@@ -207,6 +226,9 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
             desktopSidebarInDrawer(mode) &&
             !isArticleSeparatePage;
         final canPop = widget.router.canPop();
+        final outboxPending =
+            ref.watch(outboxPendingCountProvider).valueOrNull ?? 0;
+        final showOutboxAction = outboxPending > 0;
 
         Future<BatchRefreshResult> refreshAll() async {
           final feedId = ref.read(selectedFeedIdProvider);
@@ -221,9 +243,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
           final feeds = await ref.read(feedRepositoryProvider).getAll();
           final filtered = (categoryId == null)
               ? feeds
-              : (categoryId < 0
-                    ? feeds.where((f) => f.categoryId == null)
-                    : feeds.where((f) => f.categoryId == categoryId));
+              : feeds.where((f) => f.categoryId == categoryId);
           return ref
               .read(syncServiceProvider)
               .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -331,6 +351,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
                       icon: const Icon(Icons.done_all),
                     ),
                   ],
+                  if (showOutboxAction) const OutboxStatusAction(),
                 ],
               ),
               Expanded(child: widget.content),

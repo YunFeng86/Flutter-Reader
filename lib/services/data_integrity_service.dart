@@ -12,6 +12,8 @@ class DataIntegrityService {
 
   final Isar _isar;
 
+  static const int _scanBatchSize = 500;
+
   /// Repairs Article.categoryId that doesn't match Feed.categoryId.
   ///
   /// Returns the number of articles fixed.
@@ -94,11 +96,21 @@ class DataIntegrityService {
     }
 
     // Check for orphaned articles (feedId doesn't exist)
-    final allArticles = await _isar.articles.where().findAll();
-    for (final article in allArticles) {
-      if (!feedIds.contains(article.feedId)) {
-        orphanedArticles++;
+    var lastId = -1;
+    while (true) {
+      final q = _isar.articles
+          .where()
+          .idGreaterThan(lastId)
+          .limit(_scanBatchSize);
+      final ids = await q.idProperty().findAll();
+      if (ids.isEmpty) break;
+      final batchFeedIds = await q.feedIdProperty().findAll();
+      for (var i = 0; i < ids.length; i++) {
+        if (!feedIds.contains(batchFeedIds[i])) {
+          orphanedArticles++;
+        }
       }
+      lastId = ids.last;
     }
 
     return IntegrityReport(
@@ -114,33 +126,35 @@ class DataIntegrityService {
     final feeds = await _isar.feeds.where().findAll();
     final feedIds = feeds.map((f) => f.id).toSet();
 
-    return await _isar.writeTxn(() async {
-      int deleted = 0;
+    var deleted = 0;
+    var lastId = -1;
 
-      // Find all orphaned article IDs
-      final allArticles = await _isar.articles.where().findAll();
+    while (true) {
+      final q = _isar.articles
+          .where()
+          .idGreaterThan(lastId)
+          .limit(_scanBatchSize);
+      final ids = await q.idProperty().findAll();
+      if (ids.isEmpty) break;
+      final batchFeedIds = await q.feedIdProperty().findAll();
+
       final orphanedIds = <int>[];
-
-      for (final article in allArticles) {
-        if (!feedIds.contains(article.feedId)) {
-          orphanedIds.add(article.id);
+      for (var i = 0; i < ids.length; i++) {
+        if (!feedIds.contains(batchFeedIds[i])) {
+          orphanedIds.add(ids[i]);
         }
       }
 
-      if (orphanedIds.isEmpty) return 0;
-
-      // Delete in batches
-      const batchSize = 200;
-      for (var i = 0; i < orphanedIds.length; i += batchSize) {
-        final end = (i + batchSize > orphanedIds.length)
-            ? orphanedIds.length
-            : i + batchSize;
-        final batch = orphanedIds.sublist(i, end);
-        deleted += await _isar.articles.deleteAll(batch);
+      if (orphanedIds.isNotEmpty) {
+        deleted += await _isar.writeTxn(() async {
+          return _isar.articles.deleteAll(orphanedIds);
+        });
       }
 
-      return deleted;
-    });
+      lastId = ids.last;
+    }
+
+    return deleted;
   }
 }
 

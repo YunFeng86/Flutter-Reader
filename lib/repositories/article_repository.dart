@@ -64,20 +64,9 @@ class ArticleRepository {
 
   static const int defaultPageSize = 50;
 
-  Future<List<int>?> _resolveCategoryFeedIds(ArticleQuery query) async {
-    if (query.feedId != null || query.categoryId == null) return null;
-    final cid = query.categoryId!;
-    final qb = _isar.feeds.filter();
-    final filtered = cid < 0
-        ? qb.categoryIdIsNull()
-        : qb.categoryIdEqualTo(cid);
-    return filtered.idProperty().findAll();
-  }
-
   QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery(
-    ArticleQuery query, {
-    List<int>? categoryFeedIds,
-  }) {
+    ArticleQuery query,
+  ) {
     final tid = query.tagId;
     final q = query.searchQuery.trim();
     final hasQuery = q.isNotEmpty;
@@ -85,8 +74,8 @@ class ArticleRepository {
         .filter()
         .optional(query.feedId != null, (q) => q.feedIdEqualTo(query.feedId!))
         .optional(
-          query.feedId == null && categoryFeedIds != null,
-          (q) => q.anyOf(categoryFeedIds!, (q, id) => q.feedIdEqualTo(id)),
+          query.feedId == null && query.categoryId != null,
+          (q) => q.categoryIdEqualTo(query.categoryId),
         )
         .optional(tid != null, (q) => q.tags((t) => t.idEqualTo(tid!)))
         .optional(query.unreadOnly, (q) => q.isReadEqualTo(false))
@@ -144,9 +133,7 @@ class ArticleRepository {
     required int offset,
     required int limit,
   }) async {
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return [];
-    final qb = _buildQuery(query, categoryFeedIds: feedIds);
+    final qb = _buildQuery(query);
     final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).findAll();
   }
@@ -156,9 +143,7 @@ class ArticleRepository {
     required int offset,
     required int limit,
   }) async {
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return [];
-    final qb = _buildQuery(query, categoryFeedIds: feedIds);
+    final qb = _buildQuery(query);
     final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).idProperty().findAll();
   }
@@ -172,12 +157,7 @@ class ArticleRepository {
 
     Future<void> watchArticles() async {
       await articleSub?.cancel();
-      final feedIds = await _resolveCategoryFeedIds(query);
-      if (feedIds != null && feedIds.isEmpty) {
-        if (!controller.isClosed) controller.add(null);
-        return;
-      }
-      final qb = _buildQuery(query, categoryFeedIds: feedIds);
+      final qb = _buildQuery(query);
       final sorted = _applySort(qb, sortAscending: query.sortAscending);
       articleSub = sorted.watchLazy().listen((_) {
         if (!controller.isClosed) controller.add(null);
@@ -302,19 +282,12 @@ class ArticleRepository {
   }
 
   Future<int> _markAllReadBatched({int? feedId, int? categoryId}) async {
-    final query = ArticleQuery(
-      feedId: feedId,
-      categoryId: categoryId,
-      unreadOnly: true,
-    );
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return 0;
     final qb = _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
         .optional(
-          feedId == null && feedIds != null,
-          (q) => q.anyOf(feedIds!, (q, id) => q.feedIdEqualTo(id)),
+          feedId == null && categoryId != null,
+          (q) => q.categoryIdEqualTo(categoryId),
         )
         .isReadEqualTo(false);
 

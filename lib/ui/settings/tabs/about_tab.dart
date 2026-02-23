@@ -1,15 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../l10n/app_localizations.dart';
+import '../../../services/logging/app_logger.dart';
 import '../../../services/platform/shell_service.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../../../utils/path_manager.dart';
+import '../../../utils/platform.dart';
 import '../widgets/section_header.dart';
 
 class AboutTab extends StatefulWidget {
@@ -23,12 +27,14 @@ class AboutTab extends StatefulWidget {
 
 class _AboutTabState extends State<AboutTab> {
   late final Future<String> _appDataPathFuture;
+  late final Future<String> _logsPathFuture;
   late final Future<PackageInfo> _packageInfoFuture;
 
   @override
   void initState() {
     super.initState();
     _appDataPathFuture = PathManager.getSupportPath();
+    _logsPathFuture = PathManager.getLogsPath();
     _packageInfoFuture = PackageInfo.fromPlatform();
   }
 
@@ -59,6 +65,68 @@ class _AboutTabState extends State<AboutTab> {
     }
   }
 
+  Future<void> _exportLogs() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    File archive;
+    try {
+      archive = await AppLogger.createLogsArchive();
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorMessage(l10n.errorMessage(e.toString()));
+      return;
+    }
+
+    // file_selector_ios may throw UnimplementedError for save dialogs.
+    // On iOS we export via the system share sheet so users can "Save to Files".
+    if (isIOS) {
+      try {
+        await IosShareBridge.shareFile(
+          path: archive.path,
+          mimeType: 'application/zip',
+          name: p.basename(archive.path),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        context.showErrorMessage(l10n.errorMessage(e.toString()));
+        return;
+      }
+      if (!mounted) return;
+      context.showSnack(l10n.exportedLogs);
+      return;
+    }
+
+    const group = XTypeGroup(
+      label: 'ZIP',
+      extensions: ['zip'],
+      mimeTypes: ['application/zip'],
+      uniformTypeIdentifiers: ['public.zip-archive'],
+    );
+
+    FileSaveLocation? loc;
+    try {
+      loc = await getSaveLocation(
+        suggestedName: p.basename(archive.path),
+        acceptedTypeGroups: [group],
+      );
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorMessage(l10n.errorMessage(e.toString()));
+      return;
+    }
+    if (loc == null) return;
+
+    try {
+      await archive.copy(loc.path);
+    } catch (e) {
+      if (!mounted) return;
+      context.showErrorMessage(l10n.errorMessage(e.toString()));
+      return;
+    }
+    if (!mounted) return;
+    context.showSnack(l10n.exportedLogs);
+  }
+
   Future<void> _showLicenseDialog() async {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
@@ -71,14 +139,15 @@ class _AboutTabState extends State<AboutTab> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text(l10n.openSourceLicense),
-          content: SizedBox(
-            width: 600,
-            height: 400,
-            child: SingleChildScrollView(
-              child: SelectableText(
-                licenseText,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontFamily: 'monospace',
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 400),
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                child: SelectableText(
+                  licenseText,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
+                  ),
                 ),
               ),
             ),
@@ -101,6 +170,7 @@ class _AboutTabState extends State<AboutTab> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final isDesktopPlatform = isDesktop;
 
     return FutureBuilder<PackageInfo>(
       future: _packageInfoFuture,
@@ -171,49 +241,113 @@ class _AboutTabState extends State<AboutTab> {
                             ),
                             const SizedBox(height: 16),
                           ],
-                          FutureBuilder<String>(
-                            future: _appDataPathFuture,
-                            builder: (context, snapshot) {
-                              final path = snapshot.data;
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                          if (isDesktopPlatform) ...[
+                            FutureBuilder<String>(
+                              future: _appDataPathFuture,
+                              builder: (context, snapshot) {
+                                final path = snapshot.data;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.dataDirectory,
+                                      style: theme.textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SelectableText(path ?? '...'),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () async {
+                                                  await Clipboard.setData(
+                                                    ClipboardData(text: path),
+                                                  );
+                                                  if (!context.mounted) return;
+                                                  context.showSnack(l10n.done);
+                                                },
+                                          child: Text(l10n.copyPath),
+                                        ),
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () {
+                                                  unawaited(_openFolder(path));
+                                                },
+                                          child: Text(l10n.openFolder),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            FutureBuilder<String>(
+                              future: _logsPathFuture,
+                              builder: (context, snapshot) {
+                                final path = snapshot.data;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      l10n.logDirectory,
+                                      style: theme.textTheme.labelLarge,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    SelectableText(path ?? '...'),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: [
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () async {
+                                                  await Clipboard.setData(
+                                                    ClipboardData(text: path),
+                                                  );
+                                                  if (!context.mounted) return;
+                                                  context.showSnack(l10n.done);
+                                                },
+                                          child: Text(l10n.copyPath),
+                                        ),
+                                        OutlinedButton(
+                                          onPressed: path == null
+                                              ? null
+                                              : () {
+                                                  unawaited(_openFolder(path));
+                                                },
+                                          child: Text(l10n.openLogFolder),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                          if (!isDesktopPlatform) ...[
+                            const SizedBox(height: 8),
+                            FilledButton(
+                              onPressed: () {
+                                unawaited(_exportLogs());
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    l10n.dataDirectory,
-                                    style: theme.textTheme.labelLarge,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  SelectableText(path ?? '...'),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () async {
-                                                await Clipboard.setData(
-                                                  ClipboardData(text: path),
-                                                );
-                                                if (!context.mounted) return;
-                                                context.showSnack(l10n.done);
-                                              },
-                                        child: Text(l10n.copyPath),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      OutlinedButton(
-                                        onPressed: path == null
-                                            ? null
-                                            : () {
-                                                unawaited(_openFolder(path));
-                                              },
-                                        child: Text(l10n.openFolder),
-                                      ),
-                                    ],
-                                  ),
+                                  const Icon(Icons.download_outlined, size: 18),
+                                  const SizedBox(width: 8),
+                                  Flexible(child: Text(l10n.exportLogs)),
                                 ],
-                              );
-                            },
-                          ),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -235,13 +369,19 @@ class _AboutTabState extends State<AboutTab> {
                             style: theme.textTheme.titleSmall,
                           ),
                           const SizedBox(height: 12),
-                          OutlinedButton.icon(
+                          OutlinedButton(
                             onPressed: _showLicenseDialog,
-                            icon: const Icon(
-                              Icons.description_outlined,
-                              size: 18,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.description_outlined,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(child: Text(l10n.viewLicense)),
+                              ],
                             ),
-                            label: Text(l10n.viewLicense),
                           ),
                         ],
                       ),
@@ -264,7 +404,7 @@ class _AboutTabState extends State<AboutTab> {
                             style: theme.textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 12),
-                          OutlinedButton.icon(
+                          OutlinedButton(
                             onPressed: () {
                               showLicensePage(
                                 context: context,
@@ -272,8 +412,16 @@ class _AboutTabState extends State<AboutTab> {
                                 applicationVersion: packageInfo?.version,
                               );
                             },
-                            icon: const Icon(Icons.article_outlined, size: 18),
-                            label: Text(l10n.viewThirdPartyLicenses),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.article_outlined, size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(l10n.viewThirdPartyLicenses),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

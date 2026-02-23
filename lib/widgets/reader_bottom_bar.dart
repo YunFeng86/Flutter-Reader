@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fleur/l10n/app_localizations.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/repository_providers.dart';
@@ -9,7 +13,7 @@ import '../providers/reader_providers.dart';
 import '../providers/service_providers.dart';
 import '../models/article.dart';
 import '../models/tag.dart';
-import '../repositories/tag_repository.dart';
+import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
 import 'favicon_avatar.dart';
 
@@ -161,9 +165,14 @@ class ReaderBottomBar extends ConsumerWidget {
                         article.preferredContentView ==
                         ArticleContentView.extracted;
                     final showFull = hasFull && preferExtracted;
+                    final extractionFailed =
+                        !hasFull &&
+                        article.contentSource == ContentSource.extractionFailed;
 
                     return IconButton(
-                      tooltip: hasFull && showFull
+                      tooltip: extractionFailed
+                          ? l10n.fullTextRetry
+                          : hasFull && showFull
                           ? l10n.collapse
                           : l10n.fullText,
                       onPressed: controller.isLoading
@@ -178,16 +187,16 @@ class ReaderBottomBar extends ConsumerWidget {
                                   .setPreferredContentView(article.id, next);
                             }
                           : () async {
-                              // 先持久化切换为提取视图，再触发提取。
+                              final ok = await ref
+                                  .read(fullTextControllerProvider.notifier)
+                                  .fetch(article.id);
+                              if (!ok || !context.mounted) return;
                               await ref
                                   .read(articleRepositoryProvider)
                                   .setPreferredContentView(
                                     article.id,
                                     ArticleContentView.extracted,
                                   );
-                              await ref
-                                  .read(fullTextControllerProvider.notifier)
-                                  .fetch(article.id);
                             },
                       icon: controller.isLoading
                           ? const SizedBox(
@@ -196,8 +205,12 @@ class ReaderBottomBar extends ConsumerWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : Icon(
-                              Icons.chrome_reader_mode,
-                              color: showFull
+                              extractionFailed
+                                  ? Icons.refresh
+                                  : Icons.chrome_reader_mode,
+                              color: extractionFailed
+                                  ? theme.colorScheme.error
+                                  : showFull
                                   ? theme.colorScheme.primary
                                   : null,
                             ),
@@ -217,6 +230,32 @@ class ReaderBottomBar extends ConsumerWidget {
                   },
                   icon: const Icon(Icons.open_in_browser),
                 ),
+                IconButton(
+                  tooltip: l10n.copyLink,
+                  onPressed: () async {
+                    await Clipboard.setData(ClipboardData(text: article.link));
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(l10n.copiedToClipboard)),
+                    );
+                  },
+                  icon: const Icon(Icons.content_copy),
+                ),
+                IconButton(
+                  tooltip: l10n.share,
+                  onPressed: () async {
+                    final uri = Uri.tryParse(article.link);
+                    final subject = (article.title ?? '').trim().isEmpty
+                        ? null
+                        : article.title!.trim();
+                    await SharePlus.instance.share(
+                      uri == null
+                          ? ShareParams(text: article.link, subject: subject)
+                          : ShareParams(uri: uri, subject: subject),
+                    );
+                  },
+                  icon: const Icon(Icons.share_outlined),
+                ),
               ],
             ),
           ],
@@ -230,50 +269,33 @@ class ReaderBottomBar extends ConsumerWidget {
     WidgetRef ref,
     Article article,
   ) async {
-    // final l10n = AppLocalizations.of(context)!; // Unused
-    final repo = ref.read(tagRepositoryProvider);
-    final allTags = await repo.getAll();
-
-    if (!context.mounted) return;
-
     await showDialog<void>(
       context: context,
       builder: (context) {
-        return _TagsDialog(article: article, initialTags: allTags, repo: repo);
+        return _TagsDialog(articleId: article.id);
       },
     );
   }
 }
 
-class _TagsDialog extends StatefulWidget {
-  const _TagsDialog({
-    required this.article,
-    required this.initialTags,
-    required this.repo,
-  });
+class _TagsDialog extends ConsumerStatefulWidget {
+  const _TagsDialog({required this.articleId});
 
-  final Article article;
-  final List<Tag> initialTags;
-  final TagRepository repo;
+  final int articleId;
 
   @override
-  State<_TagsDialog> createState() => _TagsDialogState();
+  ConsumerState<_TagsDialog> createState() => _TagsDialogState();
 }
 
-class _TagsDialogState extends State<_TagsDialog> {
-  late List<Tag> _tags;
+class _TagsDialogState extends ConsumerState<_TagsDialog> {
   final _controller = TextEditingController();
+  final _scrollController = ScrollController();
   String? _selectedColor;
-
-  @override
-  void initState() {
-    super.initState();
-    _tags = List.of(widget.initialTags);
-  }
 
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -281,162 +303,222 @@ class _TagsDialogState extends State<_TagsDialog> {
     final name = _controller.text.trim();
     if (name.isEmpty) return;
 
-    await widget.repo.create(name, color: _selectedColor);
-
-    final updated = await widget.repo.getAll();
+    await ref.read(tagRepositoryProvider).create(name, color: _selectedColor);
     if (!mounted) return;
     setState(() {
       _controller.clear();
       _selectedColor = null;
-      _tags = updated;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    // We need to listen to the article to see updated tags if we modify it.
-    // But this dialog might not update live if we don't watch.
-    // Actually, create tag updates _tags local state.
-    // Toggling tag updates the article.
-    // Let's use a Consumer to get the article repo.
-    return Consumer(
-      builder: (context, ref, _) {
-        final articleRepo = ref.watch(articleRepositoryProvider);
-        final currentArticle = ref.watch(articleProvider(widget.article.id));
+    final allTagsAsync = ref.watch(tagsProvider);
+    final articleTagsAsync = ref.watch(articleTagsProvider(widget.articleId));
+    final tags = allTagsAsync.valueOrNull ?? const <Tag>[];
+    final selected = articleTagsAsync.valueOrNull ?? const <Tag>[];
+    final selectedIds = {for (final t in selected) t.id};
+    final isLoading =
+        (allTagsAsync.isLoading && tags.isEmpty) ||
+        (articleTagsAsync.isLoading && selected.isEmpty);
+    final hasError = allTagsAsync.hasError || articleTagsAsync.hasError;
 
-        return AlertDialog(
-          title: Text(l10n.manageTags),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        decoration: InputDecoration(
-                          labelText: l10n.newTag,
-                          isDense: true,
-                        ),
-                        onSubmitted: (_) => _createTag(),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: _createTag,
-                      icon: const Icon(Icons.add),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    l10n.tagColor,
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ChoiceChip(
-                      label: Text(l10n.autoColor),
-                      selected: _selectedColor == null,
-                      onSelected: (_) {
-                        setState(() => _selectedColor = null);
-                      },
-                    ),
-                    ...kTagColorPalette.map((hex) {
-                      final color = tagColorFromHex(hex)!;
-                      final selected = _selectedColor == hex;
-                      final borderColor = selected
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).dividerColor;
-                      final checkColor = color.computeLuminance() > 0.5
-                          ? Colors.black
-                          : Colors.white;
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(999),
-                        onTap: () {
-                          setState(() => _selectedColor = hex);
-                        },
-                        child: Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: borderColor,
-                              width: selected ? 2 : 1,
-                            ),
-                          ),
-                          child: selected
-                              ? Icon(Icons.check, size: 16, color: checkColor)
-                              : null,
-                        ),
-                      );
-                    }),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                currentArticle.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (_, _) => const Text('Error loading article'),
-                  data: (a) {
-                    if (a == null) return const Text('Article not found');
+    final articleRepo = ref.read(articleRepositoryProvider);
+    final tagRepo = ref.read(tagRepositoryProvider);
 
-                    // watchById does not auto-load links; ensure tags are loaded.
-                    if (!a.tags.isLoaded) {
-                      a.tags.loadSync();
-                    }
-                    final articleTags = a.tags.toList();
-                    return Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _tags.length,
-                        itemBuilder: (context, index) {
-                          final tag = _tags[index];
-                          final isSelected = articleTags.any(
-                            (t) => t.id == tag.id,
-                          );
-                          return CheckboxListTile(
-                            title: Text(tag.name),
-                            value: isSelected,
-                            onChanged: (val) async {
-                              if (val == true) {
-                                await articleRepo.addTag(a.id, tag);
-                              } else {
-                                await articleRepo.removeTag(a.id, tag);
-                              }
-                              // The articleProvider stream should update automatically, causing rebuild
-                            },
-                            secondary: Icon(
-                              Icons.label,
-                              color: resolveTagColor(tag.name, tag.color),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
+    Future<void> toggleTag(Tag tag, bool nextSelected) async {
+      try {
+        if (nextSelected) {
+          await articleRepo.addTag(widget.articleId, tag);
+        } else {
+          await articleRepo.removeTag(widget.articleId, tag);
+        }
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+        );
+      }
+    }
+
+    Future<void> deleteTag(Tag tag) async {
+      try {
+        final ok = await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text(l10n.deleteTagConfirmTitle),
+              content: Text(l10n.deleteTagConfirmContent),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: Text(l10n.cancel),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(true),
+                  child: Text(l10n.delete),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(l10n.done),
-            ),
-          ],
+            );
+          },
         );
-      },
+        if (ok != true) return;
+
+        await tagRepo.delete(tag.id);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.deleted)));
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.errorMessage(e.toString()))),
+        );
+      }
+    }
+
+    Widget listChild;
+    if (hasError) {
+      listChild = Center(child: Text(l10n.tagsLoadingError));
+    } else if (isLoading) {
+      listChild = const Center(child: CircularProgressIndicator());
+    } else {
+      listChild = Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: isDesktop,
+        interactive: true,
+        child: ListView.builder(
+          controller: _scrollController,
+          shrinkWrap: true,
+          itemCount: tags.length,
+          itemBuilder: (context, index) {
+            final tag = tags[index];
+            final isSelected = selectedIds.contains(tag.id);
+            return ListTile(
+              leading: Icon(
+                Icons.label,
+                color: resolveTagColor(tag.name, tag.color),
+              ),
+              title: Text(tag.name),
+              onTap: () => unawaited(toggleTag(tag, !isSelected)),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: l10n.delete,
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => unawaited(deleteTag(tag)),
+                  ),
+                  Checkbox(
+                    value: isSelected,
+                    onChanged: (val) {
+                      if (val == null) return;
+                      unawaited(toggleTag(tag, val));
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    return AlertDialog(
+      title: Text(l10n.manageTags),
+      content: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.6,
+        ),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: InputDecoration(
+                        labelText: l10n.newTag,
+                        isDense: true,
+                      ),
+                      onSubmitted: (_) => _createTag(),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _createTag,
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  l10n.tagColor,
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ChoiceChip(
+                    label: Text(l10n.autoColor),
+                    selected: _selectedColor == null,
+                    onSelected: (_) {
+                      setState(() => _selectedColor = null);
+                    },
+                  ),
+                  ...kTagColorPalette.map((hex) {
+                    final color = tagColorFromHex(hex)!;
+                    final selected = _selectedColor == hex;
+                    final borderColor = selected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).dividerColor;
+                    final checkColor = color.computeLuminance() > 0.5
+                        ? Colors.black
+                        : Colors.white;
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(999),
+                      onTap: () {
+                        setState(() => _selectedColor = hex);
+                      },
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: borderColor,
+                            width: selected ? 2 : 1,
+                          ),
+                        ),
+                        child: selected
+                            ? Icon(Icons.check, size: 16, color: checkColor)
+                            : null,
+                      ),
+                    );
+                  }),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Flexible(child: listChild),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.done),
+        ),
+      ],
     );
   }
 }

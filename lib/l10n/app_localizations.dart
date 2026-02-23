@@ -381,6 +381,30 @@ abstract class AppLocalizations {
   /// **'Add subscription'**
   String get addSubscription;
 
+  /// selectCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category'**
+  String get selectCategory;
+
+  /// loadingCategories
+  ///
+  /// In en, this message translates to:
+  /// **'Loading categories...'**
+  String get loadingCategories;
+
+  /// creatingCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Creating category...'**
+  String get creatingCategory;
+
+  /// feverAddSubscriptionNotSupported
+  ///
+  /// In en, this message translates to:
+  /// **'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.'**
+  String get feverAddSubscriptionNotSupported;
+
   /// newCategory
   ///
   /// In en, this message translates to:
@@ -422,6 +446,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full text'**
   String get fullText;
+
+  /// fullTextRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Full text failed. Retry'**
+  String get fullTextRetry;
 
   /// readerSettings
   ///
@@ -519,6 +549,36 @@ abstract class AppLocalizations {
   /// **'RSS/Atom URL'**
   String get rssAtomUrl;
 
+  /// feedOrWebsiteUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Feed / website URL'**
+  String get feedOrWebsiteUrl;
+
+  /// discoveringFeeds
+  ///
+  /// In en, this message translates to:
+  /// **'Discovering feeds...'**
+  String get discoveringFeeds;
+
+  /// addingSubscription
+  ///
+  /// In en, this message translates to:
+  /// **'Adding subscription...'**
+  String get addingSubscription;
+
+  /// selectFeed
+  ///
+  /// In en, this message translates to:
+  /// **'Select a feed'**
+  String get selectFeed;
+
+  /// noFeedsFound
+  ///
+  /// In en, this message translates to:
+  /// **'No feeds found'**
+  String get noFeedsFound;
+
   /// name
   ///
   /// In en, this message translates to:
@@ -572,6 +632,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feeds in this category will be moved to Uncategorized.'**
   String get deleteCategoryConfirmContent;
+
+  /// deleteTagConfirmTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag?'**
+  String get deleteTagConfirmTitle;
+
+  /// deleteTagConfirmContent
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove it from all articles.'**
+  String get deleteTagConfirmContent;
 
   /// categoryDeleted
   ///
@@ -686,6 +758,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in browser'**
   String get openInBrowser;
+
+  /// copyLink
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// copiedToClipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copiedToClipboard;
+
+  /// share
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
 
   /// autoMarkRead
   ///
@@ -831,6 +921,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get autoColor;
 
+  /// Error message displayed when tags fail to load in the dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading tags'**
+  String get tagsLoadingError;
+
   /// cleanedArticles
   ///
   /// In en, this message translates to:
@@ -867,6 +963,12 @@ abstract class AppLocalizations {
   /// **'Miniflux'**
   String get miniflux;
 
+  /// fever
+  ///
+  /// In en, this message translates to:
+  /// **'Fever'**
+  String get fever;
+
   /// addLocal
   ///
   /// In en, this message translates to:
@@ -884,6 +986,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add Miniflux'**
   String get addMiniflux;
+
+  /// addFever
+  ///
+  /// In en, this message translates to:
+  /// **'Add Fever'**
+  String get addFever;
 
   /// minifluxStrategy
   ///
@@ -951,11 +1059,23 @@ abstract class AppLocalizations {
   /// **'https://miniflux.example.com'**
   String get minifluxBaseUrlHint;
 
+  /// feverBaseUrlHint
+  ///
+  /// In en, this message translates to:
+  /// **'https://example.com/fever/'**
+  String get feverBaseUrlHint;
+
   /// apiToken
   ///
   /// In en, this message translates to:
   /// **'API Token'**
   String get apiToken;
+
+  /// apiKey
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get apiKey;
 
   /// authenticationMethod
   ///
@@ -974,6 +1094,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Use an API token (recommended) or username/password.'**
   String get minifluxAuthHint;
+
+  /// feverAuthHint
+  ///
+  /// In en, this message translates to:
+  /// **'Use an API key (recommended) or username/password.'**
+  String get feverAuthHint;
 
   /// username
   ///
@@ -1070,6 +1196,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open folder'**
   String get openFolder;
+
+  /// logDirectory
+  ///
+  /// In en, this message translates to:
+  /// **'Log directory'**
+  String get logDirectory;
+
+  /// openLog
+  ///
+  /// In en, this message translates to:
+  /// **'Open log'**
+  String get openLog;
+
+  /// openLogFolder
+  ///
+  /// In en, this message translates to:
+  /// **'Open log folder'**
+  String get openLogFolder;
+
+  /// exportLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Export logs'**
+  String get exportLogs;
+
+  /// exportedLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Logs exported'**
+  String get exportedLogs;
+
+  /// noLogsFound
+  ///
+  /// In en, this message translates to:
+  /// **'No log files found'**
+  String get noLogsFound;
 
   /// keyboardShortcuts
   ///
@@ -1206,8 +1368,14 @@ abstract class AppLocalizations {
   /// showAiSummary
   ///
   /// In en, this message translates to:
-  /// **'Show AI Summary'**
+  /// **'Show Summary'**
   String get showAiSummary;
+
+  /// summary
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summary;
 
   /// showImageTitle
   ///
