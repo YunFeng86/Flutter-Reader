@@ -64,7 +64,11 @@ Future<void> showAiServiceEditorDialog(
           baseUrl: baseUrl,
           defaultModel: model,
         );
-        await controller.updateAiService(updated, apiKey: apiKey);
+        await controller.updateAiService(
+          updated,
+          apiKey: apiKey,
+          previousApiKey: existingKey ?? '',
+        );
       } else {
         await controller.addAiService(
           name: name.isEmpty ? template!.name : name,

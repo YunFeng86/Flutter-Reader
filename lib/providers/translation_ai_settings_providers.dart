@@ -73,13 +73,23 @@ class TranslationAiSettingsController
     );
 
     final next = cur.copyWith(aiServices: [...cur.aiServices, service]);
-    await save(next);
-
     final trimmedKey = (apiKey ?? '').trim();
     if (trimmedKey.isNotEmpty) {
-      await ref
-          .read(translationAiSecretStoreProvider)
-          .setAiServiceApiKey(id, trimmedKey);
+      final secrets = ref.read(translationAiSecretStoreProvider);
+      await secrets.setAiServiceApiKey(id, trimmedKey);
+      try {
+        await save(next);
+      } catch (_) {
+        try {
+          await secrets.deleteAiServiceApiKey(id);
+        } catch (_) {
+          // ignore: best-effort rollback
+        }
+        state = AsyncValue.data(cur);
+        rethrow;
+      }
+    } else {
+      await save(next);
     }
 
     return id;
@@ -88,6 +98,7 @@ class TranslationAiSettingsController
   Future<void> updateAiService(
     AiServiceConfig service, {
     String? apiKey,
+    String? previousApiKey,
   }) async {
     final cur = state.valueOrNull ?? await future;
     final idx = cur.aiServices.indexWhere((s) => s.id == service.id);
@@ -95,16 +106,44 @@ class TranslationAiSettingsController
 
     final nextServices = [...cur.aiServices];
     nextServices[idx] = service;
-    await save(cur.copyWith(aiServices: nextServices));
 
     if (apiKey != null) {
-      final trimmedKey = apiKey.trim();
       final secrets = ref.read(translationAiSecretStoreProvider);
-      if (trimmedKey.isEmpty) {
-        await secrets.deleteAiServiceApiKey(service.id);
-      } else {
-        await secrets.setAiServiceApiKey(service.id, trimmedKey);
+      final trimmedKey = apiKey.trim();
+      final nextKey = trimmedKey.isEmpty ? null : trimmedKey;
+
+      final trimmedPrevKey = (previousApiKey ?? '').trim();
+      final prevKey = previousApiKey == null
+          ? await secrets.getAiServiceApiKey(service.id)
+          : (trimmedPrevKey.isEmpty ? null : trimmedPrevKey);
+
+      if (prevKey != nextKey) {
+        if (nextKey == null) {
+          await secrets.deleteAiServiceApiKey(service.id);
+        } else {
+          await secrets.setAiServiceApiKey(service.id, nextKey);
+        }
       }
+
+      try {
+        await save(cur.copyWith(aiServices: nextServices));
+      } catch (_) {
+        if (prevKey != nextKey) {
+          try {
+            if (prevKey == null) {
+              await secrets.deleteAiServiceApiKey(service.id);
+            } else {
+              await secrets.setAiServiceApiKey(service.id, prevKey);
+            }
+          } catch (_) {
+            // ignore: best-effort rollback
+          }
+        }
+        state = AsyncValue.data(cur);
+        rethrow;
+      }
+    } else {
+      await save(cur.copyWith(aiServices: nextServices));
     }
   }
 
