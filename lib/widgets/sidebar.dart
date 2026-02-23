@@ -22,7 +22,7 @@ import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
 import 'account_avatar.dart';
-import 'account_manager_sheet.dart';
+import 'account_manager_dialog.dart';
 import 'favicon_circle.dart';
 import 'overflow_marquee.dart';
 
@@ -402,8 +402,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
               sync: syncStatus,
               onTap: () {
                 unawaited(
-                  _showModalBottomSheet<void>(
-                    builder: (_) => const AccountManagerSheet(),
+                  _showDialog<void>(
+                    builder: (_) => const AccountManagerDialog(),
                   ),
                 );
               },

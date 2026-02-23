@@ -9,7 +9,7 @@ import '../ui/actions/global_nav_actions.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../ui/global_nav.dart';
 import 'account_avatar.dart';
-import 'account_manager_sheet.dart';
+import 'account_manager_dialog.dart';
 
 class GlobalNavRail extends ConsumerWidget {
   const GlobalNavRail({super.key, required this.currentUri});
@@ -112,11 +112,10 @@ class GlobalNavRail extends ConsumerWidget {
                 child: InkResponse(
                   radius: 24,
                   onTap: () async {
-                    await showModalBottomSheet<void>(
+                    await showDialog<void>(
                       context: context,
                       useRootNavigator: true,
-                      showDragHandle: true,
-                      builder: (context) => const AccountManagerSheet(),
+                      builder: (context) => const AccountManagerDialog(),
                     );
                   },
                   child: AccountAvatar(
