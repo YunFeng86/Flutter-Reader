@@ -30,7 +30,7 @@
 - **macOS 11+** - 依赖 `window_manager`，窗口行为未验证
 - **Linux (x64)** - 依赖 GTK 3.0+，通知系统可能需要额外配置
 
-**如果你在这些平台上成功运行，请在 [Issues](../../issues) 报告你的系统信息和遇到的问题。**
+**如果你在这些平台上成功运行，请在 [Issues](https://github.com/YunFeng86/Fleur/issues) 报告你的系统信息和遇到的问题。**
 
 ### ❌ 暂不支持
 

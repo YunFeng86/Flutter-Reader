@@ -10,13 +10,16 @@ import '../../../theme/app_theme.dart';
 import '../widgets/section_header.dart';
 
 class GroupingSortingTab extends ConsumerWidget {
-  const GroupingSortingTab({super.key});
+  const GroupingSortingTab({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final appSettings =
-        ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+        ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
 
     return Align(
       alignment: Alignment.topCenter,
@@ -25,15 +28,17 @@ class GroupingSortingTab extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            SectionHeader(title: l10n.groupingAndSorting),
-            const SizedBox(height: 8),
+            if (showPageTitle) ...[
+              SectionHeader(title: l10n.groupingAndSorting),
+              const SizedBox(height: 8),
+            ],
 
             // Group by
             Text(l10n.groupBy, style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: theme.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppTheme.radiusCard),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -69,7 +74,7 @@ class GroupingSortingTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Container(
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: theme.colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppTheme.radiusCard),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 12),

@@ -381,6 +381,30 @@ abstract class AppLocalizations {
   /// **'Add subscription'**
   String get addSubscription;
 
+  /// selectCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Select a category'**
+  String get selectCategory;
+
+  /// loadingCategories
+  ///
+  /// In en, this message translates to:
+  /// **'Loading categories...'**
+  String get loadingCategories;
+
+  /// creatingCategory
+  ///
+  /// In en, this message translates to:
+  /// **'Creating category...'**
+  String get creatingCategory;
+
+  /// feverAddSubscriptionNotSupported
+  ///
+  /// In en, this message translates to:
+  /// **'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.'**
+  String get feverAddSubscriptionNotSupported;
+
   /// newCategory
   ///
   /// In en, this message translates to:
@@ -422,6 +446,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full text'**
   String get fullText;
+
+  /// fullTextRetry
+  ///
+  /// In en, this message translates to:
+  /// **'Full text failed. Retry'**
+  String get fullTextRetry;
 
   /// readerSettings
   ///
@@ -519,6 +549,36 @@ abstract class AppLocalizations {
   /// **'RSS/Atom URL'**
   String get rssAtomUrl;
 
+  /// feedOrWebsiteUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Feed / website URL'**
+  String get feedOrWebsiteUrl;
+
+  /// discoveringFeeds
+  ///
+  /// In en, this message translates to:
+  /// **'Discovering feeds...'**
+  String get discoveringFeeds;
+
+  /// addingSubscription
+  ///
+  /// In en, this message translates to:
+  /// **'Adding subscription...'**
+  String get addingSubscription;
+
+  /// selectFeed
+  ///
+  /// In en, this message translates to:
+  /// **'Select a feed'**
+  String get selectFeed;
+
+  /// noFeedsFound
+  ///
+  /// In en, this message translates to:
+  /// **'No feeds found'**
+  String get noFeedsFound;
+
   /// name
   ///
   /// In en, this message translates to:
@@ -572,6 +632,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feeds in this category will be moved to Uncategorized.'**
   String get deleteCategoryConfirmContent;
+
+  /// deleteTagConfirmTitle
+  ///
+  /// In en, this message translates to:
+  /// **'Delete tag?'**
+  String get deleteTagConfirmTitle;
+
+  /// deleteTagConfirmContent
+  ///
+  /// In en, this message translates to:
+  /// **'This will remove it from all articles.'**
+  String get deleteTagConfirmContent;
 
   /// categoryDeleted
   ///
@@ -686,6 +758,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open in browser'**
   String get openInBrowser;
+
+  /// copyLink
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// copiedToClipboard
+  ///
+  /// In en, this message translates to:
+  /// **'Copied to clipboard'**
+  String get copiedToClipboard;
+
+  /// share
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
 
   /// autoMarkRead
   ///
@@ -831,6 +921,12 @@ abstract class AppLocalizations {
   /// **'Auto'**
   String get autoColor;
 
+  /// Error message displayed when tags fail to load in the dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading tags'**
+  String get tagsLoadingError;
+
   /// cleanedArticles
   ///
   /// In en, this message translates to:
@@ -848,6 +944,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Services'**
   String get services;
+
+  /// account
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// local
+  ///
+  /// In en, this message translates to:
+  /// **'Local'**
+  String get local;
+
+  /// miniflux
+  ///
+  /// In en, this message translates to:
+  /// **'Miniflux'**
+  String get miniflux;
+
+  /// fever
+  ///
+  /// In en, this message translates to:
+  /// **'Fever'**
+  String get fever;
+
+  /// addLocal
+  ///
+  /// In en, this message translates to:
+  /// **'Add Local'**
+  String get addLocal;
+
+  /// addLocalAccount
+  ///
+  /// In en, this message translates to:
+  /// **'Add Local Account'**
+  String get addLocalAccount;
+
+  /// addMiniflux
+  ///
+  /// In en, this message translates to:
+  /// **'Add Miniflux'**
+  String get addMiniflux;
+
+  /// addFever
+  ///
+  /// In en, this message translates to:
+  /// **'Add Fever'**
+  String get addFever;
+
+  /// minifluxStrategy
+  ///
+  /// In en, this message translates to:
+  /// **'Miniflux strategy'**
+  String get minifluxStrategy;
+
+  /// minifluxStrategySubtitle
+  ///
+  /// In en, this message translates to:
+  /// **'Controls how much data is fetched/prefetched during sync.'**
+  String get minifluxStrategySubtitle;
+
+  /// minifluxEntriesLimit
+  ///
+  /// In en, this message translates to:
+  /// **'Entries per sync'**
+  String get minifluxEntriesLimit;
+
+  /// minifluxWebFetchMode
+  ///
+  /// In en, this message translates to:
+  /// **'Web page fetching'**
+  String get minifluxWebFetchMode;
+
+  /// minifluxWebFetchModeSubtitle
+  ///
+  /// In en, this message translates to:
+  /// **'When \"Download Web Pages during Sync\" is enabled.'**
+  String get minifluxWebFetchModeSubtitle;
+
+  /// minifluxWebFetchModeClient
+  ///
+  /// In en, this message translates to:
+  /// **'Client (Readability)'**
+  String get minifluxWebFetchModeClient;
+
+  /// minifluxWebFetchModeServer
+  ///
+  /// In en, this message translates to:
+  /// **'Server (Miniflux fetch-content)'**
+  String get minifluxWebFetchModeServer;
+
+  /// unlimited
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get unlimited;
+
+  /// fieldName
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get fieldName;
+
+  /// baseUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Base URL'**
+  String get baseUrl;
+
+  /// minifluxBaseUrlHint
+  ///
+  /// In en, this message translates to:
+  /// **'https://miniflux.example.com'**
+  String get minifluxBaseUrlHint;
+
+  /// feverBaseUrlHint
+  ///
+  /// In en, this message translates to:
+  /// **'https://example.com/fever/'**
+  String get feverBaseUrlHint;
+
+  /// apiToken
+  ///
+  /// In en, this message translates to:
+  /// **'API Token'**
+  String get apiToken;
+
+  /// apiKey
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get apiKey;
+
+  /// authenticationMethod
+  ///
+  /// In en, this message translates to:
+  /// **'Authentication method'**
+  String get authenticationMethod;
+
+  /// usernamePassword
+  ///
+  /// In en, this message translates to:
+  /// **'Username & password'**
+  String get usernamePassword;
+
+  /// minifluxAuthHint
+  ///
+  /// In en, this message translates to:
+  /// **'Use an API token (recommended) or username/password.'**
+  String get minifluxAuthHint;
+
+  /// feverAuthHint
+  ///
+  /// In en, this message translates to:
+  /// **'Use an API key (recommended) or username/password.'**
+  String get feverAuthHint;
+
+  /// username
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// password
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// show
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get show;
+
+  /// hide
+  ///
+  /// In en, this message translates to:
+  /// **'Hide'**
+  String get hide;
+
+  /// missingRequiredFields
+  ///
+  /// In en, this message translates to:
+  /// **'Missing required fields'**
+  String get missingRequiredFields;
+
+  /// invalidBaseUrl
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid base URL'**
+  String get invalidBaseUrl;
+
+  /// onlySupportedInLocalAccount
+  ///
+  /// In en, this message translates to:
+  /// **'Only supported in Local account'**
+  String get onlySupportedInLocalAccount;
 
   /// autoRefresh
   ///
@@ -903,11 +1197,83 @@ abstract class AppLocalizations {
   /// **'Open folder'**
   String get openFolder;
 
+  /// logDirectory
+  ///
+  /// In en, this message translates to:
+  /// **'Log directory'**
+  String get logDirectory;
+
+  /// openLog
+  ///
+  /// In en, this message translates to:
+  /// **'Open log'**
+  String get openLog;
+
+  /// openLogFolder
+  ///
+  /// In en, this message translates to:
+  /// **'Open log folder'**
+  String get openLogFolder;
+
+  /// exportLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Export logs'**
+  String get exportLogs;
+
+  /// exportedLogs
+  ///
+  /// In en, this message translates to:
+  /// **'Logs exported'**
+  String get exportedLogs;
+
+  /// noLogsFound
+  ///
+  /// In en, this message translates to:
+  /// **'No log files found'**
+  String get noLogsFound;
+
   /// keyboardShortcuts
   ///
   /// In en, this message translates to:
   /// **'Keyboard shortcuts'**
   String get keyboardShortcuts;
+
+  /// version
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get version;
+
+  /// buildNumber
+  ///
+  /// In en, this message translates to:
+  /// **'Build number'**
+  String get buildNumber;
+
+  /// openSourceLicense
+  ///
+  /// In en, this message translates to:
+  /// **'Open source license'**
+  String get openSourceLicense;
+
+  /// viewLicense
+  ///
+  /// In en, this message translates to:
+  /// **'View license'**
+  String get viewLicense;
+
+  /// thirdPartyLicenses
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party licenses'**
+  String get thirdPartyLicenses;
+
+  /// viewThirdPartyLicenses
+  ///
+  /// In en, this message translates to:
+  /// **'View all open source licenses'**
+  String get viewThirdPartyLicenses;
 
   /// filter
   ///
@@ -957,11 +1323,59 @@ abstract class AppLocalizations {
   /// **'Download Web Pages during Sync'**
   String get syncWebPages;
 
+  /// Sync status: syncing (generic)
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing'**
+  String get syncStatusSyncing;
+
+  /// Sync status: syncing feeds
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing feeds'**
+  String get syncStatusSyncingFeeds;
+
+  /// Sync status: syncing subscriptions
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing subscriptions'**
+  String get syncStatusSyncingSubscriptions;
+
+  /// Sync status: syncing unread articles
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing unread articles'**
+  String get syncStatusSyncingUnreadArticles;
+
+  /// Sync status: uploading local/outbox changes
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading changes'**
+  String get syncStatusUploadingChanges;
+
+  /// Sync status: completed
+  ///
+  /// In en, this message translates to:
+  /// **'Sync complete'**
+  String get syncStatusCompleted;
+
+  /// Sync status: failed
+  ///
+  /// In en, this message translates to:
+  /// **'Sync failed'**
+  String get syncStatusFailed;
+
   /// showAiSummary
   ///
   /// In en, this message translates to:
-  /// **'Show AI Summary'**
+  /// **'Show Summary'**
   String get showAiSummary;
+
+  /// summary
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summary;
 
   /// showImageTitle
   ///
@@ -1106,6 +1520,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get windowClose;
+
+  /// Settings tab for translation and AI services
+  ///
+  /// In en, this message translates to:
+  /// **'Translation & AI'**
+  String get translationAndAiServices;
+
+  /// Translation section title
+  ///
+  /// In en, this message translates to:
+  /// **'Translation'**
+  String get translation;
+
+  /// Setting title for selecting translation provider
+  ///
+  /// In en, this message translates to:
+  /// **'Translation provider'**
+  String get translationProvider;
+
+  /// AI services section title
+  ///
+  /// In en, this message translates to:
+  /// **'AI services'**
+  String get aiServices;
+
+  /// Button/title for adding an AI service
+  ///
+  /// In en, this message translates to:
+  /// **'Add AI service'**
+  String get addAiService;
+
+  /// Generic label for AI service
+  ///
+  /// In en, this message translates to:
+  /// **'AI service'**
+  String get aiService;
 }
 
 class _AppLocalizationsDelegate

@@ -5,11 +5,16 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
+import '../ui/hero_tags.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
 import '../utils/platform.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
+import '../widgets/sidebar_pane_hero.dart';
+import '../widgets/staggered_reveal.dart';
+import '../widgets/sync_status_capsule.dart';
+import '../ui/global_nav.dart';
 
 enum _SavedMode { starred, readLater }
 
@@ -90,6 +95,8 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final showSyncCapsule =
+            LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
         final width = constraints.maxWidth;
         final spec = LayoutSpec.fromContentSize(
           contentWidth: width,
@@ -121,62 +128,65 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           ),
         );
 
-        final header = Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LayoutBuilder(
-                builder: (context, headerConstraints) {
-                  final narrow = headerConstraints.maxWidth < 760;
-                  final segmented = SegmentedButton<_SavedMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: _SavedMode.starred,
-                        label: Text(
-                          _labelWithCount(l10n.starred, starredCount),
+        final header = StaggeredReveal(
+          enabled: isDesktop,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LayoutBuilder(
+                  builder: (context, headerConstraints) {
+                    final narrow = headerConstraints.maxWidth < 760;
+                    final segmented = SegmentedButton<_SavedMode>(
+                      segments: [
+                        ButtonSegment(
+                          value: _SavedMode.starred,
+                          label: Text(
+                            _labelWithCount(l10n.starred, starredCount),
+                          ),
+                          icon: const Icon(Icons.star),
                         ),
-                        icon: const Icon(Icons.star),
-                      ),
-                      ButtonSegment(
-                        value: _SavedMode.readLater,
-                        label: Text(
-                          _labelWithCount(l10n.readLater, readLaterCount),
+                        ButtonSegment(
+                          value: _SavedMode.readLater,
+                          label: Text(
+                            _labelWithCount(l10n.readLater, readLaterCount),
+                          ),
+                          icon: const Icon(Icons.bookmark),
                         ),
-                        icon: const Icon(Icons.bookmark),
-                      ),
-                    ],
-                    selected: {_mode},
-                    onSelectionChanged: (s) {
-                      final next = s.first;
-                      setState(() => _mode = next);
-                      _applyMode(next);
-                      // Deselect the current article when switching mode.
-                      if (context.mounted) context.go('/saved');
-                    },
-                  );
+                      ],
+                      selected: {_mode},
+                      onSelectionChanged: (s) {
+                        final next = s.first;
+                        setState(() => _mode = next);
+                        _applyMode(next);
+                        // Deselect the current article when switching mode.
+                        if (context.mounted) context.go('/saved');
+                      },
+                    );
 
-                  if (narrow) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    if (narrow) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          segmented,
+                          const SizedBox(height: 8),
+                          searchField,
+                        ],
+                      );
+                    }
+
+                    return Row(
                       children: [
                         segmented,
-                        const SizedBox(height: 8),
-                        searchField,
+                        const Spacer(),
+                        SizedBox(width: 320, child: searchField),
                       ],
                     );
-                  }
-
-                  return Row(
-                    children: [
-                      segmented,
-                      const Spacer(),
-                      SizedBox(width: 320, child: searchField),
-                    ],
-                  );
-                },
-              ),
-            ],
+                  },
+                ),
+              ],
+            ),
           ),
         );
 
@@ -184,14 +194,17 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           return Column(
             children: [
               header,
-              const Divider(height: 1),
+              const SizedBox(height: 8),
               Expanded(
-                child: ArticleList(
-                  selectedArticleId: widget.selectedArticleId,
-                  baseLocation: '/saved',
-                  articleRoutePrefix: '/saved',
-                  emptyBuilder: (context, state) =>
-                      _buildEmptyState(context, l10n, state),
+                child: SyncStatusCapsuleHost(
+                  enabled: showSyncCapsule,
+                  child: ArticleList(
+                    selectedArticleId: widget.selectedArticleId,
+                    baseLocation: '/saved',
+                    articleRoutePrefix: '/saved',
+                    emptyBuilder: (context, state) =>
+                        _buildEmptyState(context, l10n, state),
+                  ),
                 ),
               ),
             ],
@@ -227,8 +240,14 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           content = Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(width: kDesktopListWidth, child: listPane()),
-              const VerticalDivider(width: 1),
+              SizedBox(width: 0, child: const SidebarPaneHero()),
+              Hero(
+                tag: kHeroArticleListPane,
+                child: RepaintBoundary(
+                  child: SizedBox(width: kDesktopListWidth, child: listPane()),
+                ),
+              ),
+              const SizedBox(width: kPaneGap),
               Expanded(child: readerPane(embedded: true)),
             ],
           );

@@ -152,6 +152,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addSubscription => '添加订阅';
 
   @override
+  String get selectCategory => '选择分类';
+
+  @override
+  String get loadingCategories => '正在加载分类...';
+
+  @override
+  String get creatingCategory => '正在创建分类...';
+
+  @override
+  String get feverAddSubscriptionNotSupported => 'Fever 账号不支持添加订阅，请在服务端管理订阅。';
+
+  @override
   String get newCategory => '新建分类';
 
   @override
@@ -173,6 +185,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get fullText => '阅读全文';
+
+  @override
+  String get fullTextRetry => '获取全文失败，重试';
 
   @override
   String get readerSettings => '阅读设置';
@@ -227,6 +242,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rssAtomUrl => 'RSS/Atom 地址';
 
   @override
+  String get feedOrWebsiteUrl => '订阅源或网站 URL';
+
+  @override
+  String get discoveringFeeds => '正在发现订阅源…';
+
+  @override
+  String get addingSubscription => '正在添加订阅…';
+
+  @override
+  String get selectFeed => '选择订阅源';
+
+  @override
+  String get noFeedsFound => '未找到可用的订阅源';
+
+  @override
   String get name => '名称';
 
   @override
@@ -252,6 +282,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteCategoryConfirmContent => '该分类下的订阅源将移动到未分类。';
+
+  @override
+  String get deleteTagConfirmTitle => '删除标签？';
+
+  @override
+  String get deleteTagConfirmContent => '这会从所有文章中移除该标签。';
 
   @override
   String get categoryDeleted => '分类已删除';
@@ -313,6 +349,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openInBrowser => '在浏览器打开';
+
+  @override
+  String get copyLink => '复制链接';
+
+  @override
+  String get copiedToClipboard => '已复制到剪贴板';
+
+  @override
+  String get share => '分享';
 
   @override
   String get autoMarkRead => '打开时自动标记为已读';
@@ -389,6 +434,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoColor => '自动';
 
   @override
+  String get tagsLoadingError => '加载标签失败';
+
+  @override
   String cleanedArticles(int count) {
     return '已清理 $count 篇文章';
   }
@@ -400,6 +448,105 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get services => '服务';
+
+  @override
+  String get account => '账号';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get fever => 'Fever';
+
+  @override
+  String get addLocal => '添加本地';
+
+  @override
+  String get addLocalAccount => '添加本地账号';
+
+  @override
+  String get addMiniflux => '添加 Miniflux';
+
+  @override
+  String get addFever => '添加 Fever';
+
+  @override
+  String get minifluxStrategy => 'Miniflux 策略';
+
+  @override
+  String get minifluxStrategySubtitle => '控制同步时拉取量与预取行为。';
+
+  @override
+  String get minifluxEntriesLimit => '每次同步拉取条数';
+
+  @override
+  String get minifluxWebFetchMode => '网页抓取方式';
+
+  @override
+  String get minifluxWebFetchModeSubtitle => '当订阅开启“同步时下载 Web 页面”时生效。';
+
+  @override
+  String get minifluxWebFetchModeClient => '客户端（Readability）';
+
+  @override
+  String get minifluxWebFetchModeServer => '服务端（Miniflux fetch-content）';
+
+  @override
+  String get unlimited => '无限制';
+
+  @override
+  String get fieldName => '名称';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
+
+  @override
+  String get authenticationMethod => '认证方式';
+
+  @override
+  String get usernamePassword => '用户名与密码';
+
+  @override
+  String get minifluxAuthHint => '可填写 API Token（推荐）或用户名/密码。';
+
+  @override
+  String get feverAuthHint => '可填写 API Key（推荐）或用户名/密码。';
+
+  @override
+  String get username => '用户名';
+
+  @override
+  String get password => '密码';
+
+  @override
+  String get show => '显示';
+
+  @override
+  String get hide => '隐藏';
+
+  @override
+  String get missingRequiredFields => '请填写必填项';
+
+  @override
+  String get invalidBaseUrl => 'Base URL 无效';
+
+  @override
+  String get onlySupportedInLocalAccount => '仅本地账号支持此操作';
 
   @override
   String get autoRefresh => '自动刷新';
@@ -431,7 +578,43 @@ class AppLocalizationsZh extends AppLocalizations {
   String get openFolder => '打开文件夹';
 
   @override
+  String get logDirectory => '日志目录';
+
+  @override
+  String get openLog => '打开日志';
+
+  @override
+  String get openLogFolder => '打开日志文件夹';
+
+  @override
+  String get exportLogs => '导出日志';
+
+  @override
+  String get exportedLogs => '日志已导出';
+
+  @override
+  String get noLogsFound => '未找到日志文件';
+
+  @override
   String get keyboardShortcuts => '快捷键';
+
+  @override
+  String get version => '版本号';
+
+  @override
+  String get buildNumber => '构建号';
+
+  @override
+  String get openSourceLicense => '开源许可证';
+
+  @override
+  String get viewLicense => '查看许可证';
+
+  @override
+  String get thirdPartyLicenses => '第三方许可证';
+
+  @override
+  String get viewThirdPartyLicenses => '查看所有开源许可证';
 
   @override
   String get filter => '过滤';
@@ -458,7 +641,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get syncWebPages => '同步时下载 Web 页面';
 
   @override
-  String get showAiSummary => 'Show AI Summary';
+  String get syncStatusSyncing => '同步中';
+
+  @override
+  String get syncStatusSyncingFeeds => '同步订阅源';
+
+  @override
+  String get syncStatusSyncingSubscriptions => '同步订阅';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => '同步未读文章';
+
+  @override
+  String get syncStatusUploadingChanges => '上传更改';
+
+  @override
+  String get syncStatusCompleted => '同步完成';
+
+  @override
+  String get syncStatusFailed => '同步失败';
+
+  @override
+  String get showAiSummary => '显示摘要';
+
+  @override
+  String get summary => '摘要';
 
   @override
   String get showImageTitle => '显示图片标题';
@@ -533,6 +740,24 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get windowClose => '关闭';
+
+  @override
+  String get translationAndAiServices => '翻译与 AI 服务';
+
+  @override
+  String get translation => '翻译';
+
+  @override
+  String get translationProvider => '翻译提供方';
+
+  @override
+  String get aiServices => 'AI 服务';
+
+  @override
+  String get addAiService => '添加 AI 服务';
+
+  @override
+  String get aiService => 'AI 服务';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -683,6 +908,18 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get addSubscription => '新增訂閱';
 
   @override
+  String get selectCategory => '選擇分類';
+
+  @override
+  String get loadingCategories => '正在載入分類...';
+
+  @override
+  String get creatingCategory => '正在建立分類...';
+
+  @override
+  String get feverAddSubscriptionNotSupported => 'Fever 帳號不支援新增訂閱，請在伺服器端管理訂閱。';
+
+  @override
   String get newCategory => '新增分類';
 
   @override
@@ -704,6 +941,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get fullText => '閱讀全文';
+
+  @override
+  String get fullTextRetry => '取得全文失敗，重試';
 
   @override
   String get readerSettings => '閱讀設定';
@@ -758,6 +998,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get rssAtomUrl => 'RSS/Atom 位址';
 
   @override
+  String get feedOrWebsiteUrl => '訂閱源或網站 URL';
+
+  @override
+  String get discoveringFeeds => '正在發現訂閱源…';
+
+  @override
+  String get addingSubscription => '正在新增訂閱…';
+
+  @override
+  String get selectFeed => '選擇訂閱源';
+
+  @override
+  String get noFeedsFound => '未找到可用的訂閱源';
+
+  @override
   String get name => '名稱';
 
   @override
@@ -783,6 +1038,12 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get deleteCategoryConfirmContent => '此分類下的訂閱源將移至未分類。';
+
+  @override
+  String get deleteTagConfirmTitle => '刪除標籤？';
+
+  @override
+  String get deleteTagConfirmContent => '這會從所有文章中移除該標籤。';
 
   @override
   String get categoryDeleted => '分類已刪除';
@@ -844,6 +1105,15 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get openInBrowser => '在瀏覽器打開';
+
+  @override
+  String get copyLink => '複製連結';
+
+  @override
+  String get copiedToClipboard => '已複製到剪貼簿';
+
+  @override
+  String get share => '分享';
 
   @override
   String get autoMarkRead => '打開時自動標記為已讀';
@@ -920,6 +1190,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get autoColor => '自動';
 
   @override
+  String get tagsLoadingError => '載入標籤失敗';
+
+  @override
   String cleanedArticles(int count) {
     return '清理了 $count 篇文章';
   }
@@ -931,6 +1204,105 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get services => '服務';
+
+  @override
+  String get account => '帳號';
+
+  @override
+  String get local => '本地';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get fever => 'Fever';
+
+  @override
+  String get addLocal => '新增本地';
+
+  @override
+  String get addLocalAccount => '新增本地帳號';
+
+  @override
+  String get addMiniflux => '新增 Miniflux';
+
+  @override
+  String get addFever => '新增 Fever';
+
+  @override
+  String get minifluxStrategy => 'Miniflux 策略';
+
+  @override
+  String get minifluxStrategySubtitle => '控制同步時的拉取量與預取行為。';
+
+  @override
+  String get minifluxEntriesLimit => '每次同步拉取筆數';
+
+  @override
+  String get minifluxWebFetchMode => '網頁抓取方式';
+
+  @override
+  String get minifluxWebFetchModeSubtitle => '當訂閱開啟「同步時下載 Web 頁面」時生效。';
+
+  @override
+  String get minifluxWebFetchModeClient => '用戶端（Readability）';
+
+  @override
+  String get minifluxWebFetchModeServer => '伺服端（Miniflux fetch-content）';
+
+  @override
+  String get unlimited => '無限制';
+
+  @override
+  String get fieldName => '名稱';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
+
+  @override
+  String get authenticationMethod => '驗證方式';
+
+  @override
+  String get usernamePassword => '使用者名稱與密碼';
+
+  @override
+  String get minifluxAuthHint => '可填寫 API Token（建議）或使用者名稱/密碼。';
+
+  @override
+  String get feverAuthHint => '可填寫 API Key（建議）或使用者名稱/密碼。';
+
+  @override
+  String get username => '使用者名稱';
+
+  @override
+  String get password => '密碼';
+
+  @override
+  String get show => '顯示';
+
+  @override
+  String get hide => '隱藏';
+
+  @override
+  String get missingRequiredFields => '請填寫必填欄位';
+
+  @override
+  String get invalidBaseUrl => 'Base URL 無效';
+
+  @override
+  String get onlySupportedInLocalAccount => '僅本地帳號支援此操作';
 
   @override
   String get autoRefresh => '自動重新整理';
@@ -962,7 +1334,43 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get openFolder => '打開資料夾';
 
   @override
+  String get logDirectory => '日誌目錄';
+
+  @override
+  String get openLog => '打開日誌';
+
+  @override
+  String get openLogFolder => '打開日誌資料夾';
+
+  @override
+  String get exportLogs => '匯出日誌';
+
+  @override
+  String get exportedLogs => '日誌已匯出';
+
+  @override
+  String get noLogsFound => '未找到日誌檔案';
+
+  @override
   String get keyboardShortcuts => '快速鍵';
+
+  @override
+  String get version => '版本號';
+
+  @override
+  String get buildNumber => '構建號';
+
+  @override
+  String get openSourceLicense => '開放原始碼授權';
+
+  @override
+  String get viewLicense => '檢視授權';
+
+  @override
+  String get thirdPartyLicenses => '第三方授權';
+
+  @override
+  String get viewThirdPartyLicenses => '檢視所有開放原始碼授權';
 
   @override
   String get filter => '過濾';
@@ -989,7 +1397,31 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get syncWebPages => '同步時下載網頁';
 
   @override
-  String get showAiSummary => '顯示 AI 摘要';
+  String get syncStatusSyncing => '同步中';
+
+  @override
+  String get syncStatusSyncingFeeds => '同步訂閱源';
+
+  @override
+  String get syncStatusSyncingSubscriptions => '同步訂閱';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => '同步未讀文章';
+
+  @override
+  String get syncStatusUploadingChanges => '上傳變更';
+
+  @override
+  String get syncStatusCompleted => '同步完成';
+
+  @override
+  String get syncStatusFailed => '同步失敗';
+
+  @override
+  String get showAiSummary => '顯示摘要';
+
+  @override
+  String get summary => '摘要';
 
   @override
   String get showImageTitle => '顯示圖片標題';
@@ -1064,4 +1496,22 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get windowClose => '關閉';
+
+  @override
+  String get translationAndAiServices => '翻譯與 AI 服務';
+
+  @override
+  String get translation => '翻譯';
+
+  @override
+  String get translationProvider => '翻譯提供方';
+
+  @override
+  String get aiServices => 'AI 服務';
+
+  @override
+  String get addAiService => '新增 AI 服務';
+
+  @override
+  String get aiService => 'AI 服務';
 }

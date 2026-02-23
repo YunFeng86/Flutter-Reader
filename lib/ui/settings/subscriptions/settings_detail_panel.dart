@@ -23,6 +23,11 @@ class SettingsDetailPanel extends ConsumerWidget {
     final selection = ref.watch(subscriptionSelectionProvider);
     final l10n = AppLocalizations.of(context)!;
 
+    // Global Settings explicitly requested (do not lose current selection context).
+    if (selection.showGlobalSettings) {
+      return const _GlobalSettings();
+    }
+
     // 1. Feed Selected -> Show Feed Settings
     if (selection.selectedFeedId != null) {
       final feedId = selection.selectedFeedId!;
@@ -86,11 +91,6 @@ class _GlobalSettings extends ConsumerWidget {
         return ListView(
           padding: const EdgeInsets.all(24),
           children: [
-            Text(
-              l10n.subscriptions,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 24),
             ListTile(
               leading: const Icon(Icons.add),
               title: Text(l10n.addSubscription),
@@ -102,7 +102,7 @@ class _GlobalSettings extends ConsumerWidget {
               onTap: () =>
                   SubscriptionActions.showAddCategoryDialog(context, ref),
             ),
-            const Divider(),
+            const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.refresh),
               title: Text(l10n.refreshAll),
@@ -119,11 +119,11 @@ class _GlobalSettings extends ConsumerWidget {
               title: Text(l10n.exportOpml),
               onTap: () => SubscriptionActions.exportOpml(context, ref),
             ),
-            const Divider(),
+            const SizedBox(height: 16),
             _FilterSection(appSettings: appSettings),
-            const Divider(),
+            const SizedBox(height: 16),
             _SyncSection(appSettings: appSettings),
-            const Divider(),
+            const SizedBox(height: 16),
             _UserAgentSection(appSettings: appSettings),
           ],
         );
@@ -161,11 +161,11 @@ class _CategorySettings extends ConsumerWidget {
             currentName: category.name,
           ),
         ),
-        const Divider(),
+        const SizedBox(height: 16),
         _FilterSection(category: category, appSettings: appSettings),
-        const Divider(),
+        const SizedBox(height: 16),
         _SyncSection(category: category, appSettings: appSettings),
-        const Divider(),
+        const SizedBox(height: 16),
         ListTile(
           leading: const Icon(Icons.delete_outline, color: Colors.red),
           title: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
@@ -235,15 +235,15 @@ class _FeedSettings extends ConsumerWidget {
           title: Text(l10n.refresh),
           onTap: () => SubscriptionActions.refreshFeed(context, ref, feed.id),
         ),
-        const Divider(),
+        const SizedBox(height: 16),
         _FilterSection(
           feed: feed,
           category: category,
           appSettings: appSettings,
         ),
-        const Divider(),
+        const SizedBox(height: 16),
         _SyncSection(feed: feed, category: category, appSettings: appSettings),
-        const Divider(),
+        const SizedBox(height: 16),
         ListTile(
           leading: const Icon(Icons.delete_outline, color: Colors.red),
           title: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
@@ -491,6 +491,47 @@ class _SyncSection extends ConsumerWidget {
                 ref
                     .read(appSettingsProvider.notifier)
                     .setSyncWebPages(val ?? false),
+              );
+            }
+          },
+        ),
+        _TriStateSwitch(
+          title: l10n.showAiSummary,
+          currentValue: feed != null
+              ? feed!.showAiSummary
+              : category?.showAiSummary,
+          effectiveValue: SettingsInheritanceHelper.resolveShowAiSummary(
+            feed,
+            category,
+            appSettings,
+          ),
+          isGlobal: feed == null && category == null,
+          onChanged: (val) {
+            if (feed != null) {
+              unawaited(
+                SubscriptionActions.updateFeedSettings(
+                  context,
+                  ref,
+                  feedId: feed!.id,
+                  showAiSummary: val,
+                  updateShowAiSummary: true,
+                ),
+              );
+            } else if (category != null) {
+              unawaited(
+                SubscriptionActions.updateCategorySettings(
+                  context,
+                  ref,
+                  categoryId: category!.id,
+                  showAiSummary: val,
+                  updateShowAiSummary: true,
+                ),
+              );
+            } else {
+              unawaited(
+                ref
+                    .read(appSettingsProvider.notifier)
+                    .setShowAiSummary(val ?? false),
               );
             }
           },
@@ -900,11 +941,11 @@ class _UserAgentSectionState extends ConsumerState<_UserAgentSection> {
                 icon: const Icon(Icons.refresh),
                 tooltip: l10n.resetToDefault,
                 onPressed: () {
-                  _webController.text = UserAgents.web;
+                  _webController.text = UserAgents.webForCurrentPlatform();
                   unawaited(
                     ref
                         .read(appSettingsProvider.notifier)
-                        .setWebUserAgent(UserAgents.web),
+                        .setWebUserAgent(UserAgents.webForCurrentPlatform()),
                   );
                 },
               ),

@@ -3,9 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
+import 'account_providers.dart';
+import '../services/accounts/account.dart';
 import '../services/rss/feed_parser.dart';
+import '../services/rss/feed_discovery_service.dart';
 import '../services/rss/rss_client.dart';
 import '../services/sync/sync_service.dart';
+import '../services/sync/miniflux/miniflux_sync_service.dart';
+import '../services/sync/fever/fever_sync_service.dart';
+import '../services/sync/outbox/outbox_store.dart';
+import 'sync_status_providers.dart';
+import '../services/actions/article_action_service.dart';
 import '../services/extract/article_extractor.dart';
 import '../services/cache/article_cache_service.dart';
 import '../services/cache/image_meta_store.dart';
@@ -45,29 +53,85 @@ final rssClientProvider = Provider<RssClient>((ref) {
 
 final feedParserProvider = Provider<FeedParser>((ref) => FeedParser());
 
+final feedDiscoveryServiceProvider = Provider<FeedDiscoveryService>((ref) {
+  return FeedDiscoveryService(ref.watch(dioProvider));
+}, dependencies: [dioProvider]);
+
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
 
-final syncServiceProvider = Provider<SyncService>((ref) {
-  final feeds = ref.watch(feedRepositoryProvider);
-  final categories = ref.watch(categoryRepositoryProvider);
-  final articles = ref.watch(articleRepositoryProvider);
-  final client = ref.watch(rssClientProvider);
-  final parser = ref.watch(feedParserProvider);
-  final notifications = ref.watch(notificationServiceProvider);
-  return SyncService(
-    feeds: feeds,
-    categories: categories,
-    articles: articles,
-    client: client,
-    parser: parser,
-    notifications: notifications,
-    cache: ref.watch(articleCacheServiceProvider),
-    extractor: ref.watch(articleExtractorProvider),
-    appSettingsStore: ref.watch(appSettingsStoreProvider),
-  );
-});
+final outboxStoreProvider = Provider<OutboxStore>((ref) => OutboxStore());
+
+final syncServiceProvider = Provider<SyncServiceBase>(
+  (ref) {
+    final account = ref.watch(activeAccountProvider);
+    final feeds = ref.watch(feedRepositoryProvider);
+    final categories = ref.watch(categoryRepositoryProvider);
+    final articles = ref.watch(articleRepositoryProvider);
+    final reporter = ref.watch(syncStatusReporterProvider);
+
+    switch (account.type) {
+      case AccountType.local:
+        return SyncService(
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          client: ref.watch(rssClientProvider),
+          parser: ref.watch(feedParserProvider),
+          notifications: ref.watch(notificationServiceProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          extractor: ref.watch(articleExtractorProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+          statusReporter: reporter,
+        );
+      case AccountType.miniflux:
+        return MinifluxSyncService(
+          account: account,
+          dio: ref.watch(dioProvider),
+          credentials: ref.watch(credentialStoreProvider),
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          outbox: ref.watch(outboxStoreProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          extractor: ref.watch(articleExtractorProvider),
+          statusReporter: reporter,
+        );
+      case AccountType.fever:
+        return FeverSyncService(
+          account: account,
+          dio: ref.watch(dioProvider),
+          credentials: ref.watch(credentialStoreProvider),
+          feeds: feeds,
+          categories: categories,
+          articles: articles,
+          outbox: ref.watch(outboxStoreProvider),
+          appSettingsStore: ref.watch(appSettingsStoreProvider),
+          notifications: ref.watch(notificationServiceProvider),
+          cache: ref.watch(articleCacheServiceProvider),
+          statusReporter: reporter,
+        );
+    }
+  },
+  dependencies: [
+    activeAccountProvider,
+    feedRepositoryProvider,
+    categoryRepositoryProvider,
+    articleRepositoryProvider,
+    rssClientProvider,
+    feedParserProvider,
+    notificationServiceProvider,
+    articleCacheServiceProvider,
+    articleExtractorProvider,
+    appSettingsStoreProvider,
+    dioProvider,
+    credentialStoreProvider,
+    outboxStoreProvider,
+    syncStatusReporterProvider,
+  ],
+);
 
 final articleExtractorProvider = Provider<ArticleExtractor>((ref) {
   return ArticleExtractor(ref.watch(dioProvider));
@@ -104,3 +168,26 @@ final articleCacheServiceProvider = Provider<ArticleCacheService>((ref) {
     ref.watch(imageMetaStoreProvider),
   );
 });
+
+final articleActionServiceProvider = Provider<ArticleActionService>(
+  (ref) {
+    return ArticleActionService(
+      account: ref.watch(activeAccountProvider),
+      articles: ref.watch(articleRepositoryProvider),
+      feeds: ref.watch(feedRepositoryProvider),
+      categories: ref.watch(categoryRepositoryProvider),
+      dio: ref.watch(dioProvider),
+      credentials: ref.watch(credentialStoreProvider),
+      outbox: ref.watch(outboxStoreProvider),
+    );
+  },
+  dependencies: [
+    activeAccountProvider,
+    articleRepositoryProvider,
+    feedRepositoryProvider,
+    categoryRepositoryProvider,
+    dioProvider,
+    credentialStoreProvider,
+    outboxStoreProvider,
+  ],
+);

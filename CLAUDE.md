@@ -72,7 +72,7 @@ lib/
 - `Category`: User-defined categories
 
 **Key Design Patterns**:
-1. **Denormalization**: `categoryId` duplicated in Articles for fast filtering (see [feed_repository.dart:48-56](lib/repositories/feed_repository.dart#L48-L56))
+1. **Denormalization**: `categoryId` duplicated in Articles for fast filtering (see [feed_repository.dart](lib/repositories/feed_repository.dart))
 2. **Dual Content Storage**: Articles store both RSS `content` and extracted `fullContent`
 3. **Stream-based Queries**: Repositories return `Stream<List<T>>` for reactive UI updates
 
@@ -88,7 +88,7 @@ isarProvider (overridden in main.dart)
                  └─ articleListControllerProvider (StateNotifierProvider)
 ```
 
-**Important**: `isarProvider` throws `UnimplementedError` by default and must be overridden in `main()` after database initialization ([core_providers.dart:5-7](lib/providers/core_providers.dart#L5-L7)).
+**Important**: `isarProvider` throws `UnimplementedError` by default and must be overridden in `main()` after database initialization ([core_providers.dart](lib/providers/core_providers.dart)).
 
 ### Routing Behavior
 
@@ -136,7 +136,7 @@ Add localization keys to all ARB files in `l10n/` and run `flutter pub get` to r
 
 ### Dependencies Injection Pattern
 
-Override providers in tests using `ProviderScope(overrides: [...])`. Example in [main.dart:12-16](lib/main.dart#L12-L16).
+Override providers in tests using `ProviderScope(overrides: [...])`. Example in [main.dart](lib/main.dart).
 
 ### Code Quality Standards
 

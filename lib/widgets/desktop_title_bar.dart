@@ -108,12 +108,24 @@ class _DesktopTitleBarState extends State<DesktopTitleBar> with WindowListener {
                         alignment: centerTitle
                             ? Alignment.center
                             : Alignment.centerLeft,
-                        child: Text(
-                          widget.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: centerTitle ? TextAlign.center : null,
-                          style: titleStyle,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          switchInCurve: Curves.easeOutCubic,
+                          switchOutCurve: Curves.easeInCubic,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: child,
+                            );
+                          },
+                          child: Text(
+                            widget.title,
+                            key: ValueKey(widget.title),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: centerTitle ? TextAlign.center : null,
+                            style: titleStyle,
+                          ),
                         ),
                       ),
                     ),

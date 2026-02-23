@@ -108,10 +108,10 @@ class AppTheme {
 
     return base.copyWith(
       scaffoldBackgroundColor: cs.surface,
-      dividerTheme: DividerThemeData(
-        color: cs.outlineVariant,
-        thickness: 1,
-        space: 1,
+      dividerTheme: const DividerThemeData(
+        color: Colors.transparent,
+        thickness: 0,
+        space: 0,
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,

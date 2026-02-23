@@ -191,6 +191,22 @@
   "@addSubscription": {
     "description": "addSubscription"
   },
+  "selectCategory": "選擇分類",
+  "@selectCategory": {
+    "description": "selectCategory"
+  },
+  "loadingCategories": "正在載入分類...",
+  "@loadingCategories": {
+    "description": "loadingCategories"
+  },
+  "creatingCategory": "正在建立分類...",
+  "@creatingCategory": {
+    "description": "creatingCategory"
+  },
+  "feverAddSubscriptionNotSupported": "Fever 帳號不支援新增訂閱，請在伺服器端管理訂閱。",
+  "@feverAddSubscriptionNotSupported": {
+    "description": "feverAddSubscriptionNotSupported"
+  },
   "newCategory": "新增分類",
   "@newCategory": {
     "description": "newCategory"
@@ -225,6 +241,10 @@
   "fullText": "閱讀全文",
   "@fullText": {
     "description": "fullText"
+  },
+  "fullTextRetry": "取得全文失敗，重試",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
   },
   "readerSettings": "閱讀設定",
   "@readerSettings": {
@@ -300,6 +320,26 @@
   "@rssAtomUrl": {
     "description": "rssAtomUrl"
   },
+  "feedOrWebsiteUrl": "訂閱源或網站 URL",
+  "@feedOrWebsiteUrl": {
+    "description": "feedOrWebsiteUrl"
+  },
+  "discoveringFeeds": "正在發現訂閱源…",
+  "@discoveringFeeds": {
+    "description": "discoveringFeeds"
+  },
+  "addingSubscription": "正在新增訂閱…",
+  "@addingSubscription": {
+    "description": "addingSubscription"
+  },
+  "selectFeed": "選擇訂閱源",
+  "@selectFeed": {
+    "description": "selectFeed"
+  },
+  "noFeedsFound": "未找到可用的訂閱源",
+  "@noFeedsFound": {
+    "description": "noFeedsFound"
+  },
   "name": "名稱",
   "@name": {
     "description": "name"
@@ -341,6 +381,10 @@
   "@autoColor": {
     "description": "autoColor"
   },
+  "tagsLoadingError": "載入標籤失敗",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
+  },
   "@cachingArticles": {
     "placeholders": {
       "count": {
@@ -360,6 +404,14 @@
   "deleteCategoryConfirmContent": "此分類下的訂閱源將移至未分類。",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "deleteTagConfirmTitle": "刪除標籤？",
+  "@deleteTagConfirmTitle": {
+    "description": "deleteTagConfirmTitle"
+  },
+  "deleteTagConfirmContent": "這會從所有文章中移除該標籤。",
+  "@deleteTagConfirmContent": {
+    "description": "deleteTagConfirmContent"
   },
   "categoryDeleted": "分類已刪除",
   "@categoryDeleted": {
@@ -446,6 +498,18 @@
   "openInBrowser": "在瀏覽器打開",
   "@openInBrowser": {
     "description": "openInBrowser"
+  },
+  "copyLink": "複製連結",
+  "@copyLink": {
+    "description": "copyLink"
+  },
+  "copiedToClipboard": "已複製到剪貼簿",
+  "@copiedToClipboard": {
+    "description": "copiedToClipboard"
+  },
+  "share": "分享",
+  "@share": {
+    "description": "share"
   },
   "autoMarkRead": "打開時自動標記為已讀",
   "@autoMarkRead": {
@@ -545,6 +609,138 @@
   "@services": {
     "description": "services"
   },
+  "account": "帳號",
+  "@account": {
+    "description": "account"
+  },
+  "local": "本地",
+  "@local": {
+    "description": "local"
+  },
+  "miniflux": "Miniflux",
+  "@miniflux": {
+    "description": "miniflux"
+  },
+  "fever": "Fever",
+  "@fever": {
+    "description": "fever"
+  },
+  "addLocal": "新增本地",
+  "@addLocal": {
+    "description": "addLocal"
+  },
+  "addLocalAccount": "新增本地帳號",
+  "@addLocalAccount": {
+    "description": "addLocalAccount"
+  },
+  "addMiniflux": "新增 Miniflux",
+  "@addMiniflux": {
+    "description": "addMiniflux"
+  },
+  "addFever": "新增 Fever",
+  "@addFever": {
+    "description": "addFever"
+  },
+  "minifluxStrategy": "Miniflux 策略",
+  "@minifluxStrategy": {
+    "description": "minifluxStrategy"
+  },
+  "minifluxStrategySubtitle": "控制同步時的拉取量與預取行為。",
+  "@minifluxStrategySubtitle": {
+    "description": "minifluxStrategySubtitle"
+  },
+  "minifluxEntriesLimit": "每次同步拉取筆數",
+  "@minifluxEntriesLimit": {
+    "description": "minifluxEntriesLimit"
+  },
+  "minifluxWebFetchMode": "網頁抓取方式",
+  "@minifluxWebFetchMode": {
+    "description": "minifluxWebFetchMode"
+  },
+  "minifluxWebFetchModeSubtitle": "當訂閱開啟「同步時下載 Web 頁面」時生效。",
+  "@minifluxWebFetchModeSubtitle": {
+    "description": "minifluxWebFetchModeSubtitle"
+  },
+  "minifluxWebFetchModeClient": "用戶端（Readability）",
+  "@minifluxWebFetchModeClient": {
+    "description": "minifluxWebFetchModeClient"
+  },
+  "minifluxWebFetchModeServer": "伺服端（Miniflux fetch-content）",
+  "@minifluxWebFetchModeServer": {
+    "description": "minifluxWebFetchModeServer"
+  },
+  "unlimited": "無限制",
+  "@unlimited": {
+    "description": "unlimited"
+  },
+  "fieldName": "名稱",
+  "@fieldName": {
+    "description": "fieldName"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "baseUrl"
+  },
+  "minifluxBaseUrlHint": "https://miniflux.example.com",
+  "@minifluxBaseUrlHint": {
+    "description": "minifluxBaseUrlHint"
+  },
+  "feverBaseUrlHint": "https://example.com/fever/",
+  "@feverBaseUrlHint": {
+    "description": "feverBaseUrlHint"
+  },
+  "apiToken": "API Token",
+  "@apiToken": {
+    "description": "apiToken"
+  },
+  "apiKey": "API Key",
+  "@apiKey": {
+    "description": "apiKey"
+  },
+  "authenticationMethod": "驗證方式",
+  "@authenticationMethod": {
+    "description": "authenticationMethod"
+  },
+  "usernamePassword": "使用者名稱與密碼",
+  "@usernamePassword": {
+    "description": "usernamePassword"
+  },
+  "minifluxAuthHint": "可填寫 API Token（建議）或使用者名稱/密碼。",
+  "@minifluxAuthHint": {
+    "description": "minifluxAuthHint"
+  },
+  "feverAuthHint": "可填寫 API Key（建議）或使用者名稱/密碼。",
+  "@feverAuthHint": {
+    "description": "feverAuthHint"
+  },
+  "username": "使用者名稱",
+  "@username": {
+    "description": "username"
+  },
+  "password": "密碼",
+  "@password": {
+    "description": "password"
+  },
+  "show": "顯示",
+  "@show": {
+    "description": "show"
+  },
+  "hide": "隱藏",
+  "@hide": {
+    "description": "hide"
+  },
+  "missingRequiredFields": "請填寫必填欄位",
+  "@missingRequiredFields": {
+    "description": "missingRequiredFields"
+  },
+  "invalidBaseUrl": "Base URL 無效",
+  "@invalidBaseUrl": {
+    "description": "invalidBaseUrl"
+  },
+  "onlySupportedInLocalAccount": "僅本地帳號支援此操作",
+  "@onlySupportedInLocalAccount": {
+    "description": "onlySupportedInLocalAccount"
+  },
   "autoRefresh": "自動重新整理",
   "@autoRefresh": {
     "description": "autoRefresh"
@@ -586,9 +782,57 @@
   "@openFolder": {
     "description": "openFolder"
   },
+  "logDirectory": "日誌目錄",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "打開日誌",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "打開日誌資料夾",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "匯出日誌",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "日誌已匯出",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "未找到日誌檔案",
+  "@noLogsFound": {
+    "description": "noLogsFound"
+  },
   "keyboardShortcuts": "快速鍵",
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
+  },
+  "version": "版本號",
+  "@version": {
+    "description": "version"
+  },
+  "buildNumber": "構建號",
+  "@buildNumber": {
+    "description": "buildNumber"
+  },
+  "openSourceLicense": "開放原始碼授權",
+  "@openSourceLicense": {
+    "description": "openSourceLicense"
+  },
+  "viewLicense": "檢視授權",
+  "@viewLicense": {
+    "description": "viewLicense"
+  },
+  "thirdPartyLicenses": "第三方授權",
+  "@thirdPartyLicenses": {
+    "description": "thirdPartyLicenses"
+  },
+  "viewThirdPartyLicenses": "檢視所有開放原始碼授權",
+  "@viewThirdPartyLicenses": {
+    "description": "viewThirdPartyLicenses"
   },
   "filter": "過濾",
   "@filter": {
@@ -622,9 +866,41 @@
   "@syncWebPages": {
     "description": "syncWebPages"
   },
-  "showAiSummary": "顯示 AI 摘要",
+  "syncStatusSyncing": "同步中",
+  "@syncStatusSyncing": {
+    "description": "Sync status: syncing (generic)"
+  },
+  "syncStatusSyncingFeeds": "同步訂閱源",
+  "@syncStatusSyncingFeeds": {
+    "description": "Sync status: syncing feeds"
+  },
+  "syncStatusSyncingSubscriptions": "同步訂閱",
+  "@syncStatusSyncingSubscriptions": {
+    "description": "Sync status: syncing subscriptions"
+  },
+  "syncStatusSyncingUnreadArticles": "同步未讀文章",
+  "@syncStatusSyncingUnreadArticles": {
+    "description": "Sync status: syncing unread articles"
+  },
+  "syncStatusUploadingChanges": "上傳變更",
+  "@syncStatusUploadingChanges": {
+    "description": "Sync status: uploading local/outbox changes"
+  },
+  "syncStatusCompleted": "同步完成",
+  "@syncStatusCompleted": {
+    "description": "Sync status: completed"
+  },
+  "syncStatusFailed": "同步失敗",
+  "@syncStatusFailed": {
+    "description": "Sync status: failed"
+  },
+  "showAiSummary": "顯示摘要",
   "@showAiSummary": {
     "description": "showAiSummary"
+  },
+  "summary": "摘要",
+  "@summary": {
+    "description": "summary"
   },
   "showImageTitle": "顯示圖片標題",
   "@showImageTitle": {
@@ -726,5 +1002,29 @@
   "windowClose": "關閉",
   "@windowClose": {
     "description": "桌面端視窗「關閉」按鈕提示"
+  },
+  "translationAndAiServices": "翻譯與 AI 服務",
+  "@translationAndAiServices": {
+    "description": "翻譯與 AI 服務設定頁標籤"
+  },
+  "translation": "翻譯",
+  "@translation": {
+    "description": "翻譯設定分組標題"
+  },
+  "translationProvider": "翻譯提供方",
+  "@translationProvider": {
+    "description": "選擇翻譯提供方的設定項標題"
+  },
+  "aiServices": "AI 服務",
+  "@aiServices": {
+    "description": "AI 服務設定分組標題"
+  },
+  "addAiService": "新增 AI 服務",
+  "@addAiService": {
+    "description": "新增 AI 服務按鈕/標題"
+  },
+  "aiService": "AI 服務",
+  "@aiService": {
+    "description": "AI 服務的通用標籤"
   }
 }

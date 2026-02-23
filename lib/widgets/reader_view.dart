@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -9,6 +9,7 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' as html_parser;
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -16,10 +17,11 @@ import 'package:fleur/l10n/app_localizations.dart';
 
 import 'reader_bottom_bar.dart';
 import '../models/article.dart';
+import '../models/category.dart';
+import '../models/feed.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
-import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/settings_providers.dart';
 import '../services/cache/image_meta_store.dart';
@@ -116,9 +118,21 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         if (!mounted) return;
         if (next.hasError) {
           final l10n = AppLocalizations.of(context)!;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.fullTextFailed(next.error.toString()))),
-          );
+          final error = next.error;
+          if (error == null) return;
+
+          String message;
+          if (error is ArticleExtractionException) {
+            switch (error.type) {
+              case ArticleExtractionErrorType.emptyContent:
+                message = l10n.fullTextRetry;
+            }
+          } else {
+            message = l10n.fullTextFailed(error.toString());
+          }
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message)));
         }
       },
       fireImmediately: false,
@@ -154,6 +168,89 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         .trim();
   }
 
+  bool _effectiveShowSummary({
+    required Article article,
+    required AppSettings appSettings,
+    required Map<int, Feed> feedMap,
+    required List<Category> categories,
+  }) {
+    final feed = feedMap[article.feedId];
+    Category? category;
+    final categoryId = feed?.categoryId ?? article.categoryId;
+    if (categoryId != null) {
+      for (final c in categories) {
+        if (c.id == categoryId) {
+          category = c;
+          break;
+        }
+      }
+    }
+
+    final feedV = feed?.showAiSummary;
+    if (feedV != null) return feedV;
+    final catV = category?.showAiSummary;
+    if (catV != null) return catV;
+    return appSettings.showAiSummary;
+  }
+
+  String _summarizeHtml(String html) {
+    final trimmed = html.trim();
+    if (trimmed.isEmpty) return '';
+
+    // Limit work for very long articles; summary is best-effort.
+    final sample = trimmed.length > 20000
+        ? trimmed.substring(0, 20000)
+        : trimmed;
+
+    final doc = html_parser.parse(sample);
+    for (final e in doc.querySelectorAll('script,style,noscript')) {
+      e.remove();
+    }
+
+    final text = (doc.body?.text ?? '')
+        .replaceAll(RegExp(r'\u00a0'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    if (text.length < 40) return '';
+
+    bool isEndPunct(String ch) =>
+        ch == '.' ||
+        ch == '!' ||
+        ch == '?' ||
+        ch == '。' ||
+        ch == '！' ||
+        ch == '？';
+
+    final sentences = <String>[];
+    var start = 0;
+    for (var i = 0; i < text.length; i++) {
+      final ch = text[i];
+      if (!isEndPunct(ch)) continue;
+      final s = text.substring(start, i + 1).trim();
+      if (s.isNotEmpty) sentences.add(s);
+      start = i + 1;
+      if (sentences.length >= 6) break;
+    }
+    final tail = text.substring(start).trim();
+    if (tail.isNotEmpty) sentences.add(tail);
+    if (sentences.isEmpty) return '';
+
+    final picked = <String>[];
+    var total = 0;
+    for (final s in sentences) {
+      if (s.trim().isEmpty) continue;
+      picked.add(s.trim());
+      total += s.length;
+      if (picked.length >= 3) break;
+      if (total >= 240) break;
+    }
+    var summary = picked.join(' ').trim();
+    if (summary.length > 280) {
+      summary = '${summary.substring(0, 280).trimRight()}…';
+    }
+    return summary;
+  }
+
   void _listenArticle(int articleId) {
     final sub = _articleSub;
     if (sub != null) {
@@ -170,10 +267,11 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         // staying on this reader view, we do not immediately flip it back.
         if (!hasMarkedRead && a != null && !a.isRead) {
           final appSettings =
-              ref.read(appSettingsProvider).valueOrNull ?? const AppSettings();
+              ref.read(appSettingsProvider).valueOrNull ??
+              AppSettings.defaults();
           if (appSettings.autoMarkRead) {
             unawaited(
-              ref.read(articleRepositoryProvider).markRead(articleId, true),
+              ref.read(articleActionServiceProvider).markRead(articleId, true),
             );
             hasMarkedRead = true;
           }
@@ -720,6 +818,20 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         ).format(article.publishedAt.toLocal());
 
         // New Inline Header
+        final appSettings =
+            ref.watch(appSettingsProvider).valueOrNull ??
+            AppSettings.defaults();
+        final feedMap = ref.watch(feedMapProvider);
+        final categories =
+            ref.watch(categoriesProvider).valueOrNull ?? const <Category>[];
+        final showSummary = _effectiveShowSummary(
+          article: article,
+          appSettings: appSettings,
+          feedMap: feedMap,
+          categories: categories,
+        );
+        final summaryText = showSummary ? _summarizeHtml(html) : '';
+
         final inlineHeader = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -737,9 +849,42 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
-            const Divider(height: 1),
-            const SizedBox(height: 24),
+            if (summaryText.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.summarize_outlined,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          l10n.summary,
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      summaryText,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 32),
           ],
         );
 
@@ -774,7 +919,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         // Show AppBar if we are not embedded (i.e. strictly full screen) OR if
         // we explicitly want a back button (e.g. secondary page on desktop).
         // On mobile (!isDesktop), we almost always want the scaffold if not embedded.
-        final showAppBar = (!isDesktop && !widget.embedded) || widget.showBack;
+        // On desktop, we only show the AppBar when we explicitly need a back
+        // button (secondary reader page). On non-desktop, we keep the previous
+        // behavior: show the scaffold when not embedded, or when back is needed.
+        final showAppBar = !isDesktop
+            ? (!widget.embedded || widget.showBack)
+            : widget.showBack;
 
         if (showAppBar) {
           return Scaffold(

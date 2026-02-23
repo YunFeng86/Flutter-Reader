@@ -8,6 +8,8 @@ import '../ui/settings/tabs/about_tab.dart';
 import '../ui/settings/tabs/app_preferences_tab.dart';
 import '../ui/settings/tabs/grouping_sorting_tab.dart';
 import '../ui/settings/tabs/services_tab.dart';
+import '../ui/settings/tabs/translation_ai_services_tab.dart';
+import '../providers/subscription_settings_provider.dart';
 import '../utils/platform.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -18,12 +20,17 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  static const _kTwoColumnWidth = 900.0;
+
   // Nullable index: null means "List View" (Narrow) or "Default" (Wide, usually 0).
   // In Wide mode, if null, we treat it as 0.
   // In Narrow mode, if null, we show List.
   int? _selectedIndex;
 
-  List<_SettingsPageItem> _buildItems(BuildContext context) {
+  List<_SettingsPageItem> _buildItems(
+    BuildContext context, {
+    required bool showPageTitle,
+  }) {
     final l10n = AppLocalizations.of(context)!;
     return [
       _SettingsPageItem(
@@ -36,25 +43,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         icon: Icons.rss_feed_outlined,
         selectedIcon: Icons.rss_feed,
         label: l10n.subscriptions,
-        content: const SubscriptionsSettingsTab(),
+        content: SubscriptionsSettingsTab(showPageTitle: showPageTitle),
       ),
       _SettingsPageItem(
         icon: Icons.format_list_bulleted,
         selectedIcon: Icons.format_list_bulleted,
         label: l10n.groupingAndSorting,
-        content: const GroupingSortingTab(),
+        content: GroupingSortingTab(showPageTitle: showPageTitle),
       ),
       _SettingsPageItem(
         icon: Icons.cloud_outlined,
         selectedIcon: Icons.cloud,
         label: l10n.services,
-        content: const ServicesTab(),
+        content: ServicesTab(showPageTitle: showPageTitle),
+      ),
+      _SettingsPageItem(
+        icon: Icons.translate_outlined,
+        selectedIcon: Icons.translate,
+        label: l10n.translationAndAiServices,
+        content: TranslationAiServicesTab(showPageTitle: showPageTitle),
       ),
       _SettingsPageItem(
         icon: Icons.info_outline,
         selectedIcon: Icons.info,
         label: l10n.about,
-        content: const AboutTab(),
+        content: AboutTab(showPageTitle: showPageTitle),
       ),
     ];
   }
@@ -63,7 +76,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
-    final items = _buildItems(context);
     final hasGlobalNav = GlobalNavScope.maybeOf(context)?.hasGlobalNav ?? false;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
@@ -72,30 +84,78 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: theme.colorScheme.surface,
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 700;
+          final isStacked = constraints.maxWidth < _kTwoColumnWidth;
+          final isShowingDetail = isStacked && _selectedIndex != null;
+          final items = _buildItems(context, showPageTitle: !isShowingDetail);
 
-          if (isNarrow) {
-            // Mobile / Narrow Layout
+          if (isStacked) {
+            // Stacked Layout (mobile / narrow desktop / medium desktop)
             // State-driven: If selection exists, show Detail. Else show List.
             if (_selectedIndex != null) {
               final item = items[_selectedIndex!];
+
+              void handleDetailBack() {
+                // Special-case Subscriptions tab: allow in-page back (feed -> list -> categories)
+                // before leaving the tab back to the Settings list.
+                if (_selectedIndex == 1) {
+                  final notifier = ref.read(
+                    subscriptionSelectionProvider.notifier,
+                  );
+                  final shouldPop = notifier.handleBack();
+                  if (!shouldPop) return;
+                }
+                setState(() => _selectedIndex = null);
+              }
+
               return PopScope(
                 canPop: false,
                 onPopInvokedWithResult: (didPop, _) {
                   if (didPop) return;
-                  setState(() => _selectedIndex = null);
+                  handleDetailBack();
                 },
                 child: Scaffold(
                   appBar: useCompactTopBar
                       ? AppBar(
-                          leading: BackButton(
-                            onPressed: () =>
-                                setState(() => _selectedIndex = null),
-                          ),
+                          leading: BackButton(onPressed: handleDetailBack),
                           title: Text(item.label),
                         )
                       : null,
-                  body: item.content,
+                  body: useCompactTopBar
+                      ? item.content
+                      : Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    tooltip: MaterialLocalizations.of(
+                                      context,
+                                    ).backButtonTooltip,
+                                    icon: const Icon(Icons.arrow_back),
+                                    onPressed: handleDetailBack,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      item.label,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Divider(height: 1),
+                            Expanded(child: item.content),
+                          ],
+                        ),
                 ),
               );
             }
@@ -142,7 +202,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             );
           }
 
-          // Desktop / Wide Layout
+          // Two-column Layout
           // Ensure valid selection
           final currentIndex = _selectedIndex ?? 0;
           final selectedItem = items[currentIndex];

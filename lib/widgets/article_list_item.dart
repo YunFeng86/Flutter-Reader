@@ -6,7 +6,7 @@ import '../models/article.dart';
 import '../providers/query_providers.dart';
 import '../utils/html_utils.dart';
 import '../utils/timeago_locale.dart';
-import 'favicon_avatar.dart';
+import 'favicon_circle.dart';
 
 class ArticleListItem extends ConsumerWidget {
   const ArticleListItem({
@@ -100,19 +100,13 @@ class ArticleListItem extends ConsumerWidget {
                                       (feed.title?.trim().isNotEmpty ==
                                           true))) ...[
                                 // Feed Icon + Name
-                                Container(
-                                  padding: const EdgeInsets.all(2),
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceContainer,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: FaviconAvatar(
-                                    siteUri: siteUri,
-                                    size: 10,
-                                    fallbackIcon: Icons.rss_feed,
-                                    fallbackColor:
-                                        theme.colorScheme.onSurfaceVariant,
-                                  ),
+                                FaviconCircle(
+                                  siteUri: siteUri,
+                                  diameter: 28,
+                                  avatarSize: 18,
+                                  fallbackIcon: Icons.rss_feed,
+                                  fallbackColor:
+                                      theme.colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 6),
                                 Flexible(

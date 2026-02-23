@@ -1,9 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-
 import '../../utils/path_manager.dart';
+import '../logging/app_logger.dart';
 
 class FaviconCacheEntry {
   const FaviconCacheEntry({required this.fetchedAt, required this.iconUrl});
@@ -120,9 +119,7 @@ class FaviconStore {
       }
       return out;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('favicon store read failed: $e');
-      }
+      AppLogger.w('favicon store read failed', tag: 'favicon', error: e);
       return <String, FaviconCacheEntry>{};
     }
   }
@@ -136,9 +133,7 @@ class FaviconStore {
       }
       await f.writeAsString(jsonEncode(encoded));
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('favicon store write failed: $e');
-      }
+      AppLogger.w('favicon store write failed', tag: 'favicon', error: e);
     }
   }
 

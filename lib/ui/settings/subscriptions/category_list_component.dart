@@ -27,7 +27,7 @@ class CategoryListComponent extends ConsumerWidget {
         }
 
         return ListView(
-          controller: ScrollController(),
+          primary: false,
           children: [
             // List actual categories
             for (final category in categories)
@@ -45,7 +45,7 @@ class CategoryListComponent extends ConsumerWidget {
                 ).colorScheme.primaryContainer,
               ),
 
-            const Divider(),
+            const SizedBox(height: 8),
 
             // Uncategorized
             ListTile(

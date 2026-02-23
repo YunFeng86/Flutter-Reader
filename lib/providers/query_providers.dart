@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/article.dart';
 import '../models/category.dart';
 import '../models/feed.dart';
@@ -7,23 +8,23 @@ import 'repository_providers.dart';
 
 final feedsProvider = StreamProvider<List<Feed>>((ref) {
   return ref.watch(feedRepositoryProvider).watchAll();
-});
+}, dependencies: [feedRepositoryProvider]);
 
 final feedProvider = StreamProvider.family<Feed?, int>((ref, id) {
   return ref.watch(feedRepositoryProvider).watchById(id);
-});
+}, dependencies: [feedRepositoryProvider]);
 
 final categoriesProvider = StreamProvider<List<Category>>((ref) {
   return ref.watch(categoryRepositoryProvider).watchAll();
-});
+}, dependencies: [categoryRepositoryProvider]);
 
 final categoryProvider = StreamProvider.family<Category?, int>((ref, id) {
   return ref.watch(categoryRepositoryProvider).watchById(id);
-});
+}, dependencies: [categoryRepositoryProvider]);
 
 final tagsProvider = StreamProvider<List<Tag>>((ref) {
   return ref.watch(tagRepositoryProvider).watchAll();
-});
+}, dependencies: [tagRepositoryProvider]);
 
 final selectedFeedIdProvider = StateProvider<int?>((ref) => null);
 final selectedCategoryIdProvider = StateProvider<int?>((ref) => null);
@@ -43,13 +44,40 @@ final articlesProvider = StreamProvider.family<List<Article>, int?>((
   feedId,
 ) {
   return ref.watch(articleRepositoryProvider).watchLatest(feedId: feedId);
-});
+}, dependencies: [articleRepositoryProvider]);
 
 final articleProvider = StreamProvider.family<Article?, int>((ref, id) {
   return ref.watch(articleRepositoryProvider).watchById(id);
-});
+}, dependencies: [articleRepositoryProvider]);
+
+/// Watches the tags linked to an article, loading IsarLinks asynchronously.
+///
+/// Note: `watchObject` does not automatically load links, so the UI should use
+/// this provider instead of calling `loadSync()` in the widget tree.
+final articleTagsProvider = StreamProvider.autoDispose.family<List<Tag>, int>((
+  ref,
+  articleId,
+) {
+  var disposed = false;
+  ref.onDispose(() => disposed = true);
+
+  final repo = ref.watch(articleRepositoryProvider);
+  return repo.watchById(articleId).asyncMap((a) async {
+    if (a == null) return const <Tag>[];
+    if (!a.tags.isLoaded) {
+      try {
+        await a.tags.load();
+      } catch (_) {
+        if (disposed) return const <Tag>[];
+        rethrow;
+      }
+    }
+    if (disposed) return const <Tag>[];
+    return a.tags.toList(growable: false);
+  });
+}, dependencies: [articleRepositoryProvider]);
 
 final feedMapProvider = Provider<Map<int, Feed>>((ref) {
   final feeds = ref.watch(feedsProvider).valueOrNull ?? [];
   return {for (final feed in feeds) feed.id: feed};
-});
+}, dependencies: [feedsProvider]);

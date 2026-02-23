@@ -156,6 +156,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addSubscription => 'Add subscription';
 
   @override
+  String get selectCategory => 'Select a category';
+
+  @override
+  String get loadingCategories => 'Loading categories...';
+
+  @override
+  String get creatingCategory => 'Creating category...';
+
+  @override
+  String get feverAddSubscriptionNotSupported =>
+      'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.';
+
+  @override
   String get newCategory => 'New category';
 
   @override
@@ -177,6 +190,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fullText => 'Full text';
+
+  @override
+  String get fullTextRetry => 'Full text failed. Retry';
 
   @override
   String get readerSettings => 'Reader settings';
@@ -231,6 +247,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rssAtomUrl => 'RSS/Atom URL';
 
   @override
+  String get feedOrWebsiteUrl => 'Feed / website URL';
+
+  @override
+  String get discoveringFeeds => 'Discovering feeds...';
+
+  @override
+  String get addingSubscription => 'Adding subscription...';
+
+  @override
+  String get selectFeed => 'Select a feed';
+
+  @override
+  String get noFeedsFound => 'No feeds found';
+
+  @override
   String get name => 'Name';
 
   @override
@@ -258,6 +289,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteCategoryConfirmContent =>
       'Feeds in this category will be moved to Uncategorized.';
+
+  @override
+  String get deleteTagConfirmTitle => 'Delete tag?';
+
+  @override
+  String get deleteTagConfirmContent =>
+      'This will remove it from all articles.';
 
   @override
   String get categoryDeleted => 'Category deleted';
@@ -319,6 +357,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openInBrowser => 'Open in browser';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String get copiedToClipboard => 'Copied to clipboard';
+
+  @override
+  String get share => 'Share';
 
   @override
   String get autoMarkRead => 'Auto-mark as read when opened';
@@ -395,6 +442,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoColor => 'Auto';
 
   @override
+  String get tagsLoadingError => 'Error loading tags';
+
+  @override
   String cleanedArticles(int count) {
     return 'Cleaned $count articles';
   }
@@ -406,6 +456,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get services => 'Services';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get local => 'Local';
+
+  @override
+  String get miniflux => 'Miniflux';
+
+  @override
+  String get fever => 'Fever';
+
+  @override
+  String get addLocal => 'Add Local';
+
+  @override
+  String get addLocalAccount => 'Add Local Account';
+
+  @override
+  String get addMiniflux => 'Add Miniflux';
+
+  @override
+  String get addFever => 'Add Fever';
+
+  @override
+  String get minifluxStrategy => 'Miniflux strategy';
+
+  @override
+  String get minifluxStrategySubtitle =>
+      'Controls how much data is fetched/prefetched during sync.';
+
+  @override
+  String get minifluxEntriesLimit => 'Entries per sync';
+
+  @override
+  String get minifluxWebFetchMode => 'Web page fetching';
+
+  @override
+  String get minifluxWebFetchModeSubtitle =>
+      'When \"Download Web Pages during Sync\" is enabled.';
+
+  @override
+  String get minifluxWebFetchModeClient => 'Client (Readability)';
+
+  @override
+  String get minifluxWebFetchModeServer => 'Server (Miniflux fetch-content)';
+
+  @override
+  String get unlimited => 'Unlimited';
+
+  @override
+  String get fieldName => 'Name';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get minifluxBaseUrlHint => 'https://miniflux.example.com';
+
+  @override
+  String get feverBaseUrlHint => 'https://example.com/fever/';
+
+  @override
+  String get apiToken => 'API Token';
+
+  @override
+  String get apiKey => 'API Key';
+
+  @override
+  String get authenticationMethod => 'Authentication method';
+
+  @override
+  String get usernamePassword => 'Username & password';
+
+  @override
+  String get minifluxAuthHint =>
+      'Use an API token (recommended) or username/password.';
+
+  @override
+  String get feverAuthHint =>
+      'Use an API key (recommended) or username/password.';
+
+  @override
+  String get username => 'Username';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get show => 'Show';
+
+  @override
+  String get hide => 'Hide';
+
+  @override
+  String get missingRequiredFields => 'Missing required fields';
+
+  @override
+  String get invalidBaseUrl => 'Invalid base URL';
+
+  @override
+  String get onlySupportedInLocalAccount => 'Only supported in Local account';
 
   @override
   String get autoRefresh => 'Auto refresh';
@@ -437,7 +590,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openFolder => 'Open folder';
 
   @override
+  String get logDirectory => 'Log directory';
+
+  @override
+  String get openLog => 'Open log';
+
+  @override
+  String get openLogFolder => 'Open log folder';
+
+  @override
+  String get exportLogs => 'Export logs';
+
+  @override
+  String get exportedLogs => 'Logs exported';
+
+  @override
+  String get noLogsFound => 'No log files found';
+
+  @override
   String get keyboardShortcuts => 'Keyboard shortcuts';
+
+  @override
+  String get version => 'Version';
+
+  @override
+  String get buildNumber => 'Build number';
+
+  @override
+  String get openSourceLicense => 'Open source license';
+
+  @override
+  String get viewLicense => 'View license';
+
+  @override
+  String get thirdPartyLicenses => 'Third-party licenses';
+
+  @override
+  String get viewThirdPartyLicenses => 'View all open source licenses';
 
   @override
   String get filter => 'Filter';
@@ -466,7 +655,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get syncWebPages => 'Download Web Pages during Sync';
 
   @override
-  String get showAiSummary => 'Show AI Summary';
+  String get syncStatusSyncing => 'Syncing';
+
+  @override
+  String get syncStatusSyncingFeeds => 'Syncing feeds';
+
+  @override
+  String get syncStatusSyncingSubscriptions => 'Syncing subscriptions';
+
+  @override
+  String get syncStatusSyncingUnreadArticles => 'Syncing unread articles';
+
+  @override
+  String get syncStatusUploadingChanges => 'Uploading changes';
+
+  @override
+  String get syncStatusCompleted => 'Sync complete';
+
+  @override
+  String get syncStatusFailed => 'Sync failed';
+
+  @override
+  String get showAiSummary => 'Show Summary';
+
+  @override
+  String get summary => 'Summary';
 
   @override
   String get showImageTitle => 'Show Image Title';
@@ -543,4 +756,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get windowClose => 'Close';
+
+  @override
+  String get translationAndAiServices => 'Translation & AI';
+
+  @override
+  String get translation => 'Translation';
+
+  @override
+  String get translationProvider => 'Translation provider';
+
+  @override
+  String get aiServices => 'AI services';
+
+  @override
+  String get addAiService => 'Add AI service';
+
+  @override
+  String get aiService => 'AI service';
 }

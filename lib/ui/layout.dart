@@ -14,7 +14,7 @@ const double kMaxReadingWidth = 700;
 // Desktop fixed panes (in logical pixels).
 const double kDesktopSidebarWidth = 260;
 const double kDesktopListWidth = 320;
-const double kDividerWidth = 1;
+const double kPaneGap = 0;
 
 // Non-desktop (tablet / narrow window) pane widths used in HomeScreen.
 const double kHomeSidebarWidth = 280;
@@ -43,11 +43,11 @@ DesktopPaneMode desktopModeForWidth(double width) {
       kDesktopSidebarWidth +
       kDesktopListWidth +
       kMinReadingWidth +
-      kDividerWidth * 2;
+      kPaneGap * 2;
 
   // Stage 2 -> 3 boundary: Can we fit List + MinReader?
   // We prioritizing keeping the Reader view visible over the Sidebar.
-  final minForListReader = kDesktopListWidth + kMinReadingWidth + kDividerWidth;
+  final minForListReader = kDesktopListWidth + kMinReadingWidth + kPaneGap;
 
   if (width >= minFor3) return DesktopPaneMode.threePane;
   if (width >= minForListReader) return DesktopPaneMode.splitListReader;
@@ -71,9 +71,9 @@ bool desktopReaderEmbedded(DesktopPaneMode mode) =>
 /// Unlike classic "600/1200" breakpoints, this keeps the reader pane at least
 /// [kMinReadingWidth] wide when it is shown side-by-side.
 int homeColumnsForWidth(double width) {
-  final minFor2 = kHomeListWidth + kMinReadingWidth + kDividerWidth;
+  final minFor2 = kHomeListWidth + kMinReadingWidth + kPaneGap;
   final minFor3 =
-      kHomeSidebarWidth + kHomeListWidth + kMinReadingWidth + kDividerWidth * 2;
+      kHomeSidebarWidth + kHomeListWidth + kMinReadingWidth + kPaneGap * 2;
   if (width >= minFor3) return 3;
   if (width >= minFor2) return 2;
   return 1;

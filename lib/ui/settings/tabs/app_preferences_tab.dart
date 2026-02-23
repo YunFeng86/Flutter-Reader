@@ -24,8 +24,9 @@ class AppPreferencesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
     final appSettings =
-        ref.watch(appSettingsProvider).valueOrNull ?? const AppSettings();
+        ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
     final readerSettings =
         ref.watch(readerSettingsProvider).valueOrNull ?? const ReaderSettings();
 
@@ -55,7 +56,7 @@ class AppPreferencesTab extends ConsumerWidget {
                 SectionHeader(title: l10n.language),
                 Container(
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -282,7 +283,7 @@ class AppPreferencesTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   ),
                   child: Column(
@@ -310,7 +311,7 @@ class AppPreferencesTab extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).dividerColor),
+                    color: theme.colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   ),
                   child: Column(

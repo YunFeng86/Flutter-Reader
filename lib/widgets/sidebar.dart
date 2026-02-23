@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,15 +7,24 @@ import 'package:fleur/l10n/app_localizations.dart';
 
 import '../models/category.dart';
 import '../models/feed.dart';
+import '../providers/account_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../providers/sync_status_providers.dart';
+import '../services/accounts/account.dart';
+import '../services/sync/sync_status_reporter.dart';
 import '../ui/actions/subscription_actions.dart';
+import '../ui/layout_spec.dart';
+import '../ui/global_nav.dart';
 import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
-import 'favicon_avatar.dart';
+import 'account_avatar.dart';
+import 'account_manager_dialog.dart';
+import 'favicon_circle.dart';
+import 'overflow_marquee.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
   const Sidebar({super.key, required this.onSelectFeed, this.router});
@@ -114,6 +125,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final selectedCategoryId = ref.watch(selectedCategoryIdProvider);
     final selectedTagId = ref.watch(selectedTagIdProvider);
     final tags = ref.watch(tagsProvider);
+    final activeAccount = ref.watch(activeAccountProvider);
+    final navMode = LayoutSpec.fromContext(context).globalNavMode;
+    final showAccountFooter = navMode == GlobalNavMode.bottom;
+    final syncStatus = ref.watch(syncStatusControllerProvider);
 
     final starredOnly = ref.watch(starredOnlyProvider);
     final readLaterOnly = ref.watch(readLaterOnlyProvider);
@@ -149,6 +164,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
+                const SizedBox(width: 8),
               ],
             ),
           ),
@@ -178,6 +194,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     final byCat = <int?, List<Feed>>{};
                     for (final f in filteredFeeds) {
                       byCat.putIfAbsent(f.categoryId, () => []).add(f);
+                    }
+
+                    final feedUnreadCounts = allUnreadCounts.value;
+                    final unreadByCategoryId = <int, int>{};
+                    if (feedUnreadCounts != null) {
+                      // Aggregate category unread counts from per-feed counts to avoid
+                      // spinning up one DB watcher per category.
+                      for (final f in feedItems) {
+                        final cid = f.categoryId;
+                        if (cid == null) continue;
+                        final c = feedUnreadCounts[f.id] ?? 0;
+                        if (c <= 0) continue;
+                        unreadByCategoryId[cid] =
+                            (unreadByCategoryId[cid] ?? 0) + c;
+                      }
                     }
 
                     final children = <Widget>[];
@@ -275,12 +306,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                   value: _SidebarMenu.settings,
                                   child: Text(l10n.settings),
                                 ),
-                                const PopupMenuDivider(),
                                 PopupMenuItem(
                                   value: _SidebarMenu.refreshAll,
                                   child: Text(l10n.refreshAll),
                                 ),
-                                const PopupMenuDivider(),
                                 PopupMenuItem(
                                   value: _SidebarMenu.importOpml,
                                   child: Text(l10n.importOpml),
@@ -329,6 +358,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                           feeds: catFeeds,
                           selectedFeedId: selectedFeedId,
                           selectedCategoryId: selectedCategoryId,
+                          unreadCount: unreadByCategoryId[c.id] ?? 0,
                           unreadCounts: allUnreadCounts.value,
                         ),
                       );
@@ -366,6 +396,18 @@ class _SidebarState extends ConsumerState<Sidebar> {
               },
             ),
           ),
+          if (showAccountFooter)
+            _AccountFooter(
+              account: activeAccount,
+              sync: syncStatus,
+              onTap: () {
+                unawaited(
+                  _showDialog<void>(
+                    builder: (_) => const AccountManagerDialog(),
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -378,10 +420,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     required List<Feed> feeds,
     required int? selectedFeedId,
     required int? selectedCategoryId,
+    required int unreadCount,
     Map<int?, int>? unreadCounts,
   }) {
     final l10n = AppLocalizations.of(context)!;
-    final unread = ref.watch(unreadCountByCategoryProvider(category.id));
     final starredOnly = ref.watch(starredOnlyProvider);
     final selected =
         !starredOnly &&
@@ -398,11 +440,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              unread.when(
-                data: (c) => _UnreadBadge(c),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
+              _UnreadBadge(unreadCount),
               if (isDesktop)
                 MenuAnchor(
                   menuChildren: [
@@ -483,20 +521,12 @@ class _SidebarState extends ConsumerState<Sidebar> {
       key: key,
       selected: selectedFeedId == f.id,
       contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
-      leading: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHigh,
-          shape: BoxShape.circle,
-        ),
-        alignment: Alignment.center,
-        child: FaviconAvatar(
-          siteUri: siteUri,
-          size: 18,
-          fallbackIcon: Icons.rss_feed,
-          fallbackColor: theme.colorScheme.onSurfaceVariant,
-        ),
+      leading: FaviconCircle(
+        siteUri: siteUri,
+        diameter: 28,
+        avatarSize: 18,
+        fallbackIcon: Icons.rss_feed,
+        fallbackColor: theme.colorScheme.onSurfaceVariant,
       ),
       title: Text(displayTitle),
       subtitle:
@@ -839,37 +869,41 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: c.name);
-    final next = await _showDialog<String?>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.rename),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: l10n.name),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.done),
-            ),
-          ],
-        );
-      },
-    );
-    if (next == null) return;
     try {
-      await ref.read(categoryRepositoryProvider).rename(c.id, next);
-    } catch (e) {
-      if (!context.mounted) return;
-      final msg = e.toString().contains('already exists')
-          ? l10n.nameAlreadyExists
-          : e.toString();
-      context.showErrorMessage(l10n.errorMessage(msg));
+      final next = await _showDialog<String?>(
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.rename),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(labelText: l10n.name),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: Text(l10n.done),
+              ),
+            ],
+          );
+        },
+      );
+      if (next == null) return;
+      try {
+        await ref.read(categoryRepositoryProvider).rename(c.id, next);
+      } catch (e) {
+        if (!context.mounted) return;
+        final msg = e.toString().contains('already exists')
+            ? l10n.nameAlreadyExists
+            : e.toString();
+        context.showErrorMessage(l10n.errorMessage(msg));
+      }
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -880,36 +914,40 @@ class _SidebarState extends ConsumerState<Sidebar> {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final controller = TextEditingController(text: f.userTitle ?? '');
-    final next = await _showDialog<String?>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.edit),
-          content: TextField(
-            controller: controller,
-            decoration: InputDecoration(labelText: l10n.name),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Text(l10n.cancel),
+    try {
+      final next = await _showDialog<String?>(
+        builder: (context) {
+          return AlertDialog(
+            title: Text(l10n.edit),
+            content: TextField(
+              controller: controller,
+              decoration: InputDecoration(labelText: l10n.name),
+              autofocus: true,
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(''),
-              child: Text(l10n.delete),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(controller.text),
-              child: Text(l10n.done),
-            ),
-          ],
-        );
-      },
-    );
-    if (next == null) return;
-    await ref
-        .read(feedRepositoryProvider)
-        .setUserTitle(feedId: f.id, userTitle: next);
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(null),
+                child: Text(l10n.cancel),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(''),
+                child: Text(l10n.delete),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(controller.text),
+                child: Text(l10n.done),
+              ),
+            ],
+          );
+        },
+      );
+      if (next == null) return;
+      await ref
+          .read(feedRepositoryProvider)
+          .setUserTitle(feedId: f.id, userTitle: next);
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _moveFeedToCategory(
@@ -1048,6 +1086,133 @@ class _SidebarItem extends StatelessWidget {
         // Visual adjustments to match "denser" look
         visualDensity: VisualDensity.compact,
         contentPadding: EdgeInsets.only(left: 12 + indent, right: 12),
+      ),
+    );
+  }
+}
+
+class _AccountFooter extends StatelessWidget {
+  const _AccountFooter({
+    required this.account,
+    required this.sync,
+    required this.onTap,
+  });
+
+  final Account account;
+  final SyncStatusState sync;
+  final VoidCallback onTap;
+
+  String _syncText(AppLocalizations l10n) {
+    String labelFor(SyncStatusLabel label) => switch (label) {
+      SyncStatusLabel.syncing => l10n.syncStatusSyncing,
+      SyncStatusLabel.syncingFeeds => l10n.syncStatusSyncingFeeds,
+      SyncStatusLabel.syncingSubscriptions =>
+        l10n.syncStatusSyncingSubscriptions,
+      SyncStatusLabel.syncingUnreadArticles =>
+        l10n.syncStatusSyncingUnreadArticles,
+      SyncStatusLabel.uploadingChanges => l10n.syncStatusUploadingChanges,
+      SyncStatusLabel.completed => l10n.syncStatusCompleted,
+      SyncStatusLabel.failed => l10n.syncStatusFailed,
+    };
+
+    final label = labelFor(sync.label);
+    final base = label;
+    final cur = sync.current;
+    final total = sync.total;
+    if (cur != null && total != null && total > 0) {
+      return '$base（$cur/$total）';
+    }
+    return base;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final showSync = sync.visible;
+    final syncText = _syncText(l10n);
+
+    return Material(
+      color: scheme.surfaceContainerLow,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          child: Row(
+            children: [
+              AccountAvatar(account: account, radius: 18, showTypeBadge: true),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      account.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 180),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return SizeTransition(
+                          sizeFactor: animation,
+                          axisAlignment: -1,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: showSync
+                          ? Padding(
+                              key: const ValueKey('sync'),
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Row(
+                                children: [
+                                  if (sync.running)
+                                    const SizedBox(
+                                      width: 10,
+                                      height: 10,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  else
+                                    Icon(
+                                      sync.label == SyncStatusLabel.failed
+                                          ? Icons.error_outline
+                                          : Icons.check,
+                                      size: 12,
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: OverflowMarquee(
+                                      text: syncText,
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: scheme.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : const SizedBox(key: ValueKey('empty')),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.unfold_more, size: 18, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

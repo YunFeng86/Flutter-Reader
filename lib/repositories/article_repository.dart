@@ -64,20 +64,9 @@ class ArticleRepository {
 
   static const int defaultPageSize = 50;
 
-  Future<List<int>?> _resolveCategoryFeedIds(ArticleQuery query) async {
-    if (query.feedId != null || query.categoryId == null) return null;
-    final cid = query.categoryId!;
-    final qb = _isar.feeds.filter();
-    final filtered = cid < 0
-        ? qb.categoryIdIsNull()
-        : qb.categoryIdEqualTo(cid);
-    return filtered.idProperty().findAll();
-  }
-
   QueryBuilder<Article, Article, QAfterFilterCondition> _buildQuery(
-    ArticleQuery query, {
-    List<int>? categoryFeedIds,
-  }) {
+    ArticleQuery query,
+  ) {
     final tid = query.tagId;
     final q = query.searchQuery.trim();
     final hasQuery = q.isNotEmpty;
@@ -85,8 +74,8 @@ class ArticleRepository {
         .filter()
         .optional(query.feedId != null, (q) => q.feedIdEqualTo(query.feedId!))
         .optional(
-          query.feedId == null && categoryFeedIds != null,
-          (q) => q.anyOf(categoryFeedIds!, (q, id) => q.feedIdEqualTo(id)),
+          query.feedId == null && query.categoryId != null,
+          (q) => q.categoryIdEqualTo(query.categoryId),
         )
         .optional(tid != null, (q) => q.tags((t) => t.idEqualTo(tid!)))
         .optional(query.unreadOnly, (q) => q.isReadEqualTo(false))
@@ -144,9 +133,7 @@ class ArticleRepository {
     required int offset,
     required int limit,
   }) async {
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return [];
-    final qb = _buildQuery(query, categoryFeedIds: feedIds);
+    final qb = _buildQuery(query);
     final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).findAll();
   }
@@ -156,9 +143,7 @@ class ArticleRepository {
     required int offset,
     required int limit,
   }) async {
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return [];
-    final qb = _buildQuery(query, categoryFeedIds: feedIds);
+    final qb = _buildQuery(query);
     final sorted = _applySort(qb, sortAscending: query.sortAscending);
     return sorted.offset(offset).limit(limit).idProperty().findAll();
   }
@@ -172,12 +157,7 @@ class ArticleRepository {
 
     Future<void> watchArticles() async {
       await articleSub?.cancel();
-      final feedIds = await _resolveCategoryFeedIds(query);
-      if (feedIds != null && feedIds.isEmpty) {
-        if (!controller.isClosed) controller.add(null);
-        return;
-      }
-      final qb = _buildQuery(query, categoryFeedIds: feedIds);
+      final qb = _buildQuery(query);
       final sorted = _applySort(qb, sortAscending: query.sortAscending);
       articleSub = sorted.watchLazy().listen((_) {
         if (!controller.isClosed) controller.add(null);
@@ -302,19 +282,12 @@ class ArticleRepository {
   }
 
   Future<int> _markAllReadBatched({int? feedId, int? categoryId}) async {
-    final query = ArticleQuery(
-      feedId: feedId,
-      categoryId: categoryId,
-      unreadOnly: true,
-    );
-    final feedIds = await _resolveCategoryFeedIds(query);
-    if (feedIds != null && feedIds.isEmpty) return 0;
     final qb = _isar.articles
         .filter()
         .optional(feedId != null, (q) => q.feedIdEqualTo(feedId!))
         .optional(
-          feedId == null && feedIds != null,
-          (q) => q.anyOf(feedIds!, (q, id) => q.feedIdEqualTo(id)),
+          feedId == null && categoryId != null,
+          (q) => q.categoryIdEqualTo(categoryId),
         )
         .isReadEqualTo(false);
 
@@ -353,10 +326,22 @@ class ArticleRepository {
     return q.findAll();
   }
 
-  Future<List<Article>> upsertMany(int feedId, List<Article> incoming) {
+  Future<List<Article>> upsertMany(
+    int feedId,
+    List<Article> incoming, {
+    bool preserveUserState = true,
+  }) {
     if (incoming.isEmpty) return Future.value(<Article>[]);
-    for (final a in incoming) {
-      a.contentHash = ContentHash.compute(a.contentHtml);
+    if (preserveUserState) {
+      for (final a in incoming) {
+        a.contentHash = ContentHash.compute(a.contentHtml);
+      }
+    } else {
+      // Remote-authoritative sync (e.g. Miniflux): skip expensive hashing here.
+      // ReaderView can compute a correct hash on-demand when needed.
+      for (final a in incoming) {
+        a.contentHash = null;
+      }
     }
     return _isar.writeTxn(() async {
       final newArticles = <Article>[];
@@ -413,8 +398,11 @@ class ArticleRepository {
       for (final a in incoming) {
         // Link already normalized above
 
-        // [V2.0] Compute content hash for change detection
-        final newHash = a.contentHash ?? '';
+        // [V2.0] Content hash is only required when we preserve local user state
+        // (to detect content changes and mark items unread).
+        final String? newHash = preserveUserState
+            ? (a.contentHash ?? '')
+            : null;
 
         // Dual-key O(1) lookup: remoteId takes priority over link
         // This prevents duplicates when URLs change but guid remains the same
@@ -432,17 +420,24 @@ class ArticleRepository {
         if (existing != null) {
           a.id = existing.id;
 
-          // [V2.0] Only update if content changed
-          if (existing.contentHash != newHash) {
-            a.contentHash = newHash;
-            a.isRead = false; // Content changed -> mark unread
-          } else {
-            // Content unchanged -> preserve user state
-            a.isRead = existing.isRead;
-            a.contentHash = existing.contentHash;
-          }
+          if (preserveUserState) {
+            // [V2.0] Only update if content changed.
+            if (existing.contentHash != newHash) {
+              a.contentHash = newHash;
+              a.isRead = false; // Content changed -> mark unread
+            } else {
+              // Content unchanged -> preserve user state.
+              a.isRead = existing.isRead;
+              a.contentHash = existing.contentHash;
+            }
 
-          a.isStarred = existing.isStarred;
+            a.isStarred = existing.isStarred;
+          } else {
+            // We didn't compute a hash for this update, so clear it to avoid
+            // stale hashes being used as a progress key.
+            a.contentHash = null;
+          }
+          // Read-later is currently local-only; always preserve.
           a.isReadLater = existing.isReadLater;
           a.contentSource = existing.contentSource;
           a.extractedContentHtml = existing.extractedContentHtml;
@@ -455,7 +450,7 @@ class ArticleRepository {
           }
         } else {
           isNew = true;
-          a.contentHash = newHash;
+          a.contentHash = preserveUserState ? newHash : null;
           if (a.publishedAt.millisecondsSinceEpoch == 0) {
             // Some feeds omit pubDate/updated; use fetchedAt for reasonable sorting.
             a.publishedAt = now.toUtc();

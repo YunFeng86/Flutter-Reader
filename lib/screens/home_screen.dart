@@ -12,9 +12,15 @@ import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
+import '../widgets/outbox_status_action.dart';
 import '../widgets/sidebar.dart';
+import '../widgets/sidebar_pane_hero.dart';
+import '../widgets/sync_status_capsule.dart';
 import '../utils/platform.dart';
 import '../ui/layout.dart';
+import '../ui/layout_spec.dart';
+import '../ui/hero_tags.dart';
+import '../ui/global_nav.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.selectedArticleId});
@@ -26,6 +32,8 @@ class HomeScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
+    final showSyncCapsule =
+        LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
 
     Future<void> refreshAll() async {
       Object? err;
@@ -38,9 +46,7 @@ class HomeScreen extends ConsumerWidget {
         final feeds = await ref.read(feedRepositoryProvider).getAll();
         final filtered = (categoryId == null)
             ? feeds
-            : (categoryId < 0
-                  ? feeds.where((f) => f.categoryId == null)
-                  : feeds.where((f) => f.categoryId == categoryId));
+            : feeds.where((f) => f.categoryId == categoryId);
         final batch = await ref
             .read(syncServiceProvider)
             .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -60,7 +66,7 @@ class HomeScreen extends ConsumerWidget {
       final selectedFeedId = ref.read(selectedFeedIdProvider);
       final selectedCategoryId = ref.read(selectedCategoryIdProvider);
       await ref
-          .read(articleRepositoryProvider)
+          .read(articleActionServiceProvider)
           .markAllRead(
             feedId: selectedFeedId,
             categoryId: selectedFeedId == null ? selectedCategoryId : null,
@@ -121,6 +127,7 @@ class HomeScreen extends ConsumerWidget {
                     unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
                   ),
                 ),
+                const OutboxStatusAction(),
               ],
             ),
             drawer: Drawer(
@@ -133,7 +140,10 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
             floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
-            body: ArticleList(selectedArticleId: selectedArticleId),
+            body: SyncStatusCapsuleHost(
+              enabled: showSyncCapsule,
+              child: ArticleList(selectedArticleId: selectedArticleId),
+            ),
           );
         }
 
@@ -205,9 +215,9 @@ class HomeScreen extends ConsumerWidget {
                     final feeds = await ref
                         .read(feedRepositoryProvider)
                         .getAll();
-                    final filtered = categoryId < 0
-                        ? feeds.where((f) => f.categoryId == null)
-                        : feeds.where((f) => f.categoryId == categoryId);
+                    final filtered = feeds.where(
+                      (f) => f.categoryId == categoryId,
+                    );
                     await ref
                         .read(syncServiceProvider)
                         .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -237,7 +247,7 @@ class HomeScreen extends ConsumerWidget {
                       .getById(selectedArticleId!);
                   if (a == null) return null;
                   await ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .markRead(selectedArticleId!, !a.isRead);
                   return null;
                 },
@@ -246,7 +256,7 @@ class HomeScreen extends ConsumerWidget {
                 onInvoke: (intent) async {
                   if (selectedArticleId == null) return null;
                   await ref
-                      .read(articleRepositoryProvider)
+                      .read(articleActionServiceProvider)
                       .toggleStar(selectedArticleId!);
                   return null;
                 },
@@ -290,6 +300,7 @@ class HomeScreen extends ConsumerWidget {
                               );
                             },
                           ),
+                          const OutboxStatusAction(),
                         ],
                       )
                     : null,
@@ -314,27 +325,27 @@ class HomeScreen extends ConsumerWidget {
                     if (columns == 3) ...[
                       SizedBox(
                         width: kHomeSidebarWidth,
-                        child: Sidebar(
-                          onSelectFeed: (_) {
-                            if (selectedArticleId != null) context.go('/');
-                          },
+                        child: SyncStatusCapsuleHost(
+                          enabled: showSyncCapsule,
+                          child: Sidebar(
+                            onSelectFeed: (_) {
+                              if (selectedArticleId != null) context.go('/');
+                            },
+                          ),
                         ),
                       ),
-                      const VerticalDivider(width: 1),
+                      const SizedBox(width: kPaneGap),
                     ],
                     SizedBox(
                       width: kHomeListWidth,
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: ArticleList(
-                              selectedArticleId: selectedArticleId,
-                            ),
-                          ),
-                        ],
+                      child: SyncStatusCapsuleHost(
+                        enabled: showSyncCapsule && columns != 3,
+                        child: ArticleList(
+                          selectedArticleId: selectedArticleId,
+                        ),
                       ),
                     ),
-                    const VerticalDivider(width: 1),
+                    const SizedBox(width: kPaneGap),
                     Expanded(
                       child: selectedArticleId == null
                           ? Container(
@@ -369,6 +380,8 @@ class HomeScreen extends ConsumerWidget {
     Future<void> Function() refreshAll,
     Future<void> Function() markAllRead,
   ) {
+    final showSyncCapsule =
+        LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
     // Desktop keyboard shortcuts stay enabled across all layouts.
     final shortcuts = <ShortcutActivator, Intent>{
       const SingleActivator(LogicalKeyboardKey.keyJ):
@@ -389,14 +402,15 @@ class HomeScreen extends ConsumerWidget {
     final sidebarVisible = ref.watch(sidebarVisibleProvider);
 
     Widget listPane({double? width}) {
-      final pane = Column(
-        children: [
-          Expanded(child: ArticleList(selectedArticleId: selectedArticleId)),
-        ],
-      );
+      final pane = ArticleList(selectedArticleId: selectedArticleId);
 
       if (width == null) return pane;
-      return SizedBox(width: width, child: pane);
+      return Hero(
+        tag: kHeroArticleListPane,
+        child: RepaintBoundary(
+          child: SizedBox(width: width, child: pane),
+        ),
+      );
     }
 
     Widget readerPane({required bool embedded}) {
@@ -424,25 +438,46 @@ class HomeScreen extends ConsumerWidget {
           if (sidebarVisible) ...[
             SizedBox(
               width: kDesktopSidebarWidth,
-              child: Sidebar(
-                onSelectFeed: (_) {
-                  if (selectedArticleId != null) context.go('/');
-                },
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  const SidebarPaneHero(),
+                  SyncStatusCapsuleHost(
+                    enabled: showSyncCapsule,
+                    child: Sidebar(
+                      onSelectFeed: (_) {
+                        if (selectedArticleId != null) context.go('/');
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
+            const SizedBox(width: kPaneGap),
           ],
-          listPane(width: kDesktopListWidth),
+          SyncStatusCapsuleHost(
+            enabled: showSyncCapsule && !sidebarVisible,
+            child: listPane(width: kDesktopListWidth),
+          ),
+          const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
       ),
       DesktopPaneMode.splitListReader => Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          listPane(width: kDesktopListWidth),
+          SyncStatusCapsuleHost(
+            enabled: showSyncCapsule,
+            child: listPane(width: kDesktopListWidth),
+          ),
+          const SizedBox(width: kPaneGap),
           Expanded(child: readerPane(embedded: true)),
         ],
       ),
-      DesktopPaneMode.listOnly => listPane(),
+      DesktopPaneMode.listOnly => SyncStatusCapsuleHost(
+        enabled: showSyncCapsule,
+        child: listPane(),
+      ),
     };
 
     final content = Shortcuts(
@@ -485,9 +520,7 @@ class HomeScreen extends ConsumerWidget {
                 await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
               } else if (categoryId != null) {
                 final feeds = await ref.read(feedRepositoryProvider).getAll();
-                final filtered = categoryId < 0
-                    ? feeds.where((f) => f.categoryId == null)
-                    : feeds.where((f) => f.categoryId == categoryId);
+                final filtered = feeds.where((f) => f.categoryId == categoryId);
                 await ref
                     .read(syncServiceProvider)
                     .refreshFeedsSafe(filtered.map((f) => f.id));
@@ -515,7 +548,7 @@ class HomeScreen extends ConsumerWidget {
                   .getById(selectedArticleId!);
               if (a == null) return null;
               await ref
-                  .read(articleRepositoryProvider)
+                  .read(articleActionServiceProvider)
                   .markRead(selectedArticleId!, !a.isRead);
               return null;
             },
@@ -524,7 +557,7 @@ class HomeScreen extends ConsumerWidget {
             onInvoke: (intent) async {
               if (selectedArticleId == null) return null;
               await ref
-                  .read(articleRepositoryProvider)
+                  .read(articleActionServiceProvider)
                   .toggleStar(selectedArticleId!);
               return null;
             },
@@ -566,6 +599,7 @@ class HomeScreen extends ConsumerWidget {
               );
             },
           ),
+          const OutboxStatusAction(),
         ],
       ),
       floatingActionButton: FloatingActionButton(

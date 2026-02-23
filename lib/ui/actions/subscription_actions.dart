@@ -282,53 +282,11 @@ class SubscriptionActions {
     final appSettings = ref.read(appSettingsProvider).valueOrNull;
     final concurrency = appSettings?.autoRefreshConcurrency ?? 2;
 
-    if (!context.mounted) return;
-
-    // Show progress dialog.
-    final progressNotifier = ValueNotifier<String>('0/${feeds.length}');
-    unawaited(
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) {
-          return PopScope(
-            canPop: false,
-            child: AlertDialog(
-              content: Row(
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(width: 24),
-                  ValueListenableBuilder<String>(
-                    valueListenable: progressNotifier,
-                    builder: (context, value, _) {
-                      return Text(
-                        l10n.refreshingProgress(
-                          int.tryParse(value.split('/')[0]) ?? 0,
-                          int.tryParse(value.split('/')[1]) ?? feeds.length,
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ).then((_) {}),
-    );
-
     final batch = await ref
         .read(syncServiceProvider)
-        .refreshFeedsSafe(
-          feeds.map((f) => f.id),
-          maxConcurrent: concurrency,
-          onProgress: (current, total) {
-            progressNotifier.value = '$current/$total';
-          },
-        );
+        .refreshFeedsSafe(feeds.map((f) => f.id), maxConcurrent: concurrency);
 
     if (!context.mounted) return;
-    Navigator.of(context).pop(); // Close progress dialog.
 
     final err = batch.firstError?.error;
     context.showSnack(
@@ -345,20 +303,21 @@ class SubscriptionActions {
     final cats = await ref.read(categoryRepositoryProvider).getAll();
     if (!context.mounted) return;
 
-    // Returns -1 for Uncategorized, categoryId for category, null for Cancel.
-    final selected = await showDialog<int?>(
+    final selected = await showDialog<_MoveFeedCategoryPick?>(
       context: context,
       builder: (context) {
         return SimpleDialog(
           title: Text(l10n.moveToCategory),
           children: [
             SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(-1),
+              onPressed: () =>
+                  Navigator.of(context).pop(const _MoveFeedToUncategorized()),
               child: Text(l10n.uncategorized),
             ),
             for (final c in cats)
               SimpleDialogOption(
-                onPressed: () => Navigator.of(context).pop(c.id),
+                onPressed: () =>
+                    Navigator.of(context).pop(_MoveFeedToCategory(c.id)),
                 child: Text(c.name),
               ),
           ],
@@ -368,7 +327,10 @@ class SubscriptionActions {
 
     if (selected == null) return;
 
-    final categoryId = selected == -1 ? null : selected;
+    final categoryId = switch (selected) {
+      _MoveFeedToUncategorized() => null,
+      _MoveFeedToCategory(:final categoryId) => categoryId,
+    };
     await ref
         .read(feedRepositoryProvider)
         .setCategory(feedId: feedId, categoryId: categoryId);
@@ -518,4 +480,18 @@ class SubscriptionActions {
     if (!context.mounted) return;
     context.showSnack(l10n.exportedOpml);
   }
+}
+
+sealed class _MoveFeedCategoryPick {
+  const _MoveFeedCategoryPick();
+}
+
+final class _MoveFeedToUncategorized extends _MoveFeedCategoryPick {
+  const _MoveFeedToUncategorized();
+}
+
+final class _MoveFeedToCategory extends _MoveFeedCategoryPick {
+  const _MoveFeedToCategory(this.categoryId);
+
+  final int categoryId;
 }

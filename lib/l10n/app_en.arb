@@ -191,6 +191,22 @@
   "@addSubscription": {
     "description": "addSubscription"
   },
+  "selectCategory": "Select a category",
+  "@selectCategory": {
+    "description": "selectCategory"
+  },
+  "loadingCategories": "Loading categories...",
+  "@loadingCategories": {
+    "description": "loadingCategories"
+  },
+  "creatingCategory": "Creating category...",
+  "@creatingCategory": {
+    "description": "creatingCategory"
+  },
+  "feverAddSubscriptionNotSupported": "Fever accounts don't support adding subscriptions. Please manage subscriptions on the server.",
+  "@feverAddSubscriptionNotSupported": {
+    "description": "feverAddSubscriptionNotSupported"
+  },
   "newCategory": "New category",
   "@newCategory": {
     "description": "newCategory"
@@ -225,6 +241,10 @@
   "fullText": "Full text",
   "@fullText": {
     "description": "fullText"
+  },
+  "fullTextRetry": "Full text failed. Retry",
+  "@fullTextRetry": {
+    "description": "fullTextRetry"
   },
   "readerSettings": "Reader settings",
   "@readerSettings": {
@@ -300,6 +320,26 @@
   "@rssAtomUrl": {
     "description": "rssAtomUrl"
   },
+  "feedOrWebsiteUrl": "Feed / website URL",
+  "@feedOrWebsiteUrl": {
+    "description": "feedOrWebsiteUrl"
+  },
+  "discoveringFeeds": "Discovering feeds...",
+  "@discoveringFeeds": {
+    "description": "discoveringFeeds"
+  },
+  "addingSubscription": "Adding subscription...",
+  "@addingSubscription": {
+    "description": "addingSubscription"
+  },
+  "selectFeed": "Select a feed",
+  "@selectFeed": {
+    "description": "selectFeed"
+  },
+  "noFeedsFound": "No feeds found",
+  "@noFeedsFound": {
+    "description": "noFeedsFound"
+  },
   "name": "Name",
   "@name": {
     "description": "name"
@@ -335,6 +375,14 @@
   "deleteCategoryConfirmContent": "Feeds in this category will be moved to Uncategorized.",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "deleteTagConfirmTitle": "Delete tag?",
+  "@deleteTagConfirmTitle": {
+    "description": "deleteTagConfirmTitle"
+  },
+  "deleteTagConfirmContent": "This will remove it from all articles.",
+  "@deleteTagConfirmContent": {
+    "description": "deleteTagConfirmContent"
   },
   "categoryDeleted": "Category deleted",
   "@categoryDeleted": {
@@ -421,6 +469,18 @@
   "openInBrowser": "Open in browser",
   "@openInBrowser": {
     "description": "openInBrowser"
+  },
+  "copyLink": "Copy link",
+  "@copyLink": {
+    "description": "copyLink"
+  },
+  "copiedToClipboard": "Copied to clipboard",
+  "@copiedToClipboard": {
+    "description": "copiedToClipboard"
+  },
+  "share": "Share",
+  "@share": {
+    "description": "share"
   },
   "autoMarkRead": "Auto-mark as read when opened",
   "@autoMarkRead": {
@@ -522,6 +582,10 @@
   "@autoColor": {
     "description": "autoColor"
   },
+  "tagsLoadingError": "Error loading tags",
+  "@tagsLoadingError": {
+    "description": "Error message displayed when tags fail to load in the dialog"
+  },
   "cleanedArticles": "Cleaned {count} articles",
   "@cleanedArticles": {
     "placeholders": {
@@ -543,6 +607,138 @@
   "services": "Services",
   "@services": {
     "description": "services"
+  },
+  "account": "Account",
+  "@account": {
+    "description": "account"
+  },
+  "local": "Local",
+  "@local": {
+    "description": "local"
+  },
+  "miniflux": "Miniflux",
+  "@miniflux": {
+    "description": "miniflux"
+  },
+  "fever": "Fever",
+  "@fever": {
+    "description": "fever"
+  },
+  "addLocal": "Add Local",
+  "@addLocal": {
+    "description": "addLocal"
+  },
+  "addLocalAccount": "Add Local Account",
+  "@addLocalAccount": {
+    "description": "addLocalAccount"
+  },
+  "addMiniflux": "Add Miniflux",
+  "@addMiniflux": {
+    "description": "addMiniflux"
+  },
+  "addFever": "Add Fever",
+  "@addFever": {
+    "description": "addFever"
+  },
+  "minifluxStrategy": "Miniflux strategy",
+  "@minifluxStrategy": {
+    "description": "minifluxStrategy"
+  },
+  "minifluxStrategySubtitle": "Controls how much data is fetched/prefetched during sync.",
+  "@minifluxStrategySubtitle": {
+    "description": "minifluxStrategySubtitle"
+  },
+  "minifluxEntriesLimit": "Entries per sync",
+  "@minifluxEntriesLimit": {
+    "description": "minifluxEntriesLimit"
+  },
+  "minifluxWebFetchMode": "Web page fetching",
+  "@minifluxWebFetchMode": {
+    "description": "minifluxWebFetchMode"
+  },
+  "minifluxWebFetchModeSubtitle": "When \"Download Web Pages during Sync\" is enabled.",
+  "@minifluxWebFetchModeSubtitle": {
+    "description": "minifluxWebFetchModeSubtitle"
+  },
+  "minifluxWebFetchModeClient": "Client (Readability)",
+  "@minifluxWebFetchModeClient": {
+    "description": "minifluxWebFetchModeClient"
+  },
+  "minifluxWebFetchModeServer": "Server (Miniflux fetch-content)",
+  "@minifluxWebFetchModeServer": {
+    "description": "minifluxWebFetchModeServer"
+  },
+  "unlimited": "Unlimited",
+  "@unlimited": {
+    "description": "unlimited"
+  },
+  "fieldName": "Name",
+  "@fieldName": {
+    "description": "fieldName"
+  },
+  "baseUrl": "Base URL",
+  "@baseUrl": {
+    "description": "baseUrl"
+  },
+  "minifluxBaseUrlHint": "https://miniflux.example.com",
+  "@minifluxBaseUrlHint": {
+    "description": "minifluxBaseUrlHint"
+  },
+  "feverBaseUrlHint": "https://example.com/fever/",
+  "@feverBaseUrlHint": {
+    "description": "feverBaseUrlHint"
+  },
+  "apiToken": "API Token",
+  "@apiToken": {
+    "description": "apiToken"
+  },
+  "apiKey": "API Key",
+  "@apiKey": {
+    "description": "apiKey"
+  },
+  "authenticationMethod": "Authentication method",
+  "@authenticationMethod": {
+    "description": "authenticationMethod"
+  },
+  "usernamePassword": "Username & password",
+  "@usernamePassword": {
+    "description": "usernamePassword"
+  },
+  "minifluxAuthHint": "Use an API token (recommended) or username/password.",
+  "@minifluxAuthHint": {
+    "description": "minifluxAuthHint"
+  },
+  "feverAuthHint": "Use an API key (recommended) or username/password.",
+  "@feverAuthHint": {
+    "description": "feverAuthHint"
+  },
+  "username": "Username",
+  "@username": {
+    "description": "username"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "password"
+  },
+  "show": "Show",
+  "@show": {
+    "description": "show"
+  },
+  "hide": "Hide",
+  "@hide": {
+    "description": "hide"
+  },
+  "missingRequiredFields": "Missing required fields",
+  "@missingRequiredFields": {
+    "description": "missingRequiredFields"
+  },
+  "invalidBaseUrl": "Invalid base URL",
+  "@invalidBaseUrl": {
+    "description": "invalidBaseUrl"
+  },
+  "onlySupportedInLocalAccount": "Only supported in Local account",
+  "@onlySupportedInLocalAccount": {
+    "description": "onlySupportedInLocalAccount"
   },
   "autoRefresh": "Auto refresh",
   "@autoRefresh": {
@@ -585,9 +781,57 @@
   "@openFolder": {
     "description": "openFolder"
   },
+  "logDirectory": "Log directory",
+  "@logDirectory": {
+    "description": "logDirectory"
+  },
+  "openLog": "Open log",
+  "@openLog": {
+    "description": "openLog"
+  },
+  "openLogFolder": "Open log folder",
+  "@openLogFolder": {
+    "description": "openLogFolder"
+  },
+  "exportLogs": "Export logs",
+  "@exportLogs": {
+    "description": "exportLogs"
+  },
+  "exportedLogs": "Logs exported",
+  "@exportedLogs": {
+    "description": "exportedLogs"
+  },
+  "noLogsFound": "No log files found",
+  "@noLogsFound": {
+    "description": "noLogsFound"
+  },
   "keyboardShortcuts": "Keyboard shortcuts",
   "@keyboardShortcuts": {
     "description": "keyboardShortcuts"
+  },
+  "version": "Version",
+  "@version": {
+    "description": "version"
+  },
+  "buildNumber": "Build number",
+  "@buildNumber": {
+    "description": "buildNumber"
+  },
+  "openSourceLicense": "Open source license",
+  "@openSourceLicense": {
+    "description": "openSourceLicense"
+  },
+  "viewLicense": "View license",
+  "@viewLicense": {
+    "description": "viewLicense"
+  },
+  "thirdPartyLicenses": "Third-party licenses",
+  "@thirdPartyLicenses": {
+    "description": "thirdPartyLicenses"
+  },
+  "viewThirdPartyLicenses": "View all open source licenses",
+  "@viewThirdPartyLicenses": {
+    "description": "viewThirdPartyLicenses"
   },
   "filter": "Filter",
   "@filter": {
@@ -621,9 +865,41 @@
   "@syncWebPages": {
     "description": "syncWebPages"
   },
-  "showAiSummary": "Show AI Summary",
+  "syncStatusSyncing": "Syncing",
+  "@syncStatusSyncing": {
+    "description": "Sync status: syncing (generic)"
+  },
+  "syncStatusSyncingFeeds": "Syncing feeds",
+  "@syncStatusSyncingFeeds": {
+    "description": "Sync status: syncing feeds"
+  },
+  "syncStatusSyncingSubscriptions": "Syncing subscriptions",
+  "@syncStatusSyncingSubscriptions": {
+    "description": "Sync status: syncing subscriptions"
+  },
+  "syncStatusSyncingUnreadArticles": "Syncing unread articles",
+  "@syncStatusSyncingUnreadArticles": {
+    "description": "Sync status: syncing unread articles"
+  },
+  "syncStatusUploadingChanges": "Uploading changes",
+  "@syncStatusUploadingChanges": {
+    "description": "Sync status: uploading local/outbox changes"
+  },
+  "syncStatusCompleted": "Sync complete",
+  "@syncStatusCompleted": {
+    "description": "Sync status: completed"
+  },
+  "syncStatusFailed": "Sync failed",
+  "@syncStatusFailed": {
+    "description": "Sync status: failed"
+  },
+  "showAiSummary": "Show Summary",
   "@showAiSummary": {
     "description": "showAiSummary"
+  },
+  "summary": "Summary",
+  "@summary": {
+    "description": "summary"
   },
   "showImageTitle": "Show Image Title",
   "@showImageTitle": {
@@ -725,5 +1001,29 @@
   "windowClose": "Close",
   "@windowClose": {
     "description": "Tooltip for the window close button on desktop"
+  },
+  "translationAndAiServices": "Translation & AI",
+  "@translationAndAiServices": {
+    "description": "Settings tab for translation and AI services"
+  },
+  "translation": "Translation",
+  "@translation": {
+    "description": "Translation section title"
+  },
+  "translationProvider": "Translation provider",
+  "@translationProvider": {
+    "description": "Setting title for selecting translation provider"
+  },
+  "aiServices": "AI services",
+  "@aiServices": {
+    "description": "AI services section title"
+  },
+  "addAiService": "Add AI service",
+  "@addAiService": {
+    "description": "Button/title for adding an AI service"
+  },
+  "aiService": "AI service",
+  "@aiService": {
+    "description": "Generic label for AI service"
   }
 }

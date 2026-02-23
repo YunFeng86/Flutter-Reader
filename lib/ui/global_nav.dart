@@ -22,7 +22,7 @@ bool showGlobalNavRailForWidth(double totalWidth) =>
 double effectiveContentWidth(double totalWidth) {
   // Only the rail consumes horizontal space.
   if (!showGlobalNavRailForWidth(totalWidth)) return totalWidth;
-  return totalWidth - kGlobalNavRailWidth - kDividerWidth;
+  return totalWidth - kGlobalNavRailWidth - kPaneGap;
 }
 
 class GlobalNavScope extends InheritedWidget {

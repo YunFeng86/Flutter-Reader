@@ -47,4 +47,38 @@ void main() {
     });
     expect(restored.seedColorPreset, SeedColorPreset.blue);
   });
+
+  test('AppSettings persists Miniflux entries limit in JSON', () {
+    final s = const AppSettings().copyWith(minifluxEntriesLimit: 800);
+    final json = s.toJson();
+    expect(json['minifluxEntriesLimit'], 800);
+
+    final restored = AppSettings.fromJson(json.cast<String, Object?>());
+    expect(restored.minifluxEntriesLimit, 800);
+  });
+
+  test('AppSettings.fromJson defaults missing Miniflux entries limit', () {
+    final restored = AppSettings.fromJson(<String, Object?>{});
+    expect(restored.minifluxEntriesLimit, 400);
+  });
+
+  test('AppSettings allows unlimited Miniflux entries limit (0)', () {
+    final s = const AppSettings().copyWith(minifluxEntriesLimit: 0);
+    final restored = AppSettings.fromJson(s.toJson().cast<String, Object?>());
+    expect(restored.minifluxEntriesLimit, 0);
+  });
+
+  test('AppSettings persists Miniflux web fetch mode in JSON', () {
+    final s = const AppSettings().copyWith(
+      minifluxWebFetchMode: MinifluxWebFetchMode.serverFetchContent,
+    );
+    final json = s.toJson();
+    expect(json['minifluxWebFetchMode'], 'serverFetchContent');
+
+    final restored = AppSettings.fromJson(json.cast<String, Object?>());
+    expect(
+      restored.minifluxWebFetchMode,
+      MinifluxWebFetchMode.serverFetchContent,
+    );
+  });
 }

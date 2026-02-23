@@ -9,7 +9,13 @@ import '../../../../providers/subscription_settings_provider.dart';
 import '../../../../widgets/favicon_avatar.dart';
 
 class SubscriptionTreeView extends ConsumerWidget {
-  const SubscriptionTreeView({super.key});
+  const SubscriptionTreeView({super.key, this.showDetailButtons = false});
+
+  /// When true, show an explicit "enter details" button for categories/feeds.
+  ///
+  /// This is primarily used for narrow layouts where the detail panel is not
+  /// always visible.
+  final bool showDetailButtons;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,11 +51,24 @@ class SubscriptionTreeView extends ConsumerWidget {
                     feeds: byCat[category.id] ?? [],
                     isSelected: selection.activeCategoryId == category.id,
                     selectedFeedId: selection.selectedFeedId,
+                    showDetailButton: showDetailButtons,
                     onCategoryTap: () {
                       notifier.selectCategory(category.id);
                     },
+                    onOpenCategorySettings: () {
+                      notifier.openCategorySettings(category.id);
+                    },
                     onFeedTap: (feedId) {
-                      notifier.selectFeed(feedId, category.id);
+                      notifier.selectFeed(
+                        feedId,
+                        categoryScope: SubscriptionCategoryId(category.id),
+                      );
+                    },
+                    onOpenFeedSettings: (feedId) {
+                      notifier.selectFeed(
+                        feedId,
+                        categoryScope: SubscriptionCategoryId(category.id),
+                      );
                     },
                   ),
                 ],
@@ -67,7 +86,7 @@ class SubscriptionTreeView extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
-                      '${uncategorized.length} 订阅源',
+                      '${uncategorized.length} ${l10n.subscriptions}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     leading: null,
@@ -105,7 +124,22 @@ class SubscriptionTreeView extends ConsumerWidget {
                             left: 56,
                             right: 16,
                           ),
-                          onTap: () => notifier.selectFeed(feed.id, null),
+                          onTap: () => notifier.selectFeed(
+                            feed.id,
+                            categoryScope:
+                                const SubscriptionCategoryUncategorized(),
+                          ),
+                          trailing: showDetailButtons
+                              ? IconButton(
+                                  tooltip: l10n.settings,
+                                  icon: const Icon(Icons.chevron_right),
+                                  onPressed: () => notifier.selectFeed(
+                                    feed.id,
+                                    categoryScope:
+                                        const SubscriptionCategoryUncategorized(),
+                                  ),
+                                )
+                              : null,
                           dense: true,
                         ),
                     ],
@@ -125,20 +159,27 @@ class _CategoryExpansionTile extends StatelessWidget {
   final List<Feed> feeds;
   final bool isSelected;
   final int? selectedFeedId;
+  final bool showDetailButton;
   final VoidCallback onCategoryTap;
+  final VoidCallback onOpenCategorySettings;
   final ValueChanged<int> onFeedTap;
+  final ValueChanged<int> onOpenFeedSettings;
 
   const _CategoryExpansionTile({
     required this.category,
     required this.feeds,
     required this.isSelected,
     required this.selectedFeedId,
+    required this.showDetailButton,
     required this.onCategoryTap,
+    required this.onOpenCategorySettings,
     required this.onFeedTap,
+    required this.onOpenFeedSettings,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     return ExpansionTile(
       key: PageStorageKey(category.id),
@@ -149,11 +190,18 @@ class _CategoryExpansionTile extends StatelessWidget {
         style: const TextStyle(fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        '${feeds.length} 订阅源',
+        '${feeds.length} ${AppLocalizations.of(context)!.subscriptions}',
         style: Theme.of(context).textTheme.bodySmall,
       ),
       // Remove default leading icon as arrow is now leading
       leading: null,
+      trailing: showDetailButton
+          ? IconButton(
+              tooltip: l10n.settings,
+              icon: const Icon(Icons.chevron_right),
+              onPressed: onOpenCategorySettings,
+            )
+          : null,
       shape: const Border(), // Remove default borders
       collapsedShape: const Border(),
 
@@ -186,12 +234,19 @@ class _CategoryExpansionTile extends StatelessWidget {
             selected: selectedFeedId == feed.id,
             contentPadding: const EdgeInsets.only(left: 56, right: 16),
             onTap: () => onFeedTap(feed.id),
+            trailing: showDetailButton
+                ? IconButton(
+                    tooltip: l10n.settings,
+                    icon: const Icon(Icons.chevron_right),
+                    onPressed: () => onOpenFeedSettings(feed.id),
+                  )
+                : null,
             dense: true,
           ),
         if (feeds.isEmpty)
           ListTile(
             title: Text(
-              'No subscriptions',
+              AppLocalizations.of(context)!.notFound,
               style: TextStyle(color: Theme.of(context).disabledColor),
             ),
             contentPadding: const EdgeInsets.only(left: 56, right: 16),
