@@ -377,6 +377,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchInContent => 'Search in content';
 
   @override
+  String get findInPage => 'Find in page';
+
+  @override
+  String get previousMatch => 'Previous match';
+
+  @override
+  String get nextMatch => 'Next match';
+
+  @override
+  String get caseSensitive => 'Case sensitive';
+
+  @override
+  String get close => 'Close';
+
+  @override
   String get groupingAndSorting => 'Grouping & Sorting';
 
   @override

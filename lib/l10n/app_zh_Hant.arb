@@ -523,6 +523,26 @@
   "@searchInContent": {
     "description": "searchInContent"
   },
+  "findInPage": "頁面內尋找",
+  "@findInPage": {
+    "description": "findInPage"
+  },
+  "previousMatch": "上一個符合",
+  "@previousMatch": {
+    "description": "previousMatch"
+  },
+  "nextMatch": "下一個符合",
+  "@nextMatch": {
+    "description": "nextMatch"
+  },
+  "caseSensitive": "區分大小寫",
+  "@caseSensitive": {
+    "description": "caseSensitive"
+  },
+  "close": "關閉",
+  "@close": {
+    "description": "close"
+  },
   "groupingAndSorting": "分組與排序",
   "@groupingAndSorting": {
     "description": "groupingAndSorting"

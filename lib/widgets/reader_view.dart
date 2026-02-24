@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
@@ -16,15 +17,18 @@ import 'package:intl/intl.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
 import 'reader_bottom_bar.dart';
+import 'reader_search_bar.dart';
 import '../models/article.dart';
 import '../models/category.dart';
 import '../models/feed.dart';
 import '../providers/app_settings_providers.dart';
+import '../providers/reader_search_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/settings_providers.dart';
 import '../services/cache/image_meta_store.dart';
+import '../services/reader_search_service.dart';
 import '../services/settings/app_settings.dart';
 import '../services/settings/reader_settings.dart';
 import '../services/settings/reader_progress_store.dart';
@@ -52,12 +56,21 @@ class ReaderView extends ConsumerStatefulWidget {
   ConsumerState<ReaderView> createState() => _ReaderViewState();
 }
 
+class _ToggleReaderSearchIntent extends Intent {
+  const _ToggleReaderSearchIntent();
+}
+
+class _CloseReaderSearchIntent extends Intent {
+  const _CloseReaderSearchIntent();
+}
+
 class _ReaderViewState extends ConsumerState<ReaderView> {
   ProviderSubscription<AsyncValue<Article?>>? _articleSub;
   ProviderSubscription<AsyncValue<void>>? _fullTextSub;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<SelectionAreaState> _selectionAreaKey =
       GlobalKey<SelectionAreaState>();
+  final GlobalKey<HtmlWidgetState> _fullHtmlKey = GlobalKey<HtmlWidgetState>();
   final ContextMenuController _contextMenuController = ContextMenuController();
   final ContextMenuController _quickMenuController = ContextMenuController();
   Timer? _quickMenuTimer;
@@ -80,6 +93,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   Timer? _restoreTimer;
   final GlobalKey _listViewKey = GlobalKey();
   final Map<int, GlobalKey> _chunkKeys = {};
+  final Map<int, GlobalKey<HtmlWidgetState>> _chunkHtmlKeys = {};
+  int _searchScrollRequestId = 0;
   _ChunkAnchor? _pendingAnchor;
   _ChunkAnchor? _lastAnchor;
   Timer? _resizeTimer;
@@ -290,6 +305,11 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final html = a == null ? '' : _selectActiveHtml(a);
         if (a == null || html.isEmpty) return;
         if (prevA != null && prevA.id == a.id && prevHtml == html) return;
+
+        ref
+            .read(readerSearchControllerProvider(articleId).notifier)
+            .setDocumentHtml(html);
+
         final maxPrefetch = html.length >= 50000 ? 6 : 24;
         unawaited(
           ref
@@ -394,6 +414,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _lastViewportSize = null;
     _usingChunkedLayout = false;
     _chunkKeys.clear();
+    _chunkHtmlKeys.clear();
     _prefetchedChunks.clear();
     _currentChunks = null;
     _currentImageBaseUrl = null;
@@ -578,6 +599,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     if (_usingChunkedLayout == isChunked) return;
     _usingChunkedLayout = isChunked;
     _chunkKeys.clear();
+    _chunkHtmlKeys.clear();
     _pendingAnchor = null;
     _resizeRestoreAttempts = 0;
     _resizeTimer?.cancel();
@@ -888,14 +910,40 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
           ],
         );
 
+        final searchState = ref.watch(
+          readerSearchControllerProvider(widget.articleId),
+        );
+        ref.listen<int>(
+          readerSearchControllerProvider(
+            widget.articleId,
+          ).select((s) => s.navigationRequestId),
+          (prev, next) {
+            if (prev == next) return;
+            final match = ref
+                .read(readerSearchControllerProvider(widget.articleId))
+                .currentMatch;
+            if (match == null) return;
+            _scheduleScrollToSearchMatch(match);
+          },
+        );
+
+        final displayChunks = html.isEmpty
+            ? const <String>[]
+            : isChunked
+            ? (searchState.highlight?.highlightedChunks ??
+                  ReaderSearchService.splitHtmlIntoChunks(html))
+            : (searchState.highlight?.highlightedChunks ?? <String>[html]);
+
         final contentWidget = html.isEmpty
             ? Center(child: Text(article.link))
             : _buildContentWidget(
                 context,
-                html,
+                displayChunks,
+                isChunked,
                 article,
                 settings,
                 inlineHeader,
+                searchState.currentAnchorId,
               );
 
         final bottomBar = Positioned(
@@ -926,6 +974,17 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             ? (!widget.embedded || widget.showBack)
             : widget.showBack;
 
+        final body = _wrapSearchShortcuts(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              contentWidget,
+              ReaderSearchBar(articleId: widget.articleId),
+              bottomBar,
+            ],
+          ),
+        );
+
         if (showAppBar) {
           return Scaffold(
             appBar: AppBar(
@@ -948,31 +1007,223 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                   : null,
               actions: const [], // Actions moved to bottom bar
             ),
-            body: Stack(
-              fit: StackFit.expand,
-              children: [contentWidget, bottomBar],
-            ),
+            body: body,
           );
         }
 
-        return Stack(
-          fit: StackFit.expand,
-          children: [contentWidget, bottomBar],
-        );
+        return body;
       },
     );
   }
 
+  Widget _wrapSearchShortcuts({required Widget child}) {
+    return Shortcuts(
+      shortcuts: <ShortcutActivator, Intent>{
+        LogicalKeySet(LogicalKeyboardKey.control, LogicalKeyboardKey.keyF):
+            const _ToggleReaderSearchIntent(),
+        LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyF):
+            const _ToggleReaderSearchIntent(),
+        LogicalKeySet(LogicalKeyboardKey.escape):
+            const _CloseReaderSearchIntent(),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _ToggleReaderSearchIntent: CallbackAction<_ToggleReaderSearchIntent>(
+            onInvoke: (_) {
+              ref
+                  .read(
+                    readerSearchControllerProvider(widget.articleId).notifier,
+                  )
+                  .toggleVisible();
+              return null;
+            },
+          ),
+          _CloseReaderSearchIntent: CallbackAction<_CloseReaderSearchIntent>(
+            onInvoke: (_) {
+              ref
+                  .read(
+                    readerSearchControllerProvider(widget.articleId).notifier,
+                  )
+                  .close(clearQuery: true);
+              return null;
+            },
+          ),
+        },
+        child: Focus(autofocus: true, child: child),
+      ),
+    );
+  }
+
+  void _scheduleScrollToSearchMatch(ReaderSearchMatch match) {
+    final requestId = ++_searchScrollRequestId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_scrollToSearchMatch(match, requestId: requestId));
+    });
+  }
+
+  Future<void> _scrollToSearchMatch(
+    ReaderSearchMatch match, {
+    required int requestId,
+  }) async {
+    if (!mounted) return;
+    if (requestId != _searchScrollRequestId) return;
+    if (!_scrollController.hasClients) return;
+
+    if (!_usingChunkedLayout) {
+      final htmlState = _fullHtmlKey.currentState;
+      if (htmlState != null) {
+        unawaited(htmlState.scrollToAnchor(match.anchorId));
+      }
+      return;
+    }
+
+    final targetIndex = match.chunkIndex + 1; // index 0 is inline header
+    await _seekToChunkIndex(targetIndex, requestId: requestId);
+    if (!mounted) return;
+    if (requestId != _searchScrollRequestId) return;
+
+    final state = _chunkHtmlKeys[targetIndex]?.currentState;
+    if (state != null) {
+      unawaited(state.scrollToAnchor(match.anchorId));
+      return;
+    }
+
+    final ctx = _chunkKeys[targetIndex]?.currentContext;
+    if (ctx == null) return;
+    if (!ctx.mounted) return;
+    await Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOut,
+      alignment: 0.1,
+    );
+    if (!mounted) return;
+    if (requestId != _searchScrollRequestId) return;
+    await WidgetsBinding.instance.endOfFrame;
+    final htmlState = _chunkHtmlKeys[targetIndex]?.currentState;
+    if (htmlState != null) {
+      unawaited(htmlState.scrollToAnchor(match.anchorId));
+    }
+  }
+
+  double _estimateAverageChunkHeight() {
+    double sum = 0;
+    int count = 0;
+    for (final entry in _chunkKeys.entries) {
+      if (entry.key == 0) continue;
+      final ctx = entry.value.currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null || !box.hasSize) continue;
+      sum += box.size.height;
+      count++;
+    }
+    if (count == 0) return 800;
+    return sum / count;
+  }
+
+  Future<void> _seekToChunkIndex(
+    int targetIndex, {
+    required int requestId,
+  }) async {
+    if (!_scrollController.hasClients) return;
+    if (requestId != _searchScrollRequestId) return;
+
+    final chunks = _currentChunks;
+    if (chunks == null || chunks.isEmpty) return;
+    final totalItems = chunks.length + 1;
+    if (targetIndex < 0 || targetIndex >= totalItems) return;
+
+    for (int attempt = 0; attempt < 10; attempt++) {
+      if (!mounted) return;
+      if (requestId != _searchScrollRequestId) return;
+
+      final ctx = _chunkKeys[targetIndex]?.currentContext;
+      if (ctx != null) {
+        if (!ctx.mounted) return;
+        await Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          alignment: 0.1,
+        );
+        return;
+      }
+
+      final position = _scrollController.position;
+      final anchor = _findChunkAnchor();
+      final diff = anchor == null ? null : (targetIndex - anchor.index);
+
+      double nextOffset;
+      if (diff == null) {
+        final frac = (targetIndex / (totalItems - 1)).clamp(0.0, 1.0);
+        nextOffset =
+            position.minScrollExtent +
+            (position.maxScrollExtent - position.minScrollExtent) * frac;
+      } else {
+        final avg = _estimateAverageChunkHeight();
+        nextOffset = position.pixels + diff * avg;
+      }
+
+      nextOffset = nextOffset
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble();
+      if ((nextOffset - position.pixels).abs() < 1) {
+        // Nudge by one viewport to force new children to build.
+        final direction = (diff ?? 0).sign;
+        if (direction == 0) return;
+        nextOffset = (position.pixels + direction * position.viewportDimension)
+            .clamp(position.minScrollExtent, position.maxScrollExtent)
+            .toDouble();
+      }
+
+      _scrollController.jumpTo(nextOffset);
+      await WidgetsBinding.instance.endOfFrame;
+    }
+  }
+
   Widget _buildContentWidget(
     BuildContext context,
-    String html,
+    List<String> chunks,
+    bool isChunked,
     Article article,
     ReaderSettings settings,
     Widget inlineHeader,
+    String? currentAnchorId,
   ) {
     final cacheManager = ref.read(cacheManagerProvider);
     _currentImageBaseUrl = Uri.tryParse(article.link);
-    if (html.length < _chunkThreshold) {
+    final theme = Theme.of(context);
+
+    String rgba(Color c, {double alpha = 1}) {
+      final a = (c.a * alpha).clamp(0.0, 1.0);
+      final r = (c.r * 255.0).round().clamp(0, 255);
+      final g = (c.g * 255.0).round().clamp(0, 255);
+      final b = (c.b * 255.0).round().clamp(0, 255);
+      return 'rgba($r,$g,$b,${a.toStringAsFixed(3)})';
+    }
+
+    Map<String, String>? searchStyles(dom.Element element) {
+      if (element.localName != 'mark') return null;
+      if (element.attributes[ReaderSearchService.markerAttribute] !=
+          ReaderSearchService.markerAttributeValue) {
+        return null;
+      }
+
+      final isCurrent =
+          currentAnchorId != null && element.id == currentAnchorId;
+      final bg = isCurrent
+          ? rgba(theme.colorScheme.secondaryContainer, alpha: 0.95)
+          : rgba(theme.colorScheme.tertiaryContainer, alpha: 0.8);
+      return <String, String>{
+        'background-color': bg,
+        'padding': '0 2px',
+        'border-radius': '2px',
+      };
+    }
+
+    if (!isChunked) {
+      final html = chunks.isEmpty ? '' : chunks.first;
       _currentChunks = null;
       return SelectionArea(
         key: _selectionAreaKey,
@@ -1000,12 +1251,14 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                       inlineHeader,
                       HtmlWidget(
                         html,
+                        key: _fullHtmlKey,
                         baseUrl: Uri.tryParse(article.link),
                         factoryBuilder: () =>
                             _ReaderWidgetFactory(cacheManager),
                         renderMode: RenderMode.column,
                         buildAsync: true,
                         onLoadingBuilder: _buildImageLoadingPlaceholder,
+                        customStylesBuilder: searchStyles,
                         textStyle: TextStyle(
                           fontSize: settings.fontSize,
                           height: settings.lineHeight,
@@ -1025,7 +1278,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     }
 
     // Lazy load long articles
-    final chunks = _splitHtmlIntoChunks(html);
     _currentChunks = chunks;
     return SelectionArea(
       key: _selectionAreaKey,
@@ -1053,15 +1305,21 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 if (index == 0) {
                   return KeyedSubtree(key: key, child: inlineHeader);
                 }
+                final htmlKey = _chunkHtmlKeys.putIfAbsent(
+                  index,
+                  () => GlobalKey<HtmlWidgetState>(),
+                );
                 return KeyedSubtree(
                   key: key,
                   child: HtmlWidget(
                     chunks[index - 1],
+                    key: htmlKey,
                     baseUrl: Uri.tryParse(article.link),
                     factoryBuilder: () => _ReaderWidgetFactory(cacheManager),
                     renderMode: RenderMode.column,
                     buildAsync: true,
                     onLoadingBuilder: _buildImageLoadingPlaceholder,
+                    customStylesBuilder: searchStyles,
                     textStyle: TextStyle(
                       fontSize: settings.fontSize,
                       height: settings.lineHeight,
@@ -1478,42 +1736,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
       loadingProgress: loadingProgress,
       aspectRatio: aspectRatio,
     );
-  }
-
-  List<String> _splitHtmlIntoChunks(String html, {int chunkSize = 20000}) {
-    final chunks = <String>[];
-    int start = 0;
-    // Regex to find closing block tags (case insensitive)
-    final blockTagRe = RegExp(
-      r'</(p|div|section|article|h[1-6]|ul|ol|table|blockquote)>',
-      caseSensitive: false,
-    );
-
-    while (start < html.length) {
-      if (start + chunkSize >= html.length) {
-        chunks.add(html.substring(start));
-        break;
-      }
-
-      int end = start + chunkSize;
-      // Look for the next closing tag after the rough chunk boundary
-      final match = blockTagRe.firstMatch(html.substring(end));
-      if (match != null) {
-        // Split after the closing tag
-        end += match.end;
-      } else {
-        // Fallback: look for generic closing tag
-        final closeIdx = html.indexOf('>', end);
-        if (closeIdx != -1) {
-          end = closeIdx + 1;
-        }
-        // If really no tags, use hard cut (unlikely for HTML)
-      }
-
-      chunks.add(html.substring(start, end));
-      start = end;
-    }
-    return chunks;
   }
 
   Future<bool> _onTapUrl(String url) async {

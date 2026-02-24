@@ -494,6 +494,26 @@
   "@searchInContent": {
     "description": "searchInContent"
   },
+  "findInPage": "Find in page",
+  "@findInPage": {
+    "description": "findInPage"
+  },
+  "previousMatch": "Previous match",
+  "@previousMatch": {
+    "description": "previousMatch"
+  },
+  "nextMatch": "Next match",
+  "@nextMatch": {
+    "description": "nextMatch"
+  },
+  "caseSensitive": "Case sensitive",
+  "@caseSensitive": {
+    "description": "caseSensitive"
+  },
+  "close": "Close",
+  "@close": {
+    "description": "close"
+  },
   "groupingAndSorting": "Grouping & Sorting",
   "@groupingAndSorting": {
     "description": "groupingAndSorting"
