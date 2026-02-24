@@ -33,7 +33,7 @@ void main() {
 
       // 1) Simulate a legacy database created before `autoTranslate` existed.
       final legacy = await Isar.open(
-        [LegacyFeedSchema, ArticleSchema, LegacyCategorySchema, TagSchema],
+        [legacyFeedSchema, ArticleSchema, legacyCategorySchema, TagSchema],
         directory: dir.path,
         name: dbName,
       );
@@ -238,7 +238,7 @@ class LegacyFeed {
 }
 
 // Property IDs mirror the schema before `autoTranslate` existed.
-final LegacyFeedSchema = CollectionSchema(
+final legacyFeedSchema = CollectionSchema(
   name: r'Feed',
   id: 8879644747771893978,
   properties: {
@@ -359,7 +359,7 @@ class LegacyCategory {
 }
 
 // Property IDs mirror the schema before `autoTranslate` existed.
-final LegacyCategorySchema = CollectionSchema(
+final legacyCategorySchema = CollectionSchema(
   name: r'Category',
   id: 5751694338128944171,
   properties: {

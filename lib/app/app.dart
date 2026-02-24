@@ -13,6 +13,7 @@ import '../providers/app_settings_providers.dart';
 import '../utils/macos_locale_bridge.dart';
 import '../utils/platform.dart';
 import '../widgets/desktop_title_bar.dart';
+import '../widgets/db_recovery_notice.dart';
 import '../widgets/outbox_status_action.dart';
 import '../widgets/sidebar.dart';
 import '../providers/query_providers.dart';
@@ -109,7 +110,8 @@ class App extends ConsumerWidget {
           onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
           builder: (context, child) {
             final content = child ?? const SizedBox.shrink();
-            if (!isDesktop) return content;
+            final wrapped = DbRecoveryNoticeOverlay(child: content);
+            if (!isDesktop) return wrapped;
 
             // Tooltips need an Overlay ancestor; since the title bar sits above the
             // Router/Navigator, we provide a top-level Overlay for desktop.
@@ -118,7 +120,7 @@ class App extends ConsumerWidget {
                 OverlayEntry(
                   opaque: true,
                   builder: (_) =>
-                      _DesktopChrome(router: router, content: content),
+                      _DesktopChrome(router: router, content: wrapped),
                 ),
               ],
             );
