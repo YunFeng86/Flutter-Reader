@@ -84,4 +84,17 @@ class SettingsInheritanceHelper {
     if (categoryShowAiSummary != null) return categoryShowAiSummary;
     return appSettings.showAiSummary;
   }
+
+  static bool resolveAutoTranslate(
+    Feed? feed,
+    Category? category,
+    AppSettings appSettings,
+  ) {
+    final feedValue = feed?.autoTranslate;
+    if (feedValue != null) return feedValue;
+
+    final categoryValue = category?.autoTranslate;
+    if (categoryValue != null) return categoryValue;
+    return appSettings.autoTranslate;
+  }
 }

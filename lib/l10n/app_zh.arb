@@ -958,6 +958,10 @@
   "@defaultValue": {
     "description": "defaultValue"
   },
+  "defaultOption": "默认",
+  "@defaultOption": {
+    "description": "通用的“默认”选项标签"
+  },
   "userAgent": "User-Agent",
   "@userAgent": {
     "description": "userAgent"
@@ -1046,5 +1050,139 @@
   "aiService": "AI 服务",
   "@aiService": {
     "description": "AI 服务的通用标签"
+  },
+  "aiSummary": "AI 总结",
+  "@aiSummary": {
+    "description": "AI 总结分组标题/标签"
+  },
+  "aiSummaryService": "AI 总结服务",
+  "@aiSummaryService": {
+    "description": "选择 AI 总结使用的 AI 服务"
+  },
+  "targetLanguage": "目标语言",
+  "@targetLanguage": {
+    "description": "选择目标语言的设置项标题"
+  },
+  "followAppLanguage": "跟随软件语言",
+  "@followAppLanguage": {
+    "description": "跟随软件语言的选项标签"
+  },
+  "aiSummaryPrompt": "AI 总结提示词",
+  "@aiSummaryPrompt": {
+    "description": "AI 总结提示词模板设置项标题"
+  },
+  "aiTranslationPrompt": "AI 翻译提示词",
+  "@aiTranslationPrompt": {
+    "description": "AI 翻译提示词模板设置项标题（仅使用 AI 翻译时生效）"
+  },
+  "defaultAiSummaryPromptTemplate": "请用 {language} 总结这篇文章（标题：{title}）：{content}",
+  "@defaultAiSummaryPromptTemplate": {
+    "description": "默认 AI 总结提示词模板",
+    "placeholders": {
+      "language": {},
+      "title": {},
+      "content": {}
+    }
+  },
+  "defaultAiTranslationPromptTemplate": "请将这篇文章翻译成 {language}（标题：{title}）：{content}",
+  "@defaultAiTranslationPromptTemplate": {
+    "description": "默认 AI 翻译提示词模板（仅使用 AI 翻译时生效）",
+    "placeholders": {
+      "language": {},
+      "title": {},
+      "content": {}
+    }
+  },
+  "promptVariables": "可用变量",
+  "@promptVariables": {
+    "description": "提示词模板可用变量列表标题"
+  },
+  "promptVariableContentDescription": "文章正文",
+  "@promptVariableContentDescription": {
+    "description": "{{content}} 变量的说明文本"
+  },
+  "promptVariableLanguageDescription": "目标语言",
+  "@promptVariableLanguageDescription": {
+    "description": "{{language}} 变量的说明文本"
+  },
+  "promptVariableTitleDescription": "文章标题",
+  "@promptVariableTitleDescription": {
+    "description": "{{title}} 变量的说明文本"
+  },
+  "tpmLimit": "TPM 限制",
+  "@tpmLimit": {
+    "description": "TPM（每分钟 Token）限制设置项标题"
+  },
+  "tpmLimitSubtitle": "0 表示不限制；超出后将进入队列等待。",
+  "@tpmLimitSubtitle": {
+    "description": "TPM 限制的说明文字"
+  },
+  "aiSummaryAction": "AI 总结",
+  "@aiSummaryAction": {
+    "description": "阅读页生成 AI 总结按钮文案"
+  },
+  "translateAction": "翻译",
+  "@translateAction": {
+    "description": "阅读页翻译按钮文案"
+  },
+  "translationMode": "翻译模式",
+  "@translationMode": {
+    "description": "选择翻译模式的标题"
+  },
+  "immersiveTranslation": "沉浸式翻译",
+  "@immersiveTranslation": {
+    "description": "沉浸式翻译模式选项文案"
+  },
+  "traditionalTranslation": "传统翻译",
+  "@traditionalTranslation": {
+    "description": "传统翻译模式选项文案"
+  },
+  "generating": "生成中…",
+  "@generating": {
+    "description": "通用生成中状态文案"
+  },
+  "queued": "排队中",
+  "@queued": {
+    "description": "通用排队中状态文案"
+  },
+  "regenerate": "重新生成",
+  "@regenerate": {
+    "description": "重新生成按钮文案"
+  },
+  "cachedPromptOutdated": "Prompt 已更新，请重新生成。",
+  "@cachedPromptOutdated": {
+    "description": "当缓存因 Prompt 变更失效时的提示文案"
+  },
+  "languageMismatchBanner": "检测到内容可能是 {source}，目标语言是 {target}。",
+  "@languageMismatchBanner": {
+    "description": "文章语言与目标语言不一致时的提醒文案",
+    "placeholders": {
+      "source": {},
+      "target": {}
+    }
+  },
+  "dontRemindThisLanguage": "不再提醒此语言",
+  "@dontRemindThisLanguage": {
+    "description": "关闭某个源语言提醒的操作文案"
+  },
+  "autoAiSummary": "自动 AI 总结",
+  "@autoAiSummary": {
+    "description": "自动 AI 总结设置项标题"
+  },
+  "autoTranslate": "自动翻译",
+  "@autoTranslate": {
+    "description": "自动翻译设置项标题"
+  },
+  "aiNotConfigured": "尚未配置 AI 服务。",
+  "@aiNotConfigured": {
+    "description": "未配置 AI 服务时的错误提示"
+  },
+  "translationNotAvailable": "所选翻译提供方暂不支持。",
+  "@translationNotAvailable": {
+    "description": "所选翻译提供方未实现时的错误提示"
+  },
+  "clearTranslation": "关闭翻译",
+  "@clearTranslation": {
+    "description": "清除/隐藏翻译视图的操作文案"
   }
 }

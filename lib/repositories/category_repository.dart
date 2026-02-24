@@ -132,6 +132,8 @@ class CategoryRepository {
     bool updateSyncWebPages = false,
     bool? showAiSummary,
     bool updateShowAiSummary = false,
+    bool? autoTranslate,
+    bool updateAutoTranslate = false,
   }) {
     return _isar.writeTxn(() async {
       final c = await _isar.categorys.get(id);
@@ -143,6 +145,7 @@ class CategoryRepository {
       if (updateSyncImages) c.syncImages = syncImages;
       if (updateSyncWebPages) c.syncWebPages = syncWebPages;
       if (updateShowAiSummary) c.showAiSummary = showAiSummary;
+      if (updateAutoTranslate) c.autoTranslate = autoTranslate;
 
       c.updatedAt = DateTime.now();
       await _isar.categorys.put(c);

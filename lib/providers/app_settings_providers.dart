@@ -105,6 +105,11 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
     await save(cur.copyWith(showAiSummary: value));
   }
 
+  Future<void> setAutoTranslate(bool value) async {
+    final cur = state.valueOrNull ?? AppSettings.defaults();
+    await save(cur.copyWith(autoTranslate: value));
+  }
+
   Future<void> setMinifluxEntriesLimit(int limit) async {
     final cur = state.valueOrNull ?? AppSettings.defaults();
     await save(cur.copyWith(minifluxEntriesLimit: limit));

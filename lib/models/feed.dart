@@ -62,6 +62,9 @@ class Feed {
   /// Whether to show AI summary
   bool? showAiSummary;
 
+  /// Whether to auto-translate the article when opened in the reader.
+  bool? autoTranslate;
+
   DateTime createdAt = DateTime.now();
   DateTime updatedAt = DateTime.now();
 }

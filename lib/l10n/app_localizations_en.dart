@@ -724,6 +724,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultValue => 'Default Value';
 
   @override
+  String get defaultOption => 'Default';
+
+  @override
   String get userAgent => 'User-Agent';
 
   @override
@@ -789,4 +792,110 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiService => 'AI service';
+
+  @override
+  String get aiSummary => 'AI summary';
+
+  @override
+  String get aiSummaryService => 'AI summary service';
+
+  @override
+  String get targetLanguage => 'Target language';
+
+  @override
+  String get followAppLanguage => 'Follow app language';
+
+  @override
+  String get aiSummaryPrompt => 'AI summary prompt';
+
+  @override
+  String get aiTranslationPrompt => 'AI translation prompt';
+
+  @override
+  String defaultAiSummaryPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return 'Please summarize this article in $language (title: $title): $content';
+  }
+
+  @override
+  String defaultAiTranslationPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return 'Please translate this article into $language (title: $title): $content';
+  }
+
+  @override
+  String get promptVariables => 'Available variables';
+
+  @override
+  String get promptVariableContentDescription => 'Article content';
+
+  @override
+  String get promptVariableLanguageDescription => 'Target language';
+
+  @override
+  String get promptVariableTitleDescription => 'Article title';
+
+  @override
+  String get tpmLimit => 'TPM limit';
+
+  @override
+  String get tpmLimitSubtitle =>
+      '0 means unlimited; requests will be queued when exceeded.';
+
+  @override
+  String get aiSummaryAction => 'AI summary';
+
+  @override
+  String get translateAction => 'Translate';
+
+  @override
+  String get translationMode => 'Translation mode';
+
+  @override
+  String get immersiveTranslation => 'Immersive translation';
+
+  @override
+  String get traditionalTranslation => 'Traditional translation';
+
+  @override
+  String get generating => 'Generating…';
+
+  @override
+  String get queued => 'Queued';
+
+  @override
+  String get regenerate => 'Regenerate';
+
+  @override
+  String get cachedPromptOutdated => 'Prompt updated; regenerate to refresh.';
+
+  @override
+  String languageMismatchBanner(Object source, Object target) {
+    return 'Detected $source content; target language is $target.';
+  }
+
+  @override
+  String get dontRemindThisLanguage => 'Don\'t remind for this language';
+
+  @override
+  String get autoAiSummary => 'Auto AI summary';
+
+  @override
+  String get autoTranslate => 'Auto translate';
+
+  @override
+  String get aiNotConfigured => 'AI service not configured.';
+
+  @override
+  String get translationNotAvailable =>
+      'Translation is not available for the selected provider.';
+
+  @override
+  String get clearTranslation => 'Clear translation';
 }

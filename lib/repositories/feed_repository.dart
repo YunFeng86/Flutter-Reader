@@ -175,6 +175,8 @@ class FeedRepository {
     bool updateSyncWebPages = false,
     bool? showAiSummary,
     bool updateShowAiSummary = false,
+    bool? autoTranslate,
+    bool updateAutoTranslate = false,
   }) {
     return _isar.writeTxn(() async {
       final feed = await _isar.feeds.get(id);
@@ -186,6 +188,7 @@ class FeedRepository {
       if (updateSyncImages) feed.syncImages = syncImages;
       if (updateSyncWebPages) feed.syncWebPages = syncWebPages;
       if (updateShowAiSummary) feed.showAiSummary = showAiSummary;
+      if (updateAutoTranslate) feed.autoTranslate = autoTranslate;
 
       feed.updatedAt = DateTime.now();
       await _isar.feeds.put(feed);

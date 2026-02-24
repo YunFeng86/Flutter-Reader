@@ -34,6 +34,58 @@ class TranslationAiSettingsController
     await save(cur.copyWith(translationProvider: selection));
   }
 
+  Future<void> setTargetLanguageTag(String? languageTag) async {
+    final trimmed = (languageTag ?? '').trim();
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    await save(cur.copyWith(targetLanguageTag: trimmed.isEmpty ? null : trimmed));
+  }
+
+  Future<void> setAiSummaryPrompt(String? prompt) async {
+    final trimmed = (prompt ?? '').trim();
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    await save(cur.copyWith(aiSummaryPrompt: trimmed.isEmpty ? null : trimmed));
+  }
+
+  Future<void> setAiTranslationPrompt(String? prompt) async {
+    final trimmed = (prompt ?? '').trim();
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    await save(
+      cur.copyWith(aiTranslationPrompt: trimmed.isEmpty ? null : trimmed),
+    );
+  }
+
+  Future<void> setTpmLimit(int tpmLimit) async {
+    final next = tpmLimit < 0 ? 0 : tpmLimit;
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    await save(cur.copyWith(tpmLimit: next));
+  }
+
+  Future<void> disableTranslationReminderForLanguage(String languageTag) async {
+    final trimmed = languageTag.trim();
+    if (trimmed.isEmpty) return;
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    if (cur.disabledTranslationReminderLanguages.contains(trimmed)) return;
+    await save(
+      cur.copyWith(
+        disabledTranslationReminderLanguages: [
+          ...cur.disabledTranslationReminderLanguages,
+          trimmed,
+        ],
+      ),
+    );
+  }
+
+  Future<void> enableTranslationReminderForLanguage(String languageTag) async {
+    final trimmed = languageTag.trim();
+    if (trimmed.isEmpty) return;
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    final next = cur.disabledTranslationReminderLanguages
+        .where((v) => v.trim() != trimmed)
+        .toList(growable: false);
+    if (next.length == cur.disabledTranslationReminderLanguages.length) return;
+    await save(cur.copyWith(disabledTranslationReminderLanguages: next));
+  }
+
   Future<void> setDeepLEndpoint(DeepLEndpoint endpoint) async {
     final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
     await save(cur.copyWith(deepL: DeepLSettings(endpoint: endpoint)));
@@ -50,6 +102,14 @@ class TranslationAiSettingsController
     final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
     await save(
       cur.copyWith(defaultAiServiceId: trimmed.isEmpty ? null : trimmed),
+    );
+  }
+
+  Future<void> setAiSummaryServiceId(String? serviceId) async {
+    final trimmed = (serviceId ?? '').trim();
+    final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
+    await save(
+      cur.copyWith(aiSummaryServiceId: trimmed.isEmpty ? null : trimmed),
     );
   }
 
@@ -166,6 +226,11 @@ class TranslationAiSettingsController
       }
     }
 
+    String? nextSummaryServiceId = cur.aiSummaryServiceId;
+    if (!enabled && nextSummaryServiceId == serviceId) {
+      nextSummaryServiceId = null;
+    }
+
     var nextProvider = cur.translationProvider;
     if (!enabled &&
         nextProvider.kind == TranslationProviderKind.aiService &&
@@ -177,6 +242,7 @@ class TranslationAiSettingsController
       cur.copyWith(
         aiServices: nextServices,
         defaultAiServiceId: nextDefaultId,
+        aiSummaryServiceId: nextSummaryServiceId,
         translationProvider: nextProvider,
       ),
     );
@@ -216,6 +282,11 @@ class TranslationAiSettingsController
       }
     }
 
+    String? nextSummaryServiceId = cur.aiSummaryServiceId;
+    if (nextSummaryServiceId == serviceId) {
+      nextSummaryServiceId = null;
+    }
+
     var nextProvider = cur.translationProvider;
     if (nextProvider.kind == TranslationProviderKind.aiService &&
         nextProvider.aiServiceId == serviceId) {
@@ -226,6 +297,7 @@ class TranslationAiSettingsController
       cur.copyWith(
         aiServices: remaining,
         defaultAiServiceId: nextDefaultId,
+        aiSummaryServiceId: nextSummaryServiceId,
         translationProvider: nextProvider,
       ),
     );

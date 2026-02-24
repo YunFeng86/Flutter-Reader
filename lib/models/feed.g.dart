@@ -17,118 +17,123 @@ const FeedSchema = CollectionSchema(
   name: r'Feed',
   id: 8879644747771893978,
   properties: {
-    r'categoryId': PropertySchema(
+    r'autoTranslate': PropertySchema(
       id: 0,
+      name: r'autoTranslate',
+      type: IsarType.bool,
+    ),
+    r'categoryId': PropertySchema(
+      id: 1,
       name: r'categoryId',
       type: IsarType.long,
     ),
     r'createdAt': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'description': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'description',
       type: IsarType.string,
     ),
     r'etag': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'etag',
       type: IsarType.string,
     ),
     r'filterEnabled': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'filterEnabled',
       type: IsarType.bool,
     ),
     r'filterKeywords': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'filterKeywords',
       type: IsarType.string,
     ),
     r'lastCheckedAt': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'lastCheckedAt',
       type: IsarType.dateTime,
     ),
     r'lastDurationMs': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'lastDurationMs',
       type: IsarType.long,
     ),
     r'lastError': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'lastError',
       type: IsarType.string,
     ),
     r'lastErrorAt': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'lastErrorAt',
       type: IsarType.dateTime,
     ),
     r'lastIncomingCount': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'lastIncomingCount',
       type: IsarType.long,
     ),
     r'lastModified': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'lastModified',
       type: IsarType.string,
     ),
     r'lastStatusCode': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'lastStatusCode',
       type: IsarType.long,
     ),
     r'lastSyncedAt': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'lastSyncedAt',
       type: IsarType.dateTime,
     ),
     r'showAiSummary': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'showAiSummary',
       type: IsarType.bool,
     ),
     r'siteUrl': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'siteUrl',
       type: IsarType.string,
     ),
     r'syncEnabled': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'syncEnabled',
       type: IsarType.bool,
     ),
     r'syncImages': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'syncImages',
       type: IsarType.bool,
     ),
     r'syncWebPages': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'syncWebPages',
       type: IsarType.bool,
     ),
     r'title': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'title',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'url': PropertySchema(
-      id: 21,
+      id: 22,
       name: r'url',
       type: IsarType.string,
     ),
     r'userTitle': PropertySchema(
-      id: 22,
+      id: 23,
       name: r'userTitle',
       type: IsarType.string,
     )
@@ -238,29 +243,30 @@ void _feedSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.categoryId);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeString(offsets[2], object.description);
-  writer.writeString(offsets[3], object.etag);
-  writer.writeBool(offsets[4], object.filterEnabled);
-  writer.writeString(offsets[5], object.filterKeywords);
-  writer.writeDateTime(offsets[6], object.lastCheckedAt);
-  writer.writeLong(offsets[7], object.lastDurationMs);
-  writer.writeString(offsets[8], object.lastError);
-  writer.writeDateTime(offsets[9], object.lastErrorAt);
-  writer.writeLong(offsets[10], object.lastIncomingCount);
-  writer.writeString(offsets[11], object.lastModified);
-  writer.writeLong(offsets[12], object.lastStatusCode);
-  writer.writeDateTime(offsets[13], object.lastSyncedAt);
-  writer.writeBool(offsets[14], object.showAiSummary);
-  writer.writeString(offsets[15], object.siteUrl);
-  writer.writeBool(offsets[16], object.syncEnabled);
-  writer.writeBool(offsets[17], object.syncImages);
-  writer.writeBool(offsets[18], object.syncWebPages);
-  writer.writeString(offsets[19], object.title);
-  writer.writeDateTime(offsets[20], object.updatedAt);
-  writer.writeString(offsets[21], object.url);
-  writer.writeString(offsets[22], object.userTitle);
+  writer.writeBool(offsets[0], object.autoTranslate);
+  writer.writeLong(offsets[1], object.categoryId);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeString(offsets[3], object.description);
+  writer.writeString(offsets[4], object.etag);
+  writer.writeBool(offsets[5], object.filterEnabled);
+  writer.writeString(offsets[6], object.filterKeywords);
+  writer.writeDateTime(offsets[7], object.lastCheckedAt);
+  writer.writeLong(offsets[8], object.lastDurationMs);
+  writer.writeString(offsets[9], object.lastError);
+  writer.writeDateTime(offsets[10], object.lastErrorAt);
+  writer.writeLong(offsets[11], object.lastIncomingCount);
+  writer.writeString(offsets[12], object.lastModified);
+  writer.writeLong(offsets[13], object.lastStatusCode);
+  writer.writeDateTime(offsets[14], object.lastSyncedAt);
+  writer.writeBool(offsets[15], object.showAiSummary);
+  writer.writeString(offsets[16], object.siteUrl);
+  writer.writeBool(offsets[17], object.syncEnabled);
+  writer.writeBool(offsets[18], object.syncImages);
+  writer.writeBool(offsets[19], object.syncWebPages);
+  writer.writeString(offsets[20], object.title);
+  writer.writeDateTime(offsets[21], object.updatedAt);
+  writer.writeString(offsets[22], object.url);
+  writer.writeString(offsets[23], object.userTitle);
 }
 
 Feed _feedDeserialize(
@@ -270,30 +276,31 @@ Feed _feedDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Feed();
-  object.categoryId = reader.readLongOrNull(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.description = reader.readStringOrNull(offsets[2]);
-  object.etag = reader.readStringOrNull(offsets[3]);
-  object.filterEnabled = reader.readBoolOrNull(offsets[4]);
-  object.filterKeywords = reader.readStringOrNull(offsets[5]);
+  object.autoTranslate = reader.readBoolOrNull(offsets[0]);
+  object.categoryId = reader.readLongOrNull(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
+  object.description = reader.readStringOrNull(offsets[3]);
+  object.etag = reader.readStringOrNull(offsets[4]);
+  object.filterEnabled = reader.readBoolOrNull(offsets[5]);
+  object.filterKeywords = reader.readStringOrNull(offsets[6]);
   object.id = id;
-  object.lastCheckedAt = reader.readDateTimeOrNull(offsets[6]);
-  object.lastDurationMs = reader.readLongOrNull(offsets[7]);
-  object.lastError = reader.readStringOrNull(offsets[8]);
-  object.lastErrorAt = reader.readDateTimeOrNull(offsets[9]);
-  object.lastIncomingCount = reader.readLongOrNull(offsets[10]);
-  object.lastModified = reader.readStringOrNull(offsets[11]);
-  object.lastStatusCode = reader.readLongOrNull(offsets[12]);
-  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[13]);
-  object.showAiSummary = reader.readBoolOrNull(offsets[14]);
-  object.siteUrl = reader.readStringOrNull(offsets[15]);
-  object.syncEnabled = reader.readBoolOrNull(offsets[16]);
-  object.syncImages = reader.readBoolOrNull(offsets[17]);
-  object.syncWebPages = reader.readBoolOrNull(offsets[18]);
-  object.title = reader.readStringOrNull(offsets[19]);
-  object.updatedAt = reader.readDateTime(offsets[20]);
-  object.url = reader.readString(offsets[21]);
-  object.userTitle = reader.readStringOrNull(offsets[22]);
+  object.lastCheckedAt = reader.readDateTimeOrNull(offsets[7]);
+  object.lastDurationMs = reader.readLongOrNull(offsets[8]);
+  object.lastError = reader.readStringOrNull(offsets[9]);
+  object.lastErrorAt = reader.readDateTimeOrNull(offsets[10]);
+  object.lastIncomingCount = reader.readLongOrNull(offsets[11]);
+  object.lastModified = reader.readStringOrNull(offsets[12]);
+  object.lastStatusCode = reader.readLongOrNull(offsets[13]);
+  object.lastSyncedAt = reader.readDateTimeOrNull(offsets[14]);
+  object.showAiSummary = reader.readBoolOrNull(offsets[15]);
+  object.siteUrl = reader.readStringOrNull(offsets[16]);
+  object.syncEnabled = reader.readBoolOrNull(offsets[17]);
+  object.syncImages = reader.readBoolOrNull(offsets[18]);
+  object.syncWebPages = reader.readBoolOrNull(offsets[19]);
+  object.title = reader.readStringOrNull(offsets[20]);
+  object.updatedAt = reader.readDateTime(offsets[21]);
+  object.url = reader.readString(offsets[22]);
+  object.userTitle = reader.readStringOrNull(offsets[23]);
   return object;
 }
 
@@ -305,50 +312,52 @@ P _feedDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 3:
       return (reader.readStringOrNull(offset)) as P;
     case 4:
-      return (reader.readBoolOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 6:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 9:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 10:
-      return (reader.readLongOrNull(offset)) as P;
-    case 11:
-      return (reader.readStringOrNull(offset)) as P;
-    case 12:
-      return (reader.readLongOrNull(offset)) as P;
-    case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
-    case 14:
-      return (reader.readBoolOrNull(offset)) as P;
-    case 15:
+    case 11:
+      return (reader.readLongOrNull(offset)) as P;
+    case 12:
       return (reader.readStringOrNull(offset)) as P;
-    case 16:
+    case 13:
+      return (reader.readLongOrNull(offset)) as P;
+    case 14:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 15:
       return (reader.readBoolOrNull(offset)) as P;
+    case 16:
+      return (reader.readStringOrNull(offset)) as P;
     case 17:
       return (reader.readBoolOrNull(offset)) as P;
     case 18:
       return (reader.readBoolOrNull(offset)) as P;
     case 19:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 20:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 21:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 22:
+      return (reader.readString(offset)) as P;
+    case 23:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -658,6 +667,32 @@ extension FeedQueryWhere on QueryBuilder<Feed, Feed, QWhereClause> {
 }
 
 extension FeedQueryFilter on QueryBuilder<Feed, Feed, QFilterCondition> {
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> autoTranslateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'autoTranslate',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> autoTranslateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'autoTranslate',
+      ));
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterFilterCondition> autoTranslateEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'autoTranslate',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterFilterCondition> categoryIdIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2725,6 +2760,18 @@ extension FeedQueryObject on QueryBuilder<Feed, Feed, QFilterCondition> {}
 extension FeedQueryLinks on QueryBuilder<Feed, Feed, QFilterCondition> {}
 
 extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> sortByAutoTranslateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> sortByCategoryId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'categoryId', Sort.asc);
@@ -3003,6 +3050,18 @@ extension FeedQuerySortBy on QueryBuilder<Feed, Feed, QSortBy> {
 }
 
 extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Feed, Feed, QAfterSortBy> thenByAutoTranslateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Feed, Feed, QAfterSortBy> thenByCategoryId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'categoryId', Sort.asc);
@@ -3293,6 +3352,12 @@ extension FeedQuerySortThenBy on QueryBuilder<Feed, Feed, QSortThenBy> {
 }
 
 extension FeedQueryWhereDistinct on QueryBuilder<Feed, Feed, QDistinct> {
+  QueryBuilder<Feed, Feed, QDistinct> distinctByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'autoTranslate');
+    });
+  }
+
   QueryBuilder<Feed, Feed, QDistinct> distinctByCategoryId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'categoryId');
@@ -3446,6 +3511,12 @@ extension FeedQueryProperty on QueryBuilder<Feed, Feed, QQueryProperty> {
   QueryBuilder<Feed, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Feed, bool?, QQueryOperations> autoTranslateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'autoTranslate');
     });
   }
 

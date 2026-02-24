@@ -11,8 +11,10 @@ import '../providers/repository_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/service_providers.dart';
+import '../providers/article_ai_providers.dart';
 import '../models/article.dart';
 import '../models/tag.dart';
+import '../services/translation/article_translation.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
 import 'favicon_avatar.dart';
@@ -111,6 +113,132 @@ class ReaderBottomBar extends ConsumerWidget {
                   tooltip: l10n.readerSettings,
                   onPressed: onShowSettings,
                   icon: const Icon(Icons.text_fields),
+                ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final aiState = ref.watch(
+                      articleAiControllerProvider(article.id),
+                    );
+                    final controller = ref.read(
+                      articleAiControllerProvider(article.id).notifier,
+                    );
+                    final isBusy =
+                        aiState.summaryStatus == ArticleAiTaskStatus.queued ||
+                        aiState.summaryStatus == ArticleAiTaskStatus.running;
+                    final hasSummary =
+                        (aiState.summaryText ?? '').trim().isNotEmpty;
+                    return IconButton(
+                      tooltip: l10n.aiSummaryAction,
+                      onPressed: isBusy
+                          ? null
+                          : () => unawaited(
+                              controller.ensureSummary(
+                                force: aiState.summaryOutdated,
+                              ),
+                            ),
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              Icons.summarize_outlined,
+                              color: hasSummary
+                                  ? theme.colorScheme.primary
+                                  : null,
+                            ),
+                    );
+                  },
+                ),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final aiState = ref.watch(
+                      articleAiControllerProvider(article.id),
+                    );
+                    final controller = ref.read(
+                      articleAiControllerProvider(article.id).notifier,
+                    );
+                    final isBusy =
+                        aiState.translationStatus ==
+                            ArticleAiTaskStatus.queued ||
+                        aiState.translationStatus ==
+                            ArticleAiTaskStatus.running;
+                    final hasTranslation =
+                        (aiState.translationHtml ?? '').trim().isNotEmpty;
+
+                    Future<void> openSheet() async {
+                      await showModalBottomSheet<void>(
+                        context: context,
+                        showDragHandle: true,
+                        builder: (context) {
+                          return SafeArea(
+                            top: false,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  title: Text(l10n.translationMode),
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.auto_awesome_outlined),
+                                  title: Text(l10n.immersiveTranslation),
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    unawaited(
+                                      controller.ensureTranslation(
+                                        mode: ArticleTranslationMode.immersive,
+                                        force: aiState.translationOutdated,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.translate_outlined),
+                                  title: Text(l10n.traditionalTranslation),
+                                  onTap: () {
+                                    Navigator.of(context).pop();
+                                    unawaited(
+                                      controller.ensureTranslation(
+                                        mode: ArticleTranslationMode.traditional,
+                                        force: aiState.translationOutdated,
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (hasTranslation)
+                                  ListTile(
+                                    leading: const Icon(Icons.close),
+                                    title: Text(l10n.clearTranslation),
+                                    onTap: () {
+                                      Navigator.of(context).pop();
+                                      controller.clearTranslation();
+                                    },
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+
+                    return IconButton(
+                      tooltip: l10n.translateAction,
+                      onPressed: isBusy ? null : () => unawaited(openSheet()),
+                      icon: isBusy
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              Icons.translate,
+                              color: hasTranslation
+                                  ? theme.colorScheme.primary
+                                  : null,
+                            ),
+                    );
+                  },
                 ),
                 IconButton(
                   tooltip: article.isStarred ? l10n.unstar : l10n.star,

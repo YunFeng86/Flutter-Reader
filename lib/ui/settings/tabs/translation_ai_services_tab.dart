@@ -2,12 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/translation_ai_settings_providers.dart';
 import '../../../services/settings/translation_ai_settings.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
+import '../../../utils/language_utils.dart';
+import '../../../utils/prompt_template.dart';
+import '../../dialogs/side_panel.dart';
 import '../../dialogs/text_input_dialog.dart';
 import '../translation_ai/ai_service_editor_dialog.dart';
 import '../translation_ai/ai_service_templates.dart';
@@ -365,30 +369,31 @@ class TranslationAiServicesTab extends ConsumerWidget {
         }
 
         Future<void> addAiService() async {
-          final picked = await showModalBottomSheet<AiServiceTemplate>(
-            context: context,
-            showDragHandle: true,
+          final picked = await showSidePanel<AiServiceTemplate>(
+            context,
             builder: (context) {
-              return SafeArea(
-                top: false,
-                child: ListView(
-                  shrinkWrap: true,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: Text(
-                        l10n.addAiService,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+              return Scaffold(
+                appBar: AppBar(
+                  title: Text(l10n.addAiService),
+                  automaticallyImplyLeading: false,
+                  actions: [
+                    IconButton(
+                      tooltip:
+                          MaterialLocalizations.of(context).closeButtonTooltip,
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
                     ),
-                    ...aiServiceTemplates.map(
-                      (t) => ListTile(
+                  ],
+                ),
+                body: ListView(
+                  children: [
+                    for (final t in aiServiceTemplates)
+                      ListTile(
                         leading: Icon(apiTypeIcon(t.apiType)),
                         title: Text(t.name),
                         subtitle: Text(apiTypeLabel(t.apiType)),
                         onTap: () => Navigator.of(context).pop(t),
                       ),
-                    ),
                   ],
                 ),
               );
@@ -442,6 +447,389 @@ class TranslationAiServicesTab extends ConsumerWidget {
           settings,
         );
 
+        final uiLocale = Localizations.localeOf(context);
+        final uiLanguageTag = languageTagForLocale(uiLocale);
+        final effectiveTargetLanguageTag = normalizeLanguageTag(
+          settings.targetLanguageTag ?? uiLanguageTag,
+        );
+
+        final targetLanguageSubtitle = settings.targetLanguageTag == null
+            ? '${l10n.followAppLanguage} · ${localizedLanguageNameForTag(uiLocale, uiLanguageTag)}'
+            : localizedLanguageNameForTag(uiLocale, effectiveTargetLanguageTag);
+
+        final defaultAiSummaryPromptTemplate = l10n.defaultAiSummaryPromptTemplate(
+          PromptTemplate.token(PromptTemplate.varLanguage),
+          PromptTemplate.token(PromptTemplate.varTitle),
+          PromptTemplate.token(PromptTemplate.varContent),
+        );
+        final defaultAiTranslationPromptTemplate =
+            l10n.defaultAiTranslationPromptTemplate(
+              PromptTemplate.token(PromptTemplate.varLanguage),
+              PromptTemplate.token(PromptTemplate.varTitle),
+              PromptTemplate.token(PromptTemplate.varContent),
+            );
+
+        final effectiveAiSummaryPrompt =
+            ((settings.aiSummaryPrompt ?? defaultAiSummaryPromptTemplate).trim());
+        final effectiveAiTranslationPrompt =
+            ((settings.aiTranslationPrompt ?? defaultAiTranslationPromptTemplate)
+                .trim());
+
+        String? serviceNameById(String serviceId) {
+          return settings.aiServices
+              .where((s) => s.id == serviceId)
+              .firstOrNull
+              ?.name;
+        }
+
+        final defaultAiServiceId = settings.defaultAiServiceId;
+        final defaultAiServiceName = defaultAiServiceId == null
+            ? null
+            : (serviceNameById(defaultAiServiceId) ?? defaultAiServiceId);
+
+        final explicitAiSummaryServiceId = settings.aiSummaryServiceId;
+        final effectiveAiSummaryServiceId =
+            explicitAiSummaryServiceId ?? defaultAiServiceId;
+        final effectiveAiSummaryServiceName = effectiveAiSummaryServiceId == null
+            ? null
+            : (serviceNameById(effectiveAiSummaryServiceId) ??
+                effectiveAiSummaryServiceId);
+
+        final aiSummaryServiceSubtitle = effectiveAiSummaryServiceName == null
+            ? l10n.aiNotConfigured
+            : (explicitAiSummaryServiceId == null
+                  ? '${l10n.defaultOption} · $effectiveAiSummaryServiceName'
+                  : effectiveAiSummaryServiceName);
+
+        Future<void> pickTargetLanguage() async {
+          const commonLanguageTags = <String>[
+            'en',
+            'zh',
+            'zh-Hant',
+            'ja',
+            'ko',
+            'fr',
+            'de',
+            'es',
+            'ru',
+          ];
+
+          final current =
+              settings.targetLanguageTag == null ? null : effectiveTargetLanguageTag;
+
+          final picked =
+              await showModalBottomSheet<({bool isDefault, String? value})>(
+                context: context,
+                showDragHandle: true,
+                builder: (context) {
+                  return SafeArea(
+                    top: false,
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Text(
+                            l10n.targetLanguage,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        ListTile(
+                          title: Text(l10n.followAppLanguage),
+                          subtitle: Text(
+                            localizedLanguageNameForTag(uiLocale, uiLanguageTag),
+                          ),
+                          trailing: settings.targetLanguageTag == null
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () => Navigator.of(context).pop(
+                            const (isDefault: true, value: null),
+                          ),
+                        ),
+                        for (final tag in commonLanguageTags)
+                          ListTile(
+                            title: Text(localizedLanguageNameForTag(uiLocale, tag)),
+                            subtitle: Text(tag),
+                            trailing: current == tag ? const Icon(Icons.check) : null,
+                            onTap: () => Navigator.of(context).pop(
+                              (isDefault: false, value: tag),
+                            ),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              );
+          if (picked == null) return;
+          await ref
+              .read(translationAiSettingsProvider.notifier)
+              .setTargetLanguageTag(picked.isDefault ? null : picked.value);
+          if (!context.mounted) return;
+          context.showSuccess(l10n.done);
+        }
+
+        Future<void> pickAiSummaryService() async {
+          final enabled = settings.aiServices
+              .where((s) => s.enabled)
+              .toList(growable: false);
+
+          final picked =
+              await showModalBottomSheet<({bool isDefault, String? value})>(
+                context: context,
+                showDragHandle: true,
+                builder: (context) {
+                  return SafeArea(
+                    top: false,
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                          child: Text(
+                            l10n.aiSummaryService,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ),
+                        ListTile(
+                          title: Text(l10n.defaultOption),
+                          subtitle: Text(defaultAiServiceName ?? l10n.aiNotConfigured),
+                          trailing: explicitAiSummaryServiceId == null
+                              ? const Icon(Icons.check)
+                              : null,
+                          onTap: () => Navigator.of(context).pop(
+                            const (isDefault: true, value: null),
+                          ),
+                        ),
+                        for (final s in enabled)
+                          ListTile(
+                            title: Row(
+                              children: [
+                                Expanded(child: Text(s.name)),
+                                if (s.id == defaultAiServiceId)
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 8),
+                                    child: Icon(Icons.star, size: 18),
+                                  ),
+                              ],
+                            ),
+                            subtitle: Text(apiTypeLabel(s.apiType)),
+                            trailing: explicitAiSummaryServiceId == s.id
+                                ? const Icon(Icons.check)
+                                : null,
+                            onTap: () => Navigator.of(context).pop(
+                              (isDefault: false, value: s.id),
+                            ),
+                          ),
+                        if (enabled.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                            child: Text(
+                              l10n.aiNotConfigured,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
+                        ListTile(
+                          leading: const Icon(Icons.add),
+                          title: Text(l10n.addAiService),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            unawaited(addAiService());
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+          if (picked == null) return;
+          await ref
+              .read(translationAiSettingsProvider.notifier)
+              .setAiSummaryServiceId(picked.isDefault ? null : picked.value);
+          if (!context.mounted) return;
+          context.showSuccess(l10n.done);
+        }
+
+        Future<void> editPromptTemplate({
+          required String title,
+          required String? customPrompt,
+          required String defaultTemplate,
+          required Future<void> Function(String? next) onSave,
+        }) async {
+          final result = await showDialog<({bool reset, String? value})>(
+            context: context,
+            builder: (context) {
+              final controller = TextEditingController(text: customPrompt ?? '');
+              return AlertDialog(
+                scrollable: true,
+                title: Text(title),
+                content: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 640),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.multiline,
+                        maxLines: 10,
+                        minLines: 6,
+                        decoration: InputDecoration(
+                          labelText: title,
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.defaultOption,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      SelectableText(
+                        defaultTemplate,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.promptVariables,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      SelectableText(
+                        '${PromptTemplate.token(PromptTemplate.varContent)} — ${l10n.promptVariableContentDescription}',
+                      ),
+                      SelectableText(
+                        '${PromptTemplate.token(PromptTemplate.varLanguage)} — ${l10n.promptVariableLanguageDescription}',
+                      ),
+                      SelectableText(
+                        '${PromptTemplate.token(PromptTemplate.varTitle)} — ${l10n.promptVariableTitleDescription}',
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l10n.cancel),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pop(const (reset: true, value: null)),
+                    child: Text(l10n.resetToDefault),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(
+                      context,
+                    ).pop((reset: false, value: controller.text)),
+                    child: Text(l10n.done),
+                  ),
+                ],
+              );
+            },
+          );
+          if (result == null) return;
+
+          if (result.reset) {
+            await onSave(null);
+          } else {
+            final trimmed = (result.value ?? '').trim();
+            final defaultTrimmed = defaultTemplate.trim();
+            await onSave(
+              trimmed.isEmpty || trimmed == defaultTrimmed ? null : trimmed,
+            );
+          }
+
+          if (!context.mounted) return;
+          context.showSuccess(l10n.done);
+        }
+
+        Future<void> editAiSummaryPrompt() async {
+          await editPromptTemplate(
+            title: l10n.aiSummaryPrompt,
+            customPrompt: settings.aiSummaryPrompt,
+            defaultTemplate: defaultAiSummaryPromptTemplate,
+            onSave: (next) => ref
+                .read(translationAiSettingsProvider.notifier)
+                .setAiSummaryPrompt(next),
+          );
+        }
+
+        Future<void> editAiTranslationPrompt() async {
+          await editPromptTemplate(
+            title: l10n.aiTranslationPrompt,
+            customPrompt: settings.aiTranslationPrompt,
+            defaultTemplate: defaultAiTranslationPromptTemplate,
+            onSave: (next) => ref
+                .read(translationAiSettingsProvider.notifier)
+                .setAiTranslationPrompt(next),
+          );
+        }
+
+        Future<void> editTpmLimit() async {
+          final picked = await showDialog<int>(
+            context: context,
+            builder: (context) {
+              final controller = TextEditingController(
+                text: settings.tpmLimit.toString(),
+              );
+              return AlertDialog(
+                title: Text(l10n.tpmLimit),
+                content: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        l10n.tpmLimitSubtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        decoration: InputDecoration(
+                          labelText: l10n.tpmLimit,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(l10n.cancel),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      final raw = controller.text.trim();
+                      final v = int.tryParse(raw);
+                      Navigator.of(context).pop(v ?? 0);
+                    },
+                    child: Text(l10n.done),
+                  ),
+                ],
+              );
+            },
+          );
+          if (picked == null) return;
+          await ref
+              .read(translationAiSettingsProvider.notifier)
+              .setTpmLimit(picked);
+          if (!context.mounted) return;
+          context.showSuccess(l10n.done);
+        }
+
         return SingleChildScrollView(
           child: Align(
             alignment: Alignment.topCenter,
@@ -478,6 +866,28 @@ class TranslationAiServicesTab extends ConsumerWidget {
                           const Divider(height: 1),
                           ListTile(
                             contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.language),
+                            title: Text(l10n.targetLanguage),
+                            subtitle: Text(targetLanguageSubtitle),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: pickTargetLanguage,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.edit_note),
+                            title: Text(l10n.aiTranslationPrompt),
+                            subtitle: Text(
+                              effectiveAiTranslationPrompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: editAiTranslationPrompt,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
                             title: const Text('百度翻译（API）'),
                             subtitle: const Text('配置 App ID / App Key'),
                             trailing: const Icon(Icons.chevron_right),
@@ -510,6 +920,55 @@ class TranslationAiServicesTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 24),
 
+                    SectionHeader(title: l10n.aiSummary),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusCard,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.summarize),
+                            title: Text(l10n.aiSummaryService),
+                            subtitle: Text(aiSummaryServiceSubtitle),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: pickAiSummaryService,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.edit_note),
+                            title: Text(l10n.aiSummaryPrompt),
+                            subtitle: Text(
+                              effectiveAiSummaryPrompt,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: editAiSummaryPrompt,
+                          ),
+                          const Divider(height: 1),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.speed),
+                            title: Text(l10n.tpmLimit),
+                            subtitle: Text(
+                              '${settings.tpmLimit} · ${l10n.tpmLimitSubtitle}',
+                            ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: editTpmLimit,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
                     Row(
                       children: [
                         Expanded(
@@ -522,7 +981,7 @@ class TranslationAiServicesTab extends ConsumerWidget {
                         FilledButton.icon(
                           onPressed: addAiService,
                           icon: const Icon(Icons.add),
-                          label: Text(l10n.add),
+                          label: Text(l10n.addAiService),
                         ),
                       ],
                     ),

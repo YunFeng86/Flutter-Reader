@@ -30,6 +30,7 @@ class AppSettings {
     this.syncImages = true,
     this.syncWebPages = false,
     this.showAiSummary = false,
+    this.autoTranslate = false,
     this.minifluxEntriesLimit = 400,
     this.minifluxWebFetchMode = MinifluxWebFetchMode.clientReadability,
     this.rssUserAgent = UserAgents.rss,
@@ -87,6 +88,7 @@ class AppSettings {
   final bool syncImages;
   final bool syncWebPages;
   final bool showAiSummary;
+  final bool autoTranslate;
 
   // --- Remote Service Strategy (Miniflux) ---
   /// Max number of entries to pull per sync call.
@@ -122,6 +124,7 @@ class AppSettings {
     bool? syncImages,
     bool? syncWebPages,
     bool? showAiSummary,
+    bool? autoTranslate,
     int? minifluxEntriesLimit,
     MinifluxWebFetchMode? minifluxWebFetchMode,
     String? rssUserAgent,
@@ -150,6 +153,7 @@ class AppSettings {
       syncImages: syncImages ?? this.syncImages,
       syncWebPages: syncWebPages ?? this.syncWebPages,
       showAiSummary: showAiSummary ?? this.showAiSummary,
+      autoTranslate: autoTranslate ?? this.autoTranslate,
       minifluxEntriesLimit: minifluxEntriesLimit ?? this.minifluxEntriesLimit,
       minifluxWebFetchMode: minifluxWebFetchMode ?? this.minifluxWebFetchMode,
       rssUserAgent: rssUserAgent ?? this.rssUserAgent,
@@ -175,6 +179,7 @@ class AppSettings {
     'syncImages': syncImages,
     'syncWebPages': syncWebPages,
     'showAiSummary': showAiSummary,
+    'autoTranslate': autoTranslate,
     'minifluxEntriesLimit': minifluxEntriesLimit,
     'minifluxWebFetchMode': minifluxWebFetchMode.name,
     'rssUserAgent': rssUserAgent,
@@ -206,6 +211,7 @@ class AppSettings {
     final syncImages = json['syncImages'];
     final syncWebPages = json['syncWebPages'];
     final showAiSummary = json['showAiSummary'];
+    final autoTranslate = json['autoTranslate'];
     final minifluxEntriesLimit = json['minifluxEntriesLimit'];
     final minifluxWebFetchMode = json['minifluxWebFetchMode'];
     final rssUserAgent = json['rssUserAgent'];
@@ -269,6 +275,7 @@ class AppSettings {
       syncImages: syncImages is! bool || syncImages,
       syncWebPages: syncWebPages is bool && syncWebPages,
       showAiSummary: showAiSummary is bool && showAiSummary,
+      autoTranslate: autoTranslate is bool && autoTranslate,
       minifluxEntriesLimit: minifluxEntriesLimit is num
           ? minifluxEntriesLimit.toInt()
           : 400,

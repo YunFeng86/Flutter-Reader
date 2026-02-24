@@ -496,7 +496,7 @@ class _SyncSection extends ConsumerWidget {
           },
         ),
         _TriStateSwitch(
-          title: l10n.showAiSummary,
+          title: l10n.autoAiSummary,
           currentValue: feed != null
               ? feed!.showAiSummary
               : category?.showAiSummary,
@@ -532,6 +532,47 @@ class _SyncSection extends ConsumerWidget {
                 ref
                     .read(appSettingsProvider.notifier)
                     .setShowAiSummary(val ?? false),
+              );
+            }
+          },
+        ),
+        _TriStateSwitch(
+          title: l10n.autoTranslate,
+          currentValue: feed != null
+              ? feed!.autoTranslate
+              : category?.autoTranslate,
+          effectiveValue: SettingsInheritanceHelper.resolveAutoTranslate(
+            feed,
+            category,
+            appSettings,
+          ),
+          isGlobal: feed == null && category == null,
+          onChanged: (val) {
+            if (feed != null) {
+              unawaited(
+                SubscriptionActions.updateFeedSettings(
+                  context,
+                  ref,
+                  feedId: feed!.id,
+                  autoTranslate: val,
+                  updateAutoTranslate: true,
+                ),
+              );
+            } else if (category != null) {
+              unawaited(
+                SubscriptionActions.updateCategorySettings(
+                  context,
+                  ref,
+                  categoryId: category!.id,
+                  autoTranslate: val,
+                  updateAutoTranslate: true,
+                ),
+              );
+            } else {
+              unawaited(
+                ref.read(appSettingsProvider.notifier).setAutoTranslate(
+                  val ?? false,
+                ),
               );
             }
           },
