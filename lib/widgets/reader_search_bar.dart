@@ -11,10 +11,10 @@ class ReaderSearchBar extends ConsumerStatefulWidget {
   final int articleId;
 
   @override
-  ConsumerState<ReaderSearchBar> createState() => _ReaderSearchBarState();
+  ConsumerState<ReaderSearchBar> createState() => ReaderSearchBarState();
 }
 
-class _ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
+class ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
   late final TextEditingController _controller;
   late final FocusNode _focusNode;
   bool _wasVisible = false;
@@ -48,6 +48,14 @@ class _ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
       baseOffset: 0,
       extentOffset: _controller.text.length,
     );
+  }
+
+  void focusAndSelectAll() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _focusNode.requestFocus();
+      _selectAll();
+    });
   }
 
   @override

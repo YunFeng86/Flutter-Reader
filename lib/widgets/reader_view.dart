@@ -71,6 +71,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
   final GlobalKey<SelectionAreaState> _selectionAreaKey =
       GlobalKey<SelectionAreaState>();
   final GlobalKey<HtmlWidgetState> _fullHtmlKey = GlobalKey<HtmlWidgetState>();
+  final GlobalKey<ReaderSearchBarState> _searchBarKey =
+      GlobalKey<ReaderSearchBarState>();
   final ContextMenuController _contextMenuController = ContextMenuController();
   final ContextMenuController _quickMenuController = ContextMenuController();
   Timer? _quickMenuTimer;
@@ -979,7 +981,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             fit: StackFit.expand,
             children: [
               contentWidget,
-              ReaderSearchBar(articleId: widget.articleId),
+              ReaderSearchBar(key: _searchBarKey, articleId: widget.articleId),
               bottomBar,
             ],
           ),
@@ -1030,11 +1032,18 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         actions: <Type, Action<Intent>>{
           _ToggleReaderSearchIntent: CallbackAction<_ToggleReaderSearchIntent>(
             onInvoke: (_) {
-              ref
-                  .read(
-                    readerSearchControllerProvider(widget.articleId).notifier,
-                  )
-                  .toggleVisible();
+              final controller = ref.read(
+                readerSearchControllerProvider(widget.articleId).notifier,
+              );
+              final isVisible =
+                  ref.read(readerSearchControllerProvider(widget.articleId))
+                      .visible;
+              if (!isVisible) {
+                controller.open();
+                return null;
+              }
+
+              _searchBarKey.currentState?.focusAndSelectAll();
               return null;
             },
           ),
