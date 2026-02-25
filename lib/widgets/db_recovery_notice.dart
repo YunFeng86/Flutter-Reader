@@ -3,9 +3,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 
+import '../l10n/app_localizations.dart';
 import '../providers/core_providers.dart';
 
 class DbRecoveryNoticeOverlay extends ConsumerStatefulWidget {
@@ -54,7 +56,8 @@ class _DbRecoveryNoticeOverlayState
 
     if (!mounted) return;
 
-    final title = MaterialLocalizations.of(context).alertDialogLabel;
+    final l10n = AppLocalizations.of(context)!;
+    final materialL10n = MaterialLocalizations.of(context);
     final createdAt = (payload?['createdAtIso'] as String?)?.trim();
     final accountId = (payload?['accountId'] as String?)?.trim();
     final dbName = (payload?['dbName'] as String?)?.trim();
@@ -63,31 +66,98 @@ class _DbRecoveryNoticeOverlayState
     final fallbackDbName = (payload?['fallbackDbName'] as String?)?.trim();
     final error = (payload?['error'] as String?)?.trim();
 
-    final lines = <String>[
-      'Database recovery was triggered.',
-      if (createdAt != null && createdAt.isNotEmpty) 'Time: $createdAt',
-      if (accountId != null && accountId.isNotEmpty) 'Account: $accountId',
-      if (dbName != null && dbName.isNotEmpty) 'DB name: $dbName',
-      if (fallbackDbName != null && fallbackDbName.isNotEmpty)
-        'Opened as: $fallbackDbName',
-      if (backupPath != null && backupPath.isNotEmpty) 'Backup: $backupPath',
-      if (movedPath != null && movedPath.isNotEmpty)
-        'Moved original: $movedPath',
-      if (error != null && error.isNotEmpty) 'Error: $error',
-      '',
-      'Your data was preserved on disk (backup / moved file).',
-    ];
+    Future<void> copyToClipboard(String text) async {
+      final trimmed = text.trim();
+      if (trimmed.isEmpty) return;
+      await Clipboard.setData(ClipboardData(text: trimmed));
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(l10n.copiedToClipboard)));
+    }
 
     await showDialog<void>(
       context: context,
       builder: (context) {
+        final theme = Theme.of(context);
+
+        Widget row({
+          required String label,
+          required String value,
+          bool allowCopy = true,
+        }) {
+          final v = value.trim();
+          if (v.isEmpty) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: SelectableText(v)),
+                    if (allowCopy)
+                      IconButton(
+                        tooltip: materialL10n.copyButtonLabel,
+                        onPressed: () => unawaited(copyToClipboard(v)),
+                        icon: const Icon(Icons.copy),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        }
+
         return AlertDialog(
-          title: Text(title),
-          content: SelectableText(lines.join('\n')),
+          title: Text(l10n.dbRecoveryTitle),
+          content: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.dbRecoveryDescription),
+                  const SizedBox(height: 16),
+                  row(label: l10n.dbRecoveryTimeLabel, value: createdAt ?? ''),
+                  row(label: l10n.account, value: accountId ?? ''),
+                  row(label: l10n.dbRecoveryDbNameLabel, value: dbName ?? ''),
+                  row(
+                    label: l10n.dbRecoveryOpenedAsLabel,
+                    value: fallbackDbName ?? '',
+                  ),
+                  row(
+                    label: l10n.dbRecoveryBackupPathLabel,
+                    value: backupPath ?? '',
+                  ),
+                  row(
+                    label: l10n.dbRecoveryMovedOriginalPathLabel,
+                    value: movedPath ?? '',
+                  ),
+                  row(label: l10n.dbRecoveryErrorLabel, value: error ?? ''),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.dbRecoveryDataPreservedHint,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(MaterialLocalizations.of(context).okButtonLabel),
+              child: Text(materialL10n.okButtonLabel),
             ),
           ],
         );

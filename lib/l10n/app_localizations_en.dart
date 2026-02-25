@@ -898,4 +898,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get clearTranslation => 'Clear translation';
+
+  @override
+  String get dbRecoveryTitle => 'Database recovery';
+
+  @override
+  String get dbRecoveryDescription =>
+      'The app detected a database issue and performed recovery. Your data was preserved on disk (backup / moved file).';
+
+  @override
+  String get dbRecoveryTimeLabel => 'Time';
+
+  @override
+  String get dbRecoveryDbNameLabel => 'DB name';
+
+  @override
+  String get dbRecoveryOpenedAsLabel => 'Opened as';
+
+  @override
+  String get dbRecoveryBackupPathLabel => 'Backup';
+
+  @override
+  String get dbRecoveryMovedOriginalPathLabel => 'Moved original';
+
+  @override
+  String get dbRecoveryErrorLabel => 'Error';
+
+  @override
+  String get dbRecoveryDataPreservedHint =>
+      'Tip: Use the copy buttons to copy paths for troubleshooting or support.';
 }

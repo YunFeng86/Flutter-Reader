@@ -1780,6 +1780,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear translation'**
   String get clearTranslation;
+
+  /// Title for the database recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Database recovery'**
+  String get dbRecoveryTitle;
+
+  /// Description text shown in the database recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'The app detected a database issue and performed recovery. Your data was preserved on disk (backup / moved file).'**
+  String get dbRecoveryDescription;
+
+  /// Label for the recovery time field
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get dbRecoveryTimeLabel;
+
+  /// Label for the database name field
+  ///
+  /// In en, this message translates to:
+  /// **'DB name'**
+  String get dbRecoveryDbNameLabel;
+
+  /// Label for the fallback database name field
+  ///
+  /// In en, this message translates to:
+  /// **'Opened as'**
+  String get dbRecoveryOpenedAsLabel;
+
+  /// Label for the backup file path field
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get dbRecoveryBackupPathLabel;
+
+  /// Label for the moved original db file path field
+  ///
+  /// In en, this message translates to:
+  /// **'Moved original'**
+  String get dbRecoveryMovedOriginalPathLabel;
+
+  /// Label for the error message field
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get dbRecoveryErrorLabel;
+
+  /// Hint shown at the bottom of the recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Use the copy buttons to copy paths for troubleshooting or support.'**
+  String get dbRecoveryDataPreservedHint;
 }
 
 class _AppLocalizationsDelegate

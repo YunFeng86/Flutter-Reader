@@ -1183,5 +1183,41 @@
   "clearTranslation": "Clear translation",
   "@clearTranslation": {
     "description": "Action label to clear/hide the translated view"
+  },
+  "dbRecoveryTitle": "Database recovery",
+  "@dbRecoveryTitle": {
+    "description": "Title for the database recovery dialog"
+  },
+  "dbRecoveryDescription": "The app detected a database issue and performed recovery. Your data was preserved on disk (backup / moved file).",
+  "@dbRecoveryDescription": {
+    "description": "Description text shown in the database recovery dialog"
+  },
+  "dbRecoveryTimeLabel": "Time",
+  "@dbRecoveryTimeLabel": {
+    "description": "Label for the recovery time field"
+  },
+  "dbRecoveryDbNameLabel": "DB name",
+  "@dbRecoveryDbNameLabel": {
+    "description": "Label for the database name field"
+  },
+  "dbRecoveryOpenedAsLabel": "Opened as",
+  "@dbRecoveryOpenedAsLabel": {
+    "description": "Label for the fallback database name field"
+  },
+  "dbRecoveryBackupPathLabel": "Backup",
+  "@dbRecoveryBackupPathLabel": {
+    "description": "Label for the backup file path field"
+  },
+  "dbRecoveryMovedOriginalPathLabel": "Moved original",
+  "@dbRecoveryMovedOriginalPathLabel": {
+    "description": "Label for the moved original db file path field"
+  },
+  "dbRecoveryErrorLabel": "Error",
+  "@dbRecoveryErrorLabel": {
+    "description": "Label for the error message field"
+  },
+  "dbRecoveryDataPreservedHint": "Tip: Use the copy buttons to copy paths for troubleshooting or support.",
+  "@dbRecoveryDataPreservedHint": {
+    "description": "Hint shown at the bottom of the recovery dialog"
   }
 }

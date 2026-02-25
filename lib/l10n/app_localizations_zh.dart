@@ -880,6 +880,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get clearTranslation => '关闭翻译';
+
+  @override
+  String get dbRecoveryTitle => '数据库恢复';
+
+  @override
+  String get dbRecoveryDescription =>
+      '应用检测到数据库异常，已自动进行恢复。你的数据已在磁盘上保留（备份/已移动的原库文件）。';
+
+  @override
+  String get dbRecoveryTimeLabel => '时间';
+
+  @override
+  String get dbRecoveryDbNameLabel => '数据库名';
+
+  @override
+  String get dbRecoveryOpenedAsLabel => '实际打开为';
+
+  @override
+  String get dbRecoveryBackupPathLabel => '备份';
+
+  @override
+  String get dbRecoveryMovedOriginalPathLabel => '已移动原库';
+
+  @override
+  String get dbRecoveryErrorLabel => '错误';
+
+  @override
+  String get dbRecoveryDataPreservedHint => '提示：可使用右侧复制按钮复制路径，便于排查或反馈。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1758,4 +1786,32 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get clearTranslation => '關閉翻譯';
+
+  @override
+  String get dbRecoveryTitle => '資料庫恢復';
+
+  @override
+  String get dbRecoveryDescription =>
+      '應用偵測到資料庫異常，已自動進行恢復。你的資料已在磁碟上保留（備份/已移動的原庫檔案）。';
+
+  @override
+  String get dbRecoveryTimeLabel => '時間';
+
+  @override
+  String get dbRecoveryDbNameLabel => '資料庫名稱';
+
+  @override
+  String get dbRecoveryOpenedAsLabel => '實際開啟為';
+
+  @override
+  String get dbRecoveryBackupPathLabel => '備份';
+
+  @override
+  String get dbRecoveryMovedOriginalPathLabel => '已移動原庫';
+
+  @override
+  String get dbRecoveryErrorLabel => '錯誤';
+
+  @override
+  String get dbRecoveryDataPreservedHint => '提示：可使用右側複製按鈕複製路徑，便於排查或回報。';
 }

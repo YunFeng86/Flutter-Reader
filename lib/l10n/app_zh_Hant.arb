@@ -1184,5 +1184,41 @@
   "clearTranslation": "關閉翻譯",
   "@clearTranslation": {
     "description": "清除/隱藏翻譯視圖的操作文案"
+  },
+  "dbRecoveryTitle": "資料庫恢復",
+  "@dbRecoveryTitle": {
+    "description": "資料庫恢復彈窗標題"
+  },
+  "dbRecoveryDescription": "應用偵測到資料庫異常，已自動進行恢復。你的資料已在磁碟上保留（備份/已移動的原庫檔案）。",
+  "@dbRecoveryDescription": {
+    "description": "資料庫恢復彈窗描述文案"
+  },
+  "dbRecoveryTimeLabel": "時間",
+  "@dbRecoveryTimeLabel": {
+    "description": "恢復時間欄位標籤"
+  },
+  "dbRecoveryDbNameLabel": "資料庫名稱",
+  "@dbRecoveryDbNameLabel": {
+    "description": "資料庫名稱欄位標籤"
+  },
+  "dbRecoveryOpenedAsLabel": "實際開啟為",
+  "@dbRecoveryOpenedAsLabel": {
+    "description": "回退資料庫名稱欄位標籤"
+  },
+  "dbRecoveryBackupPathLabel": "備份",
+  "@dbRecoveryBackupPathLabel": {
+    "description": "備份路徑欄位標籤"
+  },
+  "dbRecoveryMovedOriginalPathLabel": "已移動原庫",
+  "@dbRecoveryMovedOriginalPathLabel": {
+    "description": "已移動的原庫路徑欄位標籤"
+  },
+  "dbRecoveryErrorLabel": "錯誤",
+  "@dbRecoveryErrorLabel": {
+    "description": "錯誤資訊欄位標籤"
+  },
+  "dbRecoveryDataPreservedHint": "提示：可使用右側複製按鈕複製路徑，便於排查或回報。",
+  "@dbRecoveryDataPreservedHint": {
+    "description": "資料庫恢復彈窗底部提示"
   }
 }
