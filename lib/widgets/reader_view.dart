@@ -10,7 +10,6 @@ import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:html/dom.dart' as dom;
-import 'package:html/parser.dart' as html_parser;
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
@@ -19,9 +18,8 @@ import 'package:fleur/l10n/app_localizations.dart';
 import 'reader_bottom_bar.dart';
 import 'reader_search_bar.dart';
 import '../models/article.dart';
-import '../models/category.dart';
-import '../models/feed.dart';
 import '../providers/app_settings_providers.dart';
+import '../providers/article_ai_providers.dart';
 import '../providers/reader_search_providers.dart';
 import '../providers/reader_providers.dart';
 import '../providers/query_providers.dart';
@@ -34,6 +32,7 @@ import '../services/settings/reader_settings.dart';
 import '../services/settings/reader_progress_store.dart';
 import '../utils/platform.dart';
 import '../utils/content_hash.dart';
+import '../utils/language_utils.dart';
 import '../ui/layout.dart';
 
 class ReaderView extends ConsumerStatefulWidget {
@@ -183,89 +182,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             article.contentHtml ??
             '')
         .trim();
-  }
-
-  bool _effectiveShowSummary({
-    required Article article,
-    required AppSettings appSettings,
-    required Map<int, Feed> feedMap,
-    required List<Category> categories,
-  }) {
-    final feed = feedMap[article.feedId];
-    Category? category;
-    final categoryId = feed?.categoryId ?? article.categoryId;
-    if (categoryId != null) {
-      for (final c in categories) {
-        if (c.id == categoryId) {
-          category = c;
-          break;
-        }
-      }
-    }
-
-    final feedV = feed?.showAiSummary;
-    if (feedV != null) return feedV;
-    final catV = category?.showAiSummary;
-    if (catV != null) return catV;
-    return appSettings.showAiSummary;
-  }
-
-  String _summarizeHtml(String html) {
-    final trimmed = html.trim();
-    if (trimmed.isEmpty) return '';
-
-    // Limit work for very long articles; summary is best-effort.
-    final sample = trimmed.length > 20000
-        ? trimmed.substring(0, 20000)
-        : trimmed;
-
-    final doc = html_parser.parse(sample);
-    for (final e in doc.querySelectorAll('script,style,noscript')) {
-      e.remove();
-    }
-
-    final text = (doc.body?.text ?? '')
-        .replaceAll(RegExp(r'\u00a0'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    if (text.length < 40) return '';
-
-    bool isEndPunct(String ch) =>
-        ch == '.' ||
-        ch == '!' ||
-        ch == '?' ||
-        ch == '。' ||
-        ch == '！' ||
-        ch == '？';
-
-    final sentences = <String>[];
-    var start = 0;
-    for (var i = 0; i < text.length; i++) {
-      final ch = text[i];
-      if (!isEndPunct(ch)) continue;
-      final s = text.substring(start, i + 1).trim();
-      if (s.isNotEmpty) sentences.add(s);
-      start = i + 1;
-      if (sentences.length >= 6) break;
-    }
-    final tail = text.substring(start).trim();
-    if (tail.isNotEmpty) sentences.add(tail);
-    if (sentences.isEmpty) return '';
-
-    final picked = <String>[];
-    var total = 0;
-    for (final s in sentences) {
-      if (s.trim().isEmpty) continue;
-      picked.add(s.trim());
-      total += s.length;
-      if (picked.length >= 3) break;
-      if (total >= 240) break;
-    }
-    var summary = picked.join(' ').trim();
-    if (summary.length > 280) {
-      summary = '${summary.substring(0, 280).trimRight()}…';
-    }
-    return summary;
   }
 
   void _listenArticle(int articleId) {
@@ -822,11 +738,16 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final showExtracted =
             hasExtracted &&
             article.preferredContentView == ArticleContentView.extracted;
-        final html =
+        final originalHtml =
             ((showExtracted ? article.extractedContentHtml : null) ??
                     article.contentHtml ??
                     '')
                 .trim();
+
+        final aiState = ref.watch(articleAiControllerProvider(widget.articleId));
+        final translatedHtml = (aiState.translationHtml ?? '').trim();
+        final html = translatedHtml.isNotEmpty ? translatedHtml : originalHtml;
+
         final isChunked = html.length >= _chunkThreshold;
         _handleViewportSizeChange(
           MediaQuery.sizeOf(context),
@@ -842,19 +763,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         ).format(article.publishedAt.toLocal());
 
         // New Inline Header
-        final appSettings =
-            ref.watch(appSettingsProvider).valueOrNull ??
-            AppSettings.defaults();
-        final feedMap = ref.watch(feedMapProvider);
-        final categories =
-            ref.watch(categoriesProvider).valueOrNull ?? const <Category>[];
-        final showSummary = _effectiveShowSummary(
-          article: article,
-          appSettings: appSettings,
-          feedMap: feedMap,
-          categories: categories,
-        );
-        final summaryText = showSummary ? _summarizeHtml(html) : '';
+        final summaryText = (aiState.summaryText ?? '').trim();
+        final showSummarySection =
+            summaryText.isNotEmpty ||
+            aiState.summaryStatus == ArticleAiTaskStatus.queued ||
+            aiState.summaryStatus == ArticleAiTaskStatus.running ||
+            aiState.summaryStatus == ArticleAiTaskStatus.error;
 
         final inlineHeader = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -873,7 +787,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            if (summaryText.isNotEmpty) ...[
+            if (showSummarySection) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -893,17 +807,69 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          l10n.summary,
+                          l10n.aiSummaryAction,
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
+                        const Spacer(),
+                        if (aiState.summaryStatus == ArticleAiTaskStatus.queued ||
+                            aiState.summaryStatus == ArticleAiTaskStatus.running)
+                          const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      summaryText,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
+                    if (aiState.summaryStatus == ArticleAiTaskStatus.error &&
+                        (aiState.summaryError ?? '').trim().isNotEmpty)
+                      Text(
+                        aiState.summaryError!.trim(),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      )
+                    else if (summaryText.isNotEmpty)
+                      Text(
+                        summaryText,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      )
+                    else
+                      Text(
+                        l10n.generating,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    if (aiState.summaryOutdated) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              l10n.cachedPromptOutdated,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => unawaited(
+                              ref
+                                  .read(
+                                    articleAiControllerProvider(
+                                      widget.articleId,
+                                    ).notifier,
+                                  )
+                                  .ensureSummary(force: true),
+                            ),
+                            child: Text(l10n.regenerate),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -948,21 +914,125 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 searchState.currentAnchorId,
               );
 
-        final bottomBar = Positioned(
+        final languageBanner = aiState.showLanguageMismatchBanner &&
+                aiState.sourceLanguageTag != null
+            ? Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.languageMismatchBanner(
+                          localizedLanguageNameForTag(
+                            Localizations.localeOf(context),
+                            aiState.sourceLanguageTag!,
+                          ),
+                          localizedLanguageNameForTag(
+                            Localizations.localeOf(context),
+                            aiState.targetLanguageTag,
+                          ),
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => unawaited(
+                        ref
+                            .read(
+                              articleAiControllerProvider(widget.articleId).notifier,
+                            )
+                            .disableLanguageMismatchReminder(),
+                      ),
+                      child: Text(l10n.dontRemindThisLanguage),
+                    ),
+                  ],
+                ),
+              )
+            : null;
+
+        final translationOutdatedBanner =
+            aiState.translationOutdated && aiState.translationMode != null
+                ? Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.cachedPromptOutdated,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => unawaited(
+                            ref
+                                .read(
+                                  articleAiControllerProvider(
+                                    widget.articleId,
+                                  ).notifier,
+                                )
+                                .ensureTranslation(
+                                  mode: aiState.translationMode!,
+                                  force: true,
+                                ),
+                          ),
+                          child: Text(l10n.regenerate),
+                        ),
+                      ],
+                    ),
+                  )
+                : null;
+
+        final bottomOverlay = Positioned(
           left: 0,
           right: 0, // Stretch full width
           bottom: 0,
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: ReaderView.maxReadingWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (languageBanner != null)
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: ReaderView.maxReadingWidth,
+                    ),
+                    child: languageBanner,
+                  ),
+                ),
+              if (translationOutdatedBanner != null)
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: ReaderView.maxReadingWidth,
+                    ),
+                    child: translationOutdatedBanner,
+                  ),
+                ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: ReaderView.maxReadingWidth,
+                  ),
+                  child: ReaderBottomBar(
+                    article: article,
+                    onShowSettings: () =>
+                        _showReaderSettings(context, ref, settings),
+                  ),
+                ),
               ),
-              child: ReaderBottomBar(
-                article: article,
-                onShowSettings: () =>
-                    _showReaderSettings(context, ref, settings),
-              ),
-            ),
+            ],
           ),
         );
 
@@ -982,7 +1052,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             children: [
               contentWidget,
               ReaderSearchBar(key: _searchBarKey, articleId: widget.articleId),
-              bottomBar,
+              bottomOverlay,
             ],
           ),
         );

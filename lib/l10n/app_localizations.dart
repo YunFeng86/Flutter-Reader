@@ -1461,6 +1461,12 @@ abstract class AppLocalizations {
   /// **'Default Value'**
   String get defaultValue;
 
+  /// Generic 'Default' option label
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get defaultOption;
+
   /// userAgent
   ///
   /// In en, this message translates to:
@@ -1586,6 +1592,248 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'AI service'**
   String get aiService;
+
+  /// AI summary section title/label
+  ///
+  /// In en, this message translates to:
+  /// **'AI summary'**
+  String get aiSummary;
+
+  /// Setting title for selecting AI summary service
+  ///
+  /// In en, this message translates to:
+  /// **'AI summary service'**
+  String get aiSummaryService;
+
+  /// Setting title for selecting target language
+  ///
+  /// In en, this message translates to:
+  /// **'Target language'**
+  String get targetLanguage;
+
+  /// Option label for following the app language
+  ///
+  /// In en, this message translates to:
+  /// **'Follow app language'**
+  String get followAppLanguage;
+
+  /// Setting title for AI summary prompt template
+  ///
+  /// In en, this message translates to:
+  /// **'AI summary prompt'**
+  String get aiSummaryPrompt;
+
+  /// Setting title for AI translation prompt template
+  ///
+  /// In en, this message translates to:
+  /// **'AI translation prompt'**
+  String get aiTranslationPrompt;
+
+  /// Default AI summary prompt template
+  ///
+  /// In en, this message translates to:
+  /// **'Please summarize this article in {language} (title: {title}): {content}'**
+  String defaultAiSummaryPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  );
+
+  /// Default AI translation prompt template (only used for AI translation)
+  ///
+  /// In en, this message translates to:
+  /// **'Please translate this article into {language} (title: {title}): {content}'**
+  String defaultAiTranslationPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  );
+
+  /// Header for listing available prompt template variables
+  ///
+  /// In en, this message translates to:
+  /// **'Available variables'**
+  String get promptVariables;
+
+  /// Description text for {{content}} variable
+  ///
+  /// In en, this message translates to:
+  /// **'Article content'**
+  String get promptVariableContentDescription;
+
+  /// Description text for {{language}} variable
+  ///
+  /// In en, this message translates to:
+  /// **'Target language'**
+  String get promptVariableLanguageDescription;
+
+  /// Description text for {{title}} variable
+  ///
+  /// In en, this message translates to:
+  /// **'Article title'**
+  String get promptVariableTitleDescription;
+
+  /// Tokens per minute limit setting
+  ///
+  /// In en, this message translates to:
+  /// **'TPM limit'**
+  String get tpmLimit;
+
+  /// Subtitle text explaining the TPM limit behavior
+  ///
+  /// In en, this message translates to:
+  /// **'0 means unlimited; requests will be queued when exceeded.'**
+  String get tpmLimitSubtitle;
+
+  /// Action button label for generating AI summary
+  ///
+  /// In en, this message translates to:
+  /// **'AI summary'**
+  String get aiSummaryAction;
+
+  /// Action button label for translating an article
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translateAction;
+
+  /// Title for selecting translation mode
+  ///
+  /// In en, this message translates to:
+  /// **'Translation mode'**
+  String get translationMode;
+
+  /// Option label for immersive (bilingual) translation mode
+  ///
+  /// In en, this message translates to:
+  /// **'Immersive translation'**
+  String get immersiveTranslation;
+
+  /// Option label for traditional (translated-only) translation mode
+  ///
+  /// In en, this message translates to:
+  /// **'Traditional translation'**
+  String get traditionalTranslation;
+
+  /// Generic loading state text for generating AI/translation
+  ///
+  /// In en, this message translates to:
+  /// **'Generating…'**
+  String get generating;
+
+  /// Generic queued state text
+  ///
+  /// In en, this message translates to:
+  /// **'Queued'**
+  String get queued;
+
+  /// Action label for regenerating AI/translation output
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get regenerate;
+
+  /// Hint shown when cached content is outdated due to prompt changes
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt updated; regenerate to refresh.'**
+  String get cachedPromptOutdated;
+
+  /// Banner text shown when article language differs from target language
+  ///
+  /// In en, this message translates to:
+  /// **'Detected {source} content; target language is {target}.'**
+  String languageMismatchBanner(Object source, Object target);
+
+  /// Action label to disable language mismatch reminders for a source language
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t remind for this language'**
+  String get dontRemindThisLanguage;
+
+  /// Setting title for auto AI summary
+  ///
+  /// In en, this message translates to:
+  /// **'Auto AI summary'**
+  String get autoAiSummary;
+
+  /// Setting title for auto translation
+  ///
+  /// In en, this message translates to:
+  /// **'Auto translate'**
+  String get autoTranslate;
+
+  /// Error message shown when no AI service is configured/enabled
+  ///
+  /// In en, this message translates to:
+  /// **'AI service not configured.'**
+  String get aiNotConfigured;
+
+  /// Error message shown when the selected translation provider is not supported
+  ///
+  /// In en, this message translates to:
+  /// **'Translation is not available for the selected provider.'**
+  String get translationNotAvailable;
+
+  /// Action label to clear/hide the translated view
+  ///
+  /// In en, this message translates to:
+  /// **'Clear translation'**
+  String get clearTranslation;
+
+  /// Title for the database recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Database recovery'**
+  String get dbRecoveryTitle;
+
+  /// Description text shown in the database recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'The app detected a database issue and performed recovery. Your data was preserved on disk (backup / moved file).'**
+  String get dbRecoveryDescription;
+
+  /// Label for the recovery time field
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get dbRecoveryTimeLabel;
+
+  /// Label for the database name field
+  ///
+  /// In en, this message translates to:
+  /// **'DB name'**
+  String get dbRecoveryDbNameLabel;
+
+  /// Label for the fallback database name field
+  ///
+  /// In en, this message translates to:
+  /// **'Opened as'**
+  String get dbRecoveryOpenedAsLabel;
+
+  /// Label for the backup file path field
+  ///
+  /// In en, this message translates to:
+  /// **'Backup'**
+  String get dbRecoveryBackupPathLabel;
+
+  /// Label for the moved original db file path field
+  ///
+  /// In en, this message translates to:
+  /// **'Moved original'**
+  String get dbRecoveryMovedOriginalPathLabel;
+
+  /// Label for the error message field
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get dbRecoveryErrorLabel;
+
+  /// Hint shown at the bottom of the recovery dialog
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: Use the copy buttons to copy paths for troubleshooting or support.'**
+  String get dbRecoveryDataPreservedHint;
 }
 
 class _AppLocalizationsDelegate

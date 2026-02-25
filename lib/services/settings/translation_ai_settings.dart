@@ -2,18 +2,30 @@ class TranslationAiSettings {
   const TranslationAiSettings({
     required this.version,
     required this.translationProvider,
+    required this.aiSummaryServiceId,
+    required this.targetLanguageTag,
+    required this.aiSummaryPrompt,
+    required this.aiTranslationPrompt,
+    required this.tpmLimit,
+    required this.disabledTranslationReminderLanguages,
     required this.aiServices,
     required this.defaultAiServiceId,
     required this.deepL,
     required this.deepLX,
   });
 
-  static const int currentVersion = 1;
+  static const int currentVersion = 2;
 
   static TranslationAiSettings defaults() {
     return const TranslationAiSettings(
       version: currentVersion,
       translationProvider: TranslationProviderSelection.googleWeb(),
+      aiSummaryServiceId: null,
+      targetLanguageTag: null,
+      aiSummaryPrompt: null,
+      aiTranslationPrompt: null,
+      tpmLimit: 0,
+      disabledTranslationReminderLanguages: <String>[],
       aiServices: <AiServiceConfig>[],
       defaultAiServiceId: null,
       deepL: DeepLSettings(),
@@ -23,6 +35,32 @@ class TranslationAiSettings {
 
   final int version;
   final TranslationProviderSelection translationProvider;
+
+  /// The AI service id used for AI summary.
+  ///
+  /// When `null`, falls back to [defaultAiServiceId].
+  final String? aiSummaryServiceId;
+
+  /// Target language for translation/summary.
+  ///
+  /// - `null` means following the current app/system language.
+  /// - Otherwise uses a BCP-47 language tag (e.g. "en", "zh", "zh-Hant").
+  final String? targetLanguageTag;
+
+  /// Custom AI summary prompt template. When empty/null, uses built-in defaults.
+  final String? aiSummaryPrompt;
+
+  /// Custom AI translation prompt template. Only applies when using AI translation.
+  final String? aiTranslationPrompt;
+
+  /// Estimated tokens-per-minute limit for AI/API requests.
+  ///
+  /// `0` means unlimited.
+  final int tpmLimit;
+
+  /// Source language tags that should not show the "language mismatch" reminder.
+  final List<String> disabledTranslationReminderLanguages;
+
   final List<AiServiceConfig> aiServices;
   final String? defaultAiServiceId;
   final DeepLSettings deepL;
@@ -31,6 +69,12 @@ class TranslationAiSettings {
   TranslationAiSettings copyWith({
     int? version,
     TranslationProviderSelection? translationProvider,
+    Object? aiSummaryServiceId = _unset,
+    Object? targetLanguageTag = _unset,
+    Object? aiSummaryPrompt = _unset,
+    Object? aiTranslationPrompt = _unset,
+    int? tpmLimit,
+    List<String>? disabledTranslationReminderLanguages,
     List<AiServiceConfig>? aiServices,
     Object? defaultAiServiceId = _unset,
     DeepLSettings? deepL,
@@ -39,6 +83,22 @@ class TranslationAiSettings {
     return TranslationAiSettings(
       version: version ?? this.version,
       translationProvider: translationProvider ?? this.translationProvider,
+      aiSummaryServiceId: aiSummaryServiceId == _unset
+          ? this.aiSummaryServiceId
+          : aiSummaryServiceId as String?,
+      targetLanguageTag: targetLanguageTag == _unset
+          ? this.targetLanguageTag
+          : targetLanguageTag as String?,
+      aiSummaryPrompt: aiSummaryPrompt == _unset
+          ? this.aiSummaryPrompt
+          : aiSummaryPrompt as String?,
+      aiTranslationPrompt: aiTranslationPrompt == _unset
+          ? this.aiTranslationPrompt
+          : aiTranslationPrompt as String?,
+      tpmLimit: tpmLimit ?? this.tpmLimit,
+      disabledTranslationReminderLanguages:
+          disabledTranslationReminderLanguages ??
+          this.disabledTranslationReminderLanguages,
       aiServices: aiServices ?? this.aiServices,
       defaultAiServiceId: defaultAiServiceId == _unset
           ? this.defaultAiServiceId
@@ -51,6 +111,12 @@ class TranslationAiSettings {
   Map<String, Object?> toJson() => <String, Object?>{
     'version': version,
     'translationProvider': translationProvider.toJson(),
+    'aiSummaryServiceId': aiSummaryServiceId,
+    'targetLanguageTag': targetLanguageTag,
+    'aiSummaryPrompt': aiSummaryPrompt,
+    'aiTranslationPrompt': aiTranslationPrompt,
+    'tpmLimit': tpmLimit,
+    'disabledTranslationReminderLanguages': disabledTranslationReminderLanguages,
     'aiServices': aiServices.map((s) => s.toJson()).toList(growable: false),
     'defaultAiServiceId': defaultAiServiceId,
     'deepL': deepL.toJson(),
@@ -64,6 +130,39 @@ class TranslationAiSettings {
     final translationProvider = TranslationProviderSelection.fromJson(
       json['translationProvider'],
     );
+
+    final rawAiSummaryServiceId = json['aiSummaryServiceId'];
+    final aiSummaryServiceId =
+        rawAiSummaryServiceId is String && rawAiSummaryServiceId.trim().isNotEmpty
+            ? rawAiSummaryServiceId.trim()
+            : null;
+
+    final rawTargetLang = json['targetLanguageTag'];
+    final targetLanguageTag = rawTargetLang is String &&
+            rawTargetLang.trim().isNotEmpty
+        ? rawTargetLang.trim()
+        : null;
+
+    String? parseOptionalString(Object? raw) {
+      final s = raw is String ? raw.trim() : '';
+      return s.isEmpty ? null : s;
+    }
+
+    final aiSummaryPrompt = parseOptionalString(json['aiSummaryPrompt']);
+    final aiTranslationPrompt = parseOptionalString(json['aiTranslationPrompt']);
+
+    final rawTpm = json['tpmLimit'];
+    final tpmLimit = rawTpm is num ? rawTpm.toInt() : 0;
+
+    final disabledTranslationReminderLanguages = <String>[];
+    final rawDisabled = json['disabledTranslationReminderLanguages'];
+    if (rawDisabled is List) {
+      for (final raw in rawDisabled) {
+        final s = raw is String ? raw.trim() : '';
+        if (s.isEmpty) continue;
+        disabledTranslationReminderLanguages.add(s);
+      }
+    }
 
     final rawServices = json['aiServices'];
     final services = <AiServiceConfig>[];
@@ -86,6 +185,12 @@ class TranslationAiSettings {
     final loaded = TranslationAiSettings(
       version: version,
       translationProvider: translationProvider,
+      aiSummaryServiceId: aiSummaryServiceId,
+      targetLanguageTag: targetLanguageTag,
+      aiSummaryPrompt: aiSummaryPrompt,
+      aiTranslationPrompt: aiTranslationPrompt,
+      tpmLimit: tpmLimit < 0 ? 0 : tpmLimit,
+      disabledTranslationReminderLanguages: disabledTranslationReminderLanguages,
       aiServices: services,
       defaultAiServiceId: defaultId,
       deepL: deepL,
@@ -117,6 +222,16 @@ class TranslationAiSettings {
       normalizedDefaultId = null;
     }
 
+    String? normalizedAiSummaryServiceId = aiSummaryServiceId;
+    if (normalizedAiSummaryServiceId != null) {
+      final trimmed = normalizedAiSummaryServiceId.trim();
+      if (trimmed.isEmpty || !enabledIds.contains(trimmed)) {
+        normalizedAiSummaryServiceId = null;
+      } else {
+        normalizedAiSummaryServiceId = trimmed;
+      }
+    }
+
     TranslationProviderSelection normalizedProvider = translationProvider;
     if (normalizedProvider.kind == TranslationProviderKind.aiService) {
       final id = normalizedProvider.aiServiceId;
@@ -127,9 +242,33 @@ class TranslationAiSettings {
       }
     }
 
+    final normalizedTargetLang = (targetLanguageTag ?? '').trim();
+
+    String? normalizeOptionalString(String? v) {
+      final s = (v ?? '').trim();
+      return s.isEmpty ? null : s;
+    }
+
+    final normalizedDisabledReminderLangs = <String>[];
+    final seenLangs = <String>{};
+    for (final raw in disabledTranslationReminderLanguages) {
+      final s = raw.trim();
+      if (s.isEmpty) continue;
+      if (!seenLangs.add(s)) continue;
+      normalizedDisabledReminderLangs.add(s);
+    }
+
     return TranslationAiSettings(
       version: version,
       translationProvider: normalizedProvider,
+      aiSummaryServiceId: normalizedAiSummaryServiceId,
+      targetLanguageTag: normalizedTargetLang.isEmpty
+          ? null
+          : normalizedTargetLang,
+      aiSummaryPrompt: normalizeOptionalString(aiSummaryPrompt),
+      aiTranslationPrompt: normalizeOptionalString(aiTranslationPrompt),
+      tpmLimit: tpmLimit < 0 ? 0 : tpmLimit,
+      disabledTranslationReminderLanguages: normalizedDisabledReminderLangs,
       aiServices: normalizedServices,
       defaultAiServiceId: normalizedDefaultId,
       deepL: deepL,

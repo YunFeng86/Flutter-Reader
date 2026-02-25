@@ -15,11 +15,15 @@ import '../services/sync/outbox/outbox_store.dart';
 import 'sync_status_providers.dart';
 import '../services/actions/article_action_service.dart';
 import '../services/extract/article_extractor.dart';
+import '../services/ai/ai_request_queue.dart';
+import '../services/ai/ai_service_client.dart';
 import '../services/cache/article_cache_service.dart';
+import '../services/cache/ai_content_cache_store.dart';
 import '../services/cache/image_meta_store.dart';
 import '../services/cache/favicon_store.dart';
 import '../services/notifications/notification_service.dart';
 import '../services/network/favicon_service.dart';
+import '../services/translation/translation_service.dart';
 import 'repository_providers.dart';
 import 'app_settings_providers.dart';
 
@@ -135,6 +139,22 @@ final syncServiceProvider = Provider<SyncServiceBase>(
 
 final articleExtractorProvider = Provider<ArticleExtractor>((ref) {
   return ArticleExtractor(ref.watch(dioProvider));
+});
+
+final aiRequestQueueProvider = Provider<AiRequestQueue>((ref) {
+  return AiRequestQueue(maxConcurrent: 2);
+});
+
+final aiServiceClientProvider = Provider<AiServiceClient>((ref) {
+  return AiServiceClient(dio: ref.watch(dioProvider));
+}, dependencies: [dioProvider]);
+
+final translationServiceProvider = Provider<TranslationService>((ref) {
+  return TranslationService(dio: ref.watch(dioProvider));
+}, dependencies: [dioProvider]);
+
+final aiContentCacheStoreProvider = Provider<AiContentCacheStore>((ref) {
+  return AiContentCacheStore();
 });
 
 final cacheManagerProvider = Provider<BaseCacheManager>((ref) {

@@ -1,0 +1,2 @@
+enum ArticleTranslationMode { immersive, traditional }
+

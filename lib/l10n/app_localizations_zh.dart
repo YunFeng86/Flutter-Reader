@@ -710,6 +710,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get defaultValue => '默认值';
 
   @override
+  String get defaultOption => '默认';
+
+  @override
   String get userAgent => 'User-Agent';
 
   @override
@@ -773,6 +776,138 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiService => 'AI 服务';
+
+  @override
+  String get aiSummary => 'AI 总结';
+
+  @override
+  String get aiSummaryService => 'AI 总结服务';
+
+  @override
+  String get targetLanguage => '目标语言';
+
+  @override
+  String get followAppLanguage => '跟随软件语言';
+
+  @override
+  String get aiSummaryPrompt => 'AI 总结提示词';
+
+  @override
+  String get aiTranslationPrompt => 'AI 翻译提示词';
+
+  @override
+  String defaultAiSummaryPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return '请用 $language 总结这篇文章（标题：$title）：$content';
+  }
+
+  @override
+  String defaultAiTranslationPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return '请将这篇文章翻译成 $language（标题：$title）：$content';
+  }
+
+  @override
+  String get promptVariables => '可用变量';
+
+  @override
+  String get promptVariableContentDescription => '文章正文';
+
+  @override
+  String get promptVariableLanguageDescription => '目标语言';
+
+  @override
+  String get promptVariableTitleDescription => '文章标题';
+
+  @override
+  String get tpmLimit => 'TPM 限制';
+
+  @override
+  String get tpmLimitSubtitle => '0 表示不限制；超出后将进入队列等待。';
+
+  @override
+  String get aiSummaryAction => 'AI 总结';
+
+  @override
+  String get translateAction => '翻译';
+
+  @override
+  String get translationMode => '翻译模式';
+
+  @override
+  String get immersiveTranslation => '沉浸式翻译';
+
+  @override
+  String get traditionalTranslation => '传统翻译';
+
+  @override
+  String get generating => '生成中…';
+
+  @override
+  String get queued => '排队中';
+
+  @override
+  String get regenerate => '重新生成';
+
+  @override
+  String get cachedPromptOutdated => 'Prompt 已更新，请重新生成。';
+
+  @override
+  String languageMismatchBanner(Object source, Object target) {
+    return '检测到内容可能是 $source，目标语言是 $target。';
+  }
+
+  @override
+  String get dontRemindThisLanguage => '不再提醒此语言';
+
+  @override
+  String get autoAiSummary => '自动 AI 总结';
+
+  @override
+  String get autoTranslate => '自动翻译';
+
+  @override
+  String get aiNotConfigured => '尚未配置 AI 服务。';
+
+  @override
+  String get translationNotAvailable => '所选翻译提供方暂不支持。';
+
+  @override
+  String get clearTranslation => '关闭翻译';
+
+  @override
+  String get dbRecoveryTitle => '数据库恢复';
+
+  @override
+  String get dbRecoveryDescription =>
+      '应用检测到数据库异常，已自动进行恢复。你的数据已在磁盘上保留（备份/已移动的原库文件）。';
+
+  @override
+  String get dbRecoveryTimeLabel => '时间';
+
+  @override
+  String get dbRecoveryDbNameLabel => '数据库名';
+
+  @override
+  String get dbRecoveryOpenedAsLabel => '实际打开为';
+
+  @override
+  String get dbRecoveryBackupPathLabel => '备份';
+
+  @override
+  String get dbRecoveryMovedOriginalPathLabel => '已移动原库';
+
+  @override
+  String get dbRecoveryErrorLabel => '错误';
+
+  @override
+  String get dbRecoveryDataPreservedHint => '提示：可使用右侧复制按钮复制路径，便于排查或反馈。';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -1481,6 +1616,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get defaultValue => '預設值';
 
   @override
+  String get defaultOption => '預設';
+
+  @override
   String get userAgent => 'User-Agent';
 
   @override
@@ -1544,4 +1682,136 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get aiService => 'AI 服務';
+
+  @override
+  String get aiSummary => 'AI 總結';
+
+  @override
+  String get aiSummaryService => 'AI 總結服務';
+
+  @override
+  String get targetLanguage => '目標語言';
+
+  @override
+  String get followAppLanguage => '跟隨軟體語言';
+
+  @override
+  String get aiSummaryPrompt => 'AI 總結提示詞';
+
+  @override
+  String get aiTranslationPrompt => 'AI 翻譯提示詞';
+
+  @override
+  String defaultAiSummaryPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return '請用 $language 總結這篇文章（標題：$title）：$content';
+  }
+
+  @override
+  String defaultAiTranslationPromptTemplate(
+    Object language,
+    Object title,
+    Object content,
+  ) {
+    return '請將這篇文章翻譯成 $language（標題：$title）：$content';
+  }
+
+  @override
+  String get promptVariables => '可用變數';
+
+  @override
+  String get promptVariableContentDescription => '文章內容';
+
+  @override
+  String get promptVariableLanguageDescription => '目標語言';
+
+  @override
+  String get promptVariableTitleDescription => '文章標題';
+
+  @override
+  String get tpmLimit => 'TPM 限制';
+
+  @override
+  String get tpmLimitSubtitle => '0 表示不限制；超出後將進入佇列等待。';
+
+  @override
+  String get aiSummaryAction => 'AI 總結';
+
+  @override
+  String get translateAction => '翻譯';
+
+  @override
+  String get translationMode => '翻譯模式';
+
+  @override
+  String get immersiveTranslation => '沉浸式翻譯';
+
+  @override
+  String get traditionalTranslation => '傳統翻譯';
+
+  @override
+  String get generating => '生成中…';
+
+  @override
+  String get queued => '排隊中';
+
+  @override
+  String get regenerate => '重新生成';
+
+  @override
+  String get cachedPromptOutdated => 'Prompt 已更新，請重新生成。';
+
+  @override
+  String languageMismatchBanner(Object source, Object target) {
+    return '偵測到內容可能是 $source，目標語言是 $target。';
+  }
+
+  @override
+  String get dontRemindThisLanguage => '不再提醒此語言';
+
+  @override
+  String get autoAiSummary => '自動 AI 總結';
+
+  @override
+  String get autoTranslate => '自動翻譯';
+
+  @override
+  String get aiNotConfigured => '尚未設定 AI 服務。';
+
+  @override
+  String get translationNotAvailable => '所選翻譯提供方暫不支援。';
+
+  @override
+  String get clearTranslation => '關閉翻譯';
+
+  @override
+  String get dbRecoveryTitle => '資料庫恢復';
+
+  @override
+  String get dbRecoveryDescription =>
+      '應用偵測到資料庫異常，已自動進行恢復。你的資料已在磁碟上保留（備份/已移動的原庫檔案）。';
+
+  @override
+  String get dbRecoveryTimeLabel => '時間';
+
+  @override
+  String get dbRecoveryDbNameLabel => '資料庫名稱';
+
+  @override
+  String get dbRecoveryOpenedAsLabel => '實際開啟為';
+
+  @override
+  String get dbRecoveryBackupPathLabel => '備份';
+
+  @override
+  String get dbRecoveryMovedOriginalPathLabel => '已移動原庫';
+
+  @override
+  String get dbRecoveryErrorLabel => '錯誤';
+
+  @override
+  String get dbRecoveryDataPreservedHint => '提示：可使用右側複製按鈕複製路徑，便於排查或回報。';
 }

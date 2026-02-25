@@ -197,6 +197,8 @@ class SubscriptionActions {
     bool updateSyncWebPages = false,
     bool? showAiSummary,
     bool updateShowAiSummary = false,
+    bool? autoTranslate,
+    bool updateAutoTranslate = false,
   }) async {
     await ref
         .read(feedRepositoryProvider)
@@ -214,6 +216,8 @@ class SubscriptionActions {
           updateSyncWebPages: updateSyncWebPages,
           showAiSummary: showAiSummary,
           updateShowAiSummary: updateShowAiSummary,
+          autoTranslate: autoTranslate,
+          updateAutoTranslate: updateAutoTranslate,
         );
   }
 
@@ -233,6 +237,8 @@ class SubscriptionActions {
     bool updateSyncWebPages = false,
     bool? showAiSummary,
     bool updateShowAiSummary = false,
+    bool? autoTranslate,
+    bool updateAutoTranslate = false,
   }) async {
     await ref
         .read(categoryRepositoryProvider)
@@ -250,6 +256,8 @@ class SubscriptionActions {
           updateSyncWebPages: updateSyncWebPages,
           showAiSummary: showAiSummary,
           updateShowAiSummary: updateShowAiSummary,
+          autoTranslate: autoTranslate,
+          updateAutoTranslate: updateAutoTranslate,
         );
   }
 

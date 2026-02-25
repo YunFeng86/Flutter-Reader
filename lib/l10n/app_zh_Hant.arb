@@ -958,6 +958,10 @@
   "@defaultValue": {
     "description": "defaultValue"
   },
+  "defaultOption": "預設",
+  "@defaultOption": {
+    "description": "通用的「預設」選項標籤"
+  },
   "userAgent": "User-Agent",
   "@userAgent": {
     "description": "userAgent"
@@ -1046,5 +1050,175 @@
   "aiService": "AI 服務",
   "@aiService": {
     "description": "AI 服務的通用標籤"
+  },
+  "aiSummary": "AI 總結",
+  "@aiSummary": {
+    "description": "AI 總結分組標題/標籤"
+  },
+  "aiSummaryService": "AI 總結服務",
+  "@aiSummaryService": {
+    "description": "選擇 AI 總結使用的 AI 服務"
+  },
+  "targetLanguage": "目標語言",
+  "@targetLanguage": {
+    "description": "選擇目標語言的設定項標題"
+  },
+  "followAppLanguage": "跟隨軟體語言",
+  "@followAppLanguage": {
+    "description": "跟隨軟體語言的選項標籤"
+  },
+  "aiSummaryPrompt": "AI 總結提示詞",
+  "@aiSummaryPrompt": {
+    "description": "AI 總結提示詞模板設定項標題"
+  },
+  "aiTranslationPrompt": "AI 翻譯提示詞",
+  "@aiTranslationPrompt": {
+    "description": "AI 翻譯提示詞模板設定項標題（僅使用 AI 翻譯時生效）"
+  },
+  "defaultAiSummaryPromptTemplate": "請用 {language} 總結這篇文章（標題：{title}）：{content}",
+  "@defaultAiSummaryPromptTemplate": {
+    "description": "預設 AI 總結提示詞模板",
+    "placeholders": {
+      "language": {},
+      "title": {},
+      "content": {}
+    }
+  },
+  "defaultAiTranslationPromptTemplate": "請將這篇文章翻譯成 {language}（標題：{title}）：{content}",
+  "@defaultAiTranslationPromptTemplate": {
+    "description": "預設 AI 翻譯提示詞模板（僅使用 AI 翻譯時生效）",
+    "placeholders": {
+      "language": {},
+      "title": {},
+      "content": {}
+    }
+  },
+  "promptVariables": "可用變數",
+  "@promptVariables": {
+    "description": "提示詞模板可用變數列表標題"
+  },
+  "promptVariableContentDescription": "文章內容",
+  "@promptVariableContentDescription": {
+    "description": "{{content}} 變數的說明文字"
+  },
+  "promptVariableLanguageDescription": "目標語言",
+  "@promptVariableLanguageDescription": {
+    "description": "{{language}} 變數的說明文字"
+  },
+  "promptVariableTitleDescription": "文章標題",
+  "@promptVariableTitleDescription": {
+    "description": "{{title}} 變數的說明文字"
+  },
+  "tpmLimit": "TPM 限制",
+  "@tpmLimit": {
+    "description": "TPM（每分鐘 Token）限制設定項標題"
+  },
+  "tpmLimitSubtitle": "0 表示不限制；超出後將進入佇列等待。",
+  "@tpmLimitSubtitle": {
+    "description": "TPM 限制的說明文字"
+  },
+  "aiSummaryAction": "AI 總結",
+  "@aiSummaryAction": {
+    "description": "閱讀頁生成 AI 總結按鈕文案"
+  },
+  "translateAction": "翻譯",
+  "@translateAction": {
+    "description": "閱讀頁翻譯按鈕文案"
+  },
+  "translationMode": "翻譯模式",
+  "@translationMode": {
+    "description": "選擇翻譯模式的標題"
+  },
+  "immersiveTranslation": "沉浸式翻譯",
+  "@immersiveTranslation": {
+    "description": "沉浸式翻譯模式選項文案"
+  },
+  "traditionalTranslation": "傳統翻譯",
+  "@traditionalTranslation": {
+    "description": "傳統翻譯模式選項文案"
+  },
+  "generating": "生成中…",
+  "@generating": {
+    "description": "通用生成中狀態文案"
+  },
+  "queued": "排隊中",
+  "@queued": {
+    "description": "通用排隊中狀態文案"
+  },
+  "regenerate": "重新生成",
+  "@regenerate": {
+    "description": "重新生成按鈕文案"
+  },
+  "cachedPromptOutdated": "Prompt 已更新，請重新生成。",
+  "@cachedPromptOutdated": {
+    "description": "當快取因 Prompt 變更失效時的提示文案"
+  },
+  "languageMismatchBanner": "偵測到內容可能是 {source}，目標語言是 {target}。",
+  "@languageMismatchBanner": {
+    "description": "文章語言與目標語言不一致時的提醒文案",
+    "placeholders": {
+      "source": {},
+      "target": {}
+    }
+  },
+  "dontRemindThisLanguage": "不再提醒此語言",
+  "@dontRemindThisLanguage": {
+    "description": "關閉某個來源語言提醒的操作文案"
+  },
+  "autoAiSummary": "自動 AI 總結",
+  "@autoAiSummary": {
+    "description": "自動 AI 總結設定項標題"
+  },
+  "autoTranslate": "自動翻譯",
+  "@autoTranslate": {
+    "description": "自動翻譯設定項標題"
+  },
+  "aiNotConfigured": "尚未設定 AI 服務。",
+  "@aiNotConfigured": {
+    "description": "未設定 AI 服務時的錯誤提示"
+  },
+  "translationNotAvailable": "所選翻譯提供方暫不支援。",
+  "@translationNotAvailable": {
+    "description": "所選翻譯提供方未實作時的錯誤提示"
+  },
+  "clearTranslation": "關閉翻譯",
+  "@clearTranslation": {
+    "description": "清除/隱藏翻譯視圖的操作文案"
+  },
+  "dbRecoveryTitle": "資料庫恢復",
+  "@dbRecoveryTitle": {
+    "description": "資料庫恢復彈窗標題"
+  },
+  "dbRecoveryDescription": "應用偵測到資料庫異常，已自動進行恢復。你的資料已在磁碟上保留（備份/已移動的原庫檔案）。",
+  "@dbRecoveryDescription": {
+    "description": "資料庫恢復彈窗描述文案"
+  },
+  "dbRecoveryTimeLabel": "時間",
+  "@dbRecoveryTimeLabel": {
+    "description": "恢復時間欄位標籤"
+  },
+  "dbRecoveryDbNameLabel": "資料庫名稱",
+  "@dbRecoveryDbNameLabel": {
+    "description": "資料庫名稱欄位標籤"
+  },
+  "dbRecoveryOpenedAsLabel": "實際開啟為",
+  "@dbRecoveryOpenedAsLabel": {
+    "description": "回退資料庫名稱欄位標籤"
+  },
+  "dbRecoveryBackupPathLabel": "備份",
+  "@dbRecoveryBackupPathLabel": {
+    "description": "備份路徑欄位標籤"
+  },
+  "dbRecoveryMovedOriginalPathLabel": "已移動原庫",
+  "@dbRecoveryMovedOriginalPathLabel": {
+    "description": "已移動的原庫路徑欄位標籤"
+  },
+  "dbRecoveryErrorLabel": "錯誤",
+  "@dbRecoveryErrorLabel": {
+    "description": "錯誤資訊欄位標籤"
+  },
+  "dbRecoveryDataPreservedHint": "提示：可使用右側複製按鈕複製路徑，便於排查或回報。",
+  "@dbRecoveryDataPreservedHint": {
+    "description": "資料庫恢復彈窗底部提示"
   }
 }

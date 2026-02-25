@@ -17,48 +17,53 @@ const CategorySchema = CollectionSchema(
   name: r'Category',
   id: 5751694338128944171,
   properties: {
-    r'createdAt': PropertySchema(
+    r'autoTranslate': PropertySchema(
       id: 0,
+      name: r'autoTranslate',
+      type: IsarType.bool,
+    ),
+    r'createdAt': PropertySchema(
+      id: 1,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'filterEnabled': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'filterEnabled',
       type: IsarType.bool,
     ),
     r'filterKeywords': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'filterKeywords',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'showAiSummary': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'showAiSummary',
       type: IsarType.bool,
     ),
     r'syncEnabled': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'syncEnabled',
       type: IsarType.bool,
     ),
     r'syncImages': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'syncImages',
       type: IsarType.bool,
     ),
     r'syncWebPages': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'syncWebPages',
       type: IsarType.bool,
     ),
     r'updatedAt': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -113,15 +118,16 @@ void _categorySerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeBool(offsets[1], object.filterEnabled);
-  writer.writeString(offsets[2], object.filterKeywords);
-  writer.writeString(offsets[3], object.name);
-  writer.writeBool(offsets[4], object.showAiSummary);
-  writer.writeBool(offsets[5], object.syncEnabled);
-  writer.writeBool(offsets[6], object.syncImages);
-  writer.writeBool(offsets[7], object.syncWebPages);
-  writer.writeDateTime(offsets[8], object.updatedAt);
+  writer.writeBool(offsets[0], object.autoTranslate);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeBool(offsets[2], object.filterEnabled);
+  writer.writeString(offsets[3], object.filterKeywords);
+  writer.writeString(offsets[4], object.name);
+  writer.writeBool(offsets[5], object.showAiSummary);
+  writer.writeBool(offsets[6], object.syncEnabled);
+  writer.writeBool(offsets[7], object.syncImages);
+  writer.writeBool(offsets[8], object.syncWebPages);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 Category _categoryDeserialize(
@@ -131,16 +137,17 @@ Category _categoryDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Category();
-  object.createdAt = reader.readDateTime(offsets[0]);
-  object.filterEnabled = reader.readBoolOrNull(offsets[1]);
-  object.filterKeywords = reader.readStringOrNull(offsets[2]);
+  object.autoTranslate = reader.readBoolOrNull(offsets[0]);
+  object.createdAt = reader.readDateTime(offsets[1]);
+  object.filterEnabled = reader.readBoolOrNull(offsets[2]);
+  object.filterKeywords = reader.readStringOrNull(offsets[3]);
   object.id = id;
-  object.name = reader.readString(offsets[3]);
-  object.showAiSummary = reader.readBoolOrNull(offsets[4]);
-  object.syncEnabled = reader.readBoolOrNull(offsets[5]);
-  object.syncImages = reader.readBoolOrNull(offsets[6]);
-  object.syncWebPages = reader.readBoolOrNull(offsets[7]);
-  object.updatedAt = reader.readDateTime(offsets[8]);
+  object.name = reader.readString(offsets[4]);
+  object.showAiSummary = reader.readBoolOrNull(offsets[5]);
+  object.syncEnabled = reader.readBoolOrNull(offsets[6]);
+  object.syncImages = reader.readBoolOrNull(offsets[7]);
+  object.syncWebPages = reader.readBoolOrNull(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -152,15 +159,15 @@ P _categoryDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readBoolOrNull(offset)) as P;
     case 1:
-      return (reader.readBoolOrNull(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
-    case 3:
-      return (reader.readString(offset)) as P;
-    case 4:
       return (reader.readBoolOrNull(offset)) as P;
+    case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
+      return (reader.readString(offset)) as P;
     case 5:
       return (reader.readBoolOrNull(offset)) as P;
     case 6:
@@ -168,6 +175,8 @@ P _categoryDeserializeProp<P>(
     case 7:
       return (reader.readBoolOrNull(offset)) as P;
     case 8:
+      return (reader.readBoolOrNull(offset)) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -361,6 +370,34 @@ extension CategoryQueryWhere on QueryBuilder<Category, Category, QWhereClause> {
 
 extension CategoryQueryFilter
     on QueryBuilder<Category, Category, QFilterCondition> {
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      autoTranslateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'autoTranslate',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition>
+      autoTranslateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'autoTranslate',
+      ));
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterFilterCondition> autoTranslateEqualTo(
+      bool? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'autoTranslate',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterFilterCondition> createdAtEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -947,6 +984,18 @@ extension CategoryQueryLinks
     on QueryBuilder<Category, Category, QFilterCondition> {}
 
 extension CategoryQuerySortBy on QueryBuilder<Category, Category, QSortBy> {
+  QueryBuilder<Category, Category, QAfterSortBy> sortByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> sortByAutoTranslateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1058,6 +1107,18 @@ extension CategoryQuerySortBy on QueryBuilder<Category, Category, QSortBy> {
 
 extension CategoryQuerySortThenBy
     on QueryBuilder<Category, Category, QSortThenBy> {
+  QueryBuilder<Category, Category, QAfterSortBy> thenByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Category, Category, QAfterSortBy> thenByAutoTranslateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'autoTranslate', Sort.desc);
+    });
+  }
+
   QueryBuilder<Category, Category, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1181,6 +1242,12 @@ extension CategoryQuerySortThenBy
 
 extension CategoryQueryWhereDistinct
     on QueryBuilder<Category, Category, QDistinct> {
+  QueryBuilder<Category, Category, QDistinct> distinctByAutoTranslate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'autoTranslate');
+    });
+  }
+
   QueryBuilder<Category, Category, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1244,6 +1311,12 @@ extension CategoryQueryProperty
   QueryBuilder<Category, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Category, bool?, QQueryOperations> autoTranslateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'autoTranslate');
     });
   }
 
