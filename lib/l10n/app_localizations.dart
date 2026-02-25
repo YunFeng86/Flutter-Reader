@@ -795,6 +795,36 @@ abstract class AppLocalizations {
   /// **'Search in content'**
   String get searchInContent;
 
+  /// findInPage
+  ///
+  /// In en, this message translates to:
+  /// **'Find in page'**
+  String get findInPage;
+
+  /// previousMatch
+  ///
+  /// In en, this message translates to:
+  /// **'Previous match'**
+  String get previousMatch;
+
+  /// nextMatch
+  ///
+  /// In en, this message translates to:
+  /// **'Next match'**
+  String get nextMatch;
+
+  /// caseSensitive
+  ///
+  /// In en, this message translates to:
+  /// **'Case sensitive'**
+  String get caseSensitive;
+
+  /// close
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
   /// groupingAndSorting
   ///
   /// In en, this message translates to:

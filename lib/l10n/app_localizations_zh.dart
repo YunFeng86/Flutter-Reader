@@ -369,6 +369,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchInContent => '搜索正文';
 
   @override
+  String get findInPage => '页面内查找';
+
+  @override
+  String get previousMatch => '上一个匹配';
+
+  @override
+  String get nextMatch => '下一个匹配';
+
+  @override
+  String get caseSensitive => '区分大小写';
+
+  @override
+  String get close => '关闭';
+
+  @override
   String get groupingAndSorting => '分组与排序';
 
   @override
@@ -1123,6 +1138,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get searchInContent => '搜尋內容';
+
+  @override
+  String get findInPage => '頁面內尋找';
+
+  @override
+  String get previousMatch => '上一個符合';
+
+  @override
+  String get nextMatch => '下一個符合';
+
+  @override
+  String get caseSensitive => '區分大小寫';
+
+  @override
+  String get close => '關閉';
 
   @override
   String get groupingAndSorting => '分組與排序';

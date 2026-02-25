@@ -446,7 +446,9 @@ class _AboutTabState extends State<AboutTab> {
                             Text('U: Toggle unread-only'),
                             Text('M: Toggle read/unread for selected article'),
                             Text('S: Toggle star for selected article'),
-                            Text('Ctrl+F: Search articles'),
+                            Text(
+                              'Ctrl/Cmd+F: Search articles (list); focus Find in page (reader)',
+                            ),
                           ],
                         ),
                       ),

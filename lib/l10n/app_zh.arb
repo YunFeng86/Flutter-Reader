@@ -523,6 +523,26 @@
   "@searchInContent": {
     "description": "searchInContent"
   },
+  "findInPage": "页面内查找",
+  "@findInPage": {
+    "description": "findInPage"
+  },
+  "previousMatch": "上一个匹配",
+  "@previousMatch": {
+    "description": "previousMatch"
+  },
+  "nextMatch": "下一个匹配",
+  "@nextMatch": {
+    "description": "nextMatch"
+  },
+  "caseSensitive": "区分大小写",
+  "@caseSensitive": {
+    "description": "caseSensitive"
+  },
+  "close": "关闭",
+  "@close": {
+    "description": "close"
+  },
   "groupingAndSorting": "分组与排序",
   "@groupingAndSorting": {
     "description": "groupingAndSorting"
