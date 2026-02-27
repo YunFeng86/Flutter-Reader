@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -184,11 +185,28 @@ class BackgroundSyncRunner {
 
       if (!shouldRefresh && !hasPendingOutbox) return;
 
-      final isar = await openIsarForAccount(
-        accountId: activeAccount.id,
-        dbName: activeAccount.dbName,
-        isPrimary: activeAccount.isPrimary,
-      );
+      late final Isar isar;
+      try {
+        isar = await openIsarForAccount(
+          accountId: activeAccount.id,
+          dbName: activeAccount.dbName,
+          isPrimary: activeAccount.isPrimary,
+        );
+      } on DbOpenFailure catch (e) {
+        AppLogger.w(
+          'Background sync skipped: failed to open DB (${e.kind})',
+          tag: 'sync',
+          error: e.error,
+        );
+        return;
+      } catch (e) {
+        AppLogger.w(
+          'Background sync skipped: failed to open DB',
+          tag: 'sync',
+          error: e,
+        );
+        return;
+      }
 
       try {
         final feeds = FeedRepository(isar);

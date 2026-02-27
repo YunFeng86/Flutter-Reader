@@ -22,6 +22,9 @@ class _AccountGateState extends ConsumerState<AccountGate> {
   Isar? _isar;
   String? _openedForAccountId;
   Future<void>? _opening;
+  Object? _openError;
+  StackTrace? _openErrorStack;
+  String? _openErrorForAccountId;
 
   @override
   void dispose() {
@@ -52,10 +55,27 @@ class _AccountGateState extends ConsumerState<AccountGate> {
 
     // Ensure the correct Isar instance is opened for the active account.
     final shouldOpen = _openedForAccountId != activeAccount.id;
-    if (shouldOpen && _opening == null) {
-      _opening = _openFor(activeAccount).whenComplete(() {
-        if (mounted) setState(() => _opening = null);
-      });
+    final hasErrorForActive =
+        _openError != null && _openErrorForAccountId == activeAccount.id;
+    if (shouldOpen && _opening == null && !hasErrorForActive) {
+      final openingForAccountId = activeAccount.id;
+      _opening = _openFor(activeAccount)
+          .catchError((e, st) {
+            if (!mounted) return;
+            setState(() {
+              final currentAccountId = ref.read(activeAccountProvider).id;
+              // Only keep the error if we're still trying to open the same
+              // account (avoid stale errors after account switching).
+              if (openingForAccountId == currentAccountId) {
+                _openError = e;
+                _openErrorStack = st is StackTrace ? st : null;
+                _openErrorForAccountId = openingForAccountId;
+              }
+            });
+          })
+          .whenComplete(() {
+            if (mounted) setState(() => _opening = null);
+          });
     }
 
     final opening = _opening;
@@ -63,6 +83,71 @@ class _AccountGateState extends ConsumerState<AccountGate> {
       return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    final openError = _openError;
+    if (openError != null && hasErrorForActive) {
+      final kind = openError is DbOpenFailure ? openError.kind : null;
+      final hint = switch (kind) {
+        DbOpenFailureKind.transient =>
+          '数据库可能正在被占用（例如同时打开了两个应用实例），或正在关闭中。请关闭其他实例后重试。',
+        DbOpenFailureKind.environmental =>
+          '数据库目录可能没有权限/磁盘空间不足/路径异常。请检查系统权限与存储空间后重试。',
+        _ => '数据库打开失败，请重试或重启应用。',
+      };
+      final details = [
+        openError.toString(),
+        if (_openErrorStack != null) _openErrorStack.toString(),
+      ].join('\n\n');
+
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 720),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('无法打开数据库', style: TextStyle(fontSize: 20)),
+                    const SizedBox(height: 12),
+                    Text(hint),
+                    const SizedBox(height: 12),
+                    const Text(
+                      '错误详情：',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 8),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: SingleChildScrollView(
+                        child: SelectableText(details),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: FilledButton(
+                        onPressed: () {
+                          setState(() {
+                            _openError = null;
+                            _openErrorStack = null;
+                            _openErrorForAccountId = null;
+                          });
+                        },
+                        child: const Text('重试'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -91,6 +176,9 @@ class _AccountGateState extends ConsumerState<AccountGate> {
     final prev = _isar;
     _isar = next;
     _openedForAccountId = account.id;
+    _openError = null;
+    _openErrorStack = null;
+    _openErrorForAccountId = null;
     if (prev != null) {
       // Close in background; Isar close can be slow on some platforms.
       unawaited(prev.close());

@@ -14,6 +14,27 @@ import 'migrations.dart';
 
 const String kPrimaryAccountId = 'local';
 
+enum DbOpenFailureKind { transient, environmental }
+
+class DbOpenFailure implements Exception {
+  const DbOpenFailure({
+    required this.kind,
+    required this.directory,
+    required this.name,
+    required this.error,
+  });
+
+  final DbOpenFailureKind kind;
+  final String directory;
+  final String name;
+  final Object error;
+
+  @override
+  String toString() {
+    return 'DbOpenFailure(kind: $kind, directory: $directory, name: $name, error: $error)';
+  }
+}
+
 /// Open the Isar database for a given account.
 ///
 /// - Primary account uses [PathManager.getIsarLocation] to avoid silent data
@@ -222,6 +243,69 @@ Future<String?> _moveBrokenDbFiles({
   return movedPath;
 }
 
+bool _containsAny(String haystack, List<String> needles) {
+  for (final n in needles) {
+    if (haystack.contains(n)) return true;
+  }
+  return false;
+}
+
+String _openErrorText(Object error) {
+  if (error is IsarError) {
+    return error.message;
+  }
+  if (error is FileSystemException) {
+    final parts = <String>[
+      error.message,
+      error.osError?.message ?? '',
+      error.path ?? '',
+    ];
+    return parts.where((p) => p.trim().isNotEmpty).join(' | ');
+  }
+  return error.toString();
+}
+
+DbOpenFailureKind? _classifyNonRecoveryOpenFailure(Object error) {
+  final text = _openErrorText(error).toLowerCase();
+
+  // File locks / concurrent opens (common during fast account switching or when
+  // the app is launched twice).
+  if (_containsAny(text, <String>[
+    'lock',
+    'locked',
+    'resource busy',
+    'device or resource busy',
+    'text file busy',
+    'being used by another process',
+    'in use',
+    'already opened',
+    'already been opened',
+    'another instance',
+  ])) {
+    return DbOpenFailureKind.transient;
+  }
+
+  // Environment issues: recovery (moving db / opening fresh) won't help.
+  if (_containsAny(text, <String>[
+    'permission denied',
+    'access is denied',
+    'operation not permitted',
+    'read-only file system',
+    'no such file or directory',
+    'file system exception',
+    'no space left on device',
+  ])) {
+    return DbOpenFailureKind.environmental;
+  }
+
+  // If Isar reports a failure that isn't an obvious lock/permission issue, it
+  // is usually a DB-level problem where recovery can help (backup + move + re-open).
+  if (error is IsarError) return null;
+
+  // Default: be conservative and avoid destructive recovery.
+  return DbOpenFailureKind.environmental;
+}
+
 Future<Isar> _openWithBackupAndRecovery({
   required List<CollectionSchema<dynamic>> schemas,
   required String directory,
@@ -235,11 +319,68 @@ Future<Isar> _openWithBackupAndRecovery({
   try {
     return await Isar.open(schemas, directory: directory, name: name);
   } catch (e, s) {
+    Object recoveryError = e;
+    StackTrace recoveryStack = s;
+    final initialKind = _classifyNonRecoveryOpenFailure(e);
+
+    // For non-corruption failures (locks, permission, etc.), do a short backoff
+    // retry before we consider any destructive recovery.
+    if (initialKind != null) {
+      Object lastError = e;
+      StackTrace lastStack = s;
+      DbOpenFailureKind? kindOrNull = initialKind;
+
+      const delays = <Duration>[
+        Duration(milliseconds: 120),
+        Duration(milliseconds: 240),
+        Duration(milliseconds: 480),
+        Duration(milliseconds: 960),
+      ];
+
+      for (var i = 0; i < delays.length; i++) {
+        await Future<void>.delayed(delays[i]);
+        try {
+          final isar = await Isar.open(
+            schemas,
+            directory: directory,
+            name: name,
+          );
+          AppLogger.i('Isar open succeeded after retry #${i + 1}', tag: 'db');
+          return isar;
+        } catch (e2, s2) {
+          lastError = e2;
+          lastStack = s2;
+          kindOrNull = _classifyNonRecoveryOpenFailure(e2);
+          if (kindOrNull == null) {
+            // Escalate to recovery for a DB-level failure.
+            recoveryError = e2;
+            recoveryStack = s2;
+            break;
+          }
+        }
+      }
+
+      if (kindOrNull != null) {
+        AppLogger.e(
+          'Failed to open Isar DB (non-recoverable)',
+          tag: 'db',
+          error: lastError,
+          stackTrace: lastStack,
+        );
+        throw DbOpenFailure(
+          kind: kindOrNull,
+          directory: directory,
+          name: name,
+          error: lastError,
+        );
+      }
+    }
+
     AppLogger.e(
       'Failed to open Isar DB; attempting recovery',
       tag: 'db',
-      error: e,
-      stackTrace: s,
+      error: recoveryError,
+      stackTrace: recoveryStack,
     );
 
     final originalPath = p.join(directory, '$name.isar');
@@ -269,7 +410,7 @@ Future<Isar> _openWithBackupAndRecovery({
             originalPath: originalPath,
             backupPath: backupPath,
             movedPath: movedPath,
-            error: e.toString(),
+            error: recoveryError.toString(),
             fallbackDbName: fallbackName,
           ),
         );
@@ -302,7 +443,7 @@ Future<Isar> _openWithBackupAndRecovery({
         originalPath: originalPath,
         backupPath: backupPath,
         movedPath: movedPath,
-        error: e.toString(),
+        error: recoveryError.toString(),
         fallbackDbName: fallbackName,
       ),
     );
