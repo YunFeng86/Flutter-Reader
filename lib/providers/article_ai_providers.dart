@@ -101,19 +101,22 @@ class ArticleAiState {
       articleId: articleId,
       contentHash: contentHash ?? this.contentHash,
       targetLanguageTag: targetLanguageTag ?? this.targetLanguageTag,
-      sourceLanguageTag:
-          sourceLanguageTag == _unset
-              ? this.sourceLanguageTag
-              : sourceLanguageTag as String?,
+      sourceLanguageTag: sourceLanguageTag == _unset
+          ? this.sourceLanguageTag
+          : sourceLanguageTag as String?,
       showLanguageMismatchBanner:
           showLanguageMismatchBanner ?? this.showLanguageMismatchBanner,
-      summaryText: summaryText == _unset ? this.summaryText : summaryText as String?,
+      summaryText: summaryText == _unset
+          ? this.summaryText
+          : summaryText as String?,
       summaryStatus: summaryStatus ?? this.summaryStatus,
-      summaryError:
-          summaryError == _unset ? this.summaryError : summaryError as String?,
+      summaryError: summaryError == _unset
+          ? this.summaryError
+          : summaryError as String?,
       summaryOutdated: summaryOutdated ?? this.summaryOutdated,
-      translationHtml:
-          translationHtml == _unset ? this.translationHtml : translationHtml as String?,
+      translationHtml: translationHtml == _unset
+          ? this.translationHtml
+          : translationHtml as String?,
       translationMode: translationMode == _unset
           ? this.translationMode
           : translationMode as ArticleTranslationMode?,
@@ -133,7 +136,8 @@ final articleAiControllerProvider =
       ArticleAiController.new,
     );
 
-class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int> {
+class ArticleAiController
+    extends AutoDisposeFamilyNotifier<ArticleAiState, int> {
   Article? _article;
   Feed? _feed;
   Category? _category;
@@ -172,29 +176,21 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
       (_, next) => _handleTranslationSettings(next.valueOrNull),
       fireImmediately: true,
     );
-    ref.listen<Map<int, Feed>>(
-      feedMapProvider,
-      (_, next) {
-        final feedId = _article?.feedId;
-        _feed = feedId == null ? null : next[feedId];
-        _refreshAuto();
-        _refreshLanguageBanner();
-      },
-      fireImmediately: true,
-    );
-    ref.listen<AsyncValue<List<Category>>>(
-      categoriesProvider,
-      (_, next) {
-        final categories = next.valueOrNull ?? const <Category>[];
-        final catId = _effectiveCategoryId();
-        _category = catId == null
-            ? null
-            : categories.where((c) => c.id == catId).firstOrNull;
-        _refreshAuto();
-        _refreshLanguageBanner();
-      },
-      fireImmediately: true,
-    );
+    ref.listen<Map<int, Feed>>(feedMapProvider, (_, next) {
+      final feedId = _article?.feedId;
+      _feed = feedId == null ? null : next[feedId];
+      _refreshAuto();
+      _refreshLanguageBanner();
+    }, fireImmediately: true);
+    ref.listen<AsyncValue<List<Category>>>(categoriesProvider, (_, next) {
+      final categories = next.valueOrNull ?? const <Category>[];
+      final catId = _effectiveCategoryId();
+      _category = catId == null
+          ? null
+          : categories.where((c) => c.id == catId).firstOrNull;
+      _refreshAuto();
+      _refreshLanguageBanner();
+    }, fireImmediately: true);
 
     return ArticleAiState.initial(articleId);
   }
@@ -232,6 +228,8 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
     final resolved = normalizeLanguageTag(rawTarget ?? uiTag);
     _targetLanguageTag = resolved.isEmpty ? uiTag : resolved;
     if (state.targetLanguageTag != _targetLanguageTag) {
+      _summaryRequestId++;
+      _translationRequestId++;
       state = state.copyWith(
         targetLanguageTag: _targetLanguageTag,
         summaryText: null,
@@ -250,6 +248,9 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
   void _handleArticle(Article? next) {
     _article = next;
     if (next == null) {
+      _contentHashRequestId++;
+      _summaryRequestId++;
+      _translationRequestId++;
       _activeHtml = '';
       _activeShowExtracted = false;
       _contentHash = '';
@@ -272,16 +273,22 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
 
     final hasExtracted = (next.extractedContentHtml ?? '').trim().isNotEmpty;
     final showExtracted =
-        hasExtracted && next.preferredContentView == ArticleContentView.extracted;
+        hasExtracted &&
+        next.preferredContentView == ArticleContentView.extracted;
     final html =
-        ((showExtracted ? next.extractedContentHtml : null) ?? next.contentHtml ?? '')
+        ((showExtracted ? next.extractedContentHtml : null) ??
+                next.contentHtml ??
+                '')
             .trim();
 
-    final changed = html != _activeHtml || showExtracted != _activeShowExtracted;
+    final changed =
+        html != _activeHtml || showExtracted != _activeShowExtracted;
     _activeHtml = html;
     _activeShowExtracted = showExtracted;
 
     if (changed) {
+      _summaryRequestId++;
+      _translationRequestId++;
       _contentHash = '';
       state = state.copyWith(
         contentHash: '',
@@ -319,7 +326,8 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
   void _refreshLanguageBanner() {
     final source = state.sourceLanguageTag;
     final target = _targetLanguageTag;
-    final disabled = _translationSettings?.disabledTranslationReminderLanguages ??
+    final disabled =
+        _translationSettings?.disabledTranslationReminderLanguages ??
         const <String>[];
     final shouldShow =
         source != null &&
@@ -408,7 +416,8 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
       final source = state.sourceLanguageTag;
       if (source != null &&
           source.trim().isNotEmpty &&
-          normalizeLanguageTag(source) != normalizeLanguageTag(_targetLanguageTag)) {
+          normalizeLanguageTag(source) !=
+              normalizeLanguageTag(_targetLanguageTag)) {
         unawaited(
           ensureTranslation(
             mode: ArticleTranslationMode.immersive,
@@ -440,7 +449,8 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
     if (contentHash.isEmpty) return;
 
     final serviceId =
-        (settings.aiSummaryServiceId ?? settings.defaultAiServiceId ?? '').trim();
+        (settings.aiSummaryServiceId ?? settings.defaultAiServiceId ?? '')
+            .trim();
     if (serviceId.isEmpty) {
       state = state.copyWith(
         summaryStatus: ArticleAiTaskStatus.error,
@@ -449,7 +459,9 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
       return;
     }
 
-    final service = settings.aiServices.where((s) => s.id == serviceId).firstOrNull;
+    final service = settings.aiServices
+        .where((s) => s.id == serviceId)
+        .firstOrNull;
     if (service == null || !service.enabled) {
       state = state.copyWith(
         summaryStatus: ArticleAiTaskStatus.error,
@@ -480,7 +492,8 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
     if (cached != null && cached.contentHash == contentHash) {
       final cachedText = cached.data.trim();
       if (cachedText.isNotEmpty) {
-        final outdated = cached.promptHash != null && cached.promptHash != promptHash;
+        final outdated =
+            cached.promptHash != null && cached.promptHash != promptHash;
         state = state.copyWith(
           summaryText: cachedText,
           summaryStatus: ArticleAiTaskStatus.ready,
@@ -508,9 +521,14 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
     final title = (article.title ?? '').trim().isNotEmpty
         ? article.title!.trim()
         : article.link;
-    final languageName = localizedLanguageNameForTag(_uiLocale, _targetLanguageTag);
+    final languageName = localizedLanguageNameForTag(
+      _uiLocale,
+      _targetLanguageTag,
+    );
     final content = _extractPlainText(_activeHtml);
-    final clipped = content.length > 40000 ? content.substring(0, 40000) : content;
+    final clipped = content.length > 40000
+        ? content.substring(0, 40000)
+        : content;
     final prompt = PromptTemplate.render(
       template,
       variables: <String, String>{
@@ -590,8 +608,9 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
 
     final provider = settings.translationProvider;
     final providerKind = provider.kind.name;
-    final providerServiceId =
-        provider.kind == TranslationProviderKind.aiService ? provider.aiServiceId : null;
+    final providerServiceId = provider.kind == TranslationProviderKind.aiService
+        ? provider.aiServiceId
+        : null;
     final cacheKey = AiContentCacheKey.translation(
       accountId: ref.read(activeAccountProvider).id,
       articleId: article.id,
@@ -611,15 +630,17 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
                   PromptTemplate.token(PromptTemplate.varContent),
                 ))
         : null;
-    final promptHash =
-        promptTemplate == null ? null : PromptTemplate.hash(promptTemplate);
+    final promptHash = promptTemplate == null
+        ? null
+        : PromptTemplate.hash(promptTemplate);
 
     final cached = await cacheStore.read(cacheKey);
     if (requestId != _translationRequestId) return;
     if (cached != null && cached.contentHash == contentHash) {
       final cachedHtml = cached.data.trim();
       if (cachedHtml.isNotEmpty) {
-        final outdated = promptHash != null &&
+        final outdated =
+            promptHash != null &&
             cached.promptHash != null &&
             cached.promptHash != promptHash;
         state = state.copyWith(
@@ -693,7 +714,10 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
     if (elements.isEmpty) return;
 
     final l10n = _l10n!;
-    final languageName = localizedLanguageNameForTag(_uiLocale, targetLanguageTag);
+    final languageName = localizedLanguageNameForTag(
+      _uiLocale,
+      targetLanguageTag,
+    );
     final title = (article.title ?? '').trim().isNotEmpty
         ? article.title!.trim()
         : article.link;
@@ -714,6 +738,7 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
         throw StateError(l10n.aiNotConfigured);
       }
       aiApiKey = await secrets.getAiServiceApiKey(id);
+      if (requestId != _translationRequestId) return;
       if (aiApiKey == null || aiApiKey.trim().isEmpty) {
         throw StateError(l10n.aiNotConfigured);
       }
@@ -758,6 +783,7 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
             maxOutputTokens: 800,
           ),
         );
+        if (requestId != _translationRequestId) return;
       } else {
         out = await queue.schedule<String>(
           estimatedTokens: estimateTokens(src),
@@ -778,6 +804,7 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
             targetLanguageTag: targetLanguageTag,
           ),
         );
+        if (requestId != _translationRequestId) return;
       }
 
       final translated = out.trim();
@@ -812,6 +839,7 @@ class ArticleAiController extends AutoDisposeFamilyNotifier<ArticleAiState, int>
 
       final now = DateTime.now();
       if (now.difference(lastUiUpdate) >= const Duration(milliseconds: 350)) {
+        if (requestId != _translationRequestId) return;
         lastUiUpdate = now;
         final html = body.innerHtml.trim();
         state = state.copyWith(translationHtml: html);

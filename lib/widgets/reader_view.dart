@@ -66,6 +66,7 @@ class _CloseReaderSearchIntent extends Intent {
 class _ReaderViewState extends ConsumerState<ReaderView> {
   ProviderSubscription<AsyncValue<Article?>>? _articleSub;
   ProviderSubscription<AsyncValue<void>>? _fullTextSub;
+  ProviderSubscription<String?>? _translationHtmlSub;
   final ScrollController _scrollController = ScrollController();
   final GlobalKey<SelectionAreaState> _selectionAreaKey =
       GlobalKey<SelectionAreaState>();
@@ -155,6 +156,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     );
 
     _listenArticle(widget.articleId);
+    _listenTranslationHtml(widget.articleId);
   }
 
   @override
@@ -167,6 +169,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         _scrollController.jumpTo(_scrollController.position.minScrollExtent);
       }
       _listenArticle(widget.articleId);
+      _listenTranslationHtml(widget.articleId);
     }
   }
 
@@ -182,6 +185,48 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             article.contentHtml ??
             '')
         .trim();
+  }
+
+  void _syncSearchDocumentHtml(int articleId) {
+    final article = ref.read(articleProvider(articleId)).valueOrNull;
+    if (article == null) return;
+    final originalHtml = _selectActiveHtml(article);
+    final translatedHtml =
+        (ref.read(articleAiControllerProvider(articleId)).translationHtml ?? '')
+            .trim();
+    final displayHtml = translatedHtml.isNotEmpty
+        ? translatedHtml
+        : originalHtml;
+    ref
+        .read(readerSearchControllerProvider(articleId).notifier)
+        .setDocumentHtml(displayHtml);
+  }
+
+  void _listenTranslationHtml(int articleId) {
+    final sub = _translationHtmlSub;
+    if (sub != null) {
+      sub.close();
+    }
+    _translationHtmlSub = ref.listenManual<String?>(
+      articleAiControllerProvider(articleId).select((s) => s.translationHtml),
+      (prev, next) {
+        final search = ref.read(readerSearchControllerProvider(articleId));
+        final prevTrimmed = (prev ?? '').trim();
+        final nextTrimmed = (next ?? '').trim();
+        final shouldUpdate =
+            search.visible || prevTrimmed.isEmpty != nextTrimmed.isEmpty;
+        if (!shouldUpdate) return;
+
+        final article = ref.read(articleProvider(articleId)).valueOrNull;
+        if (article == null) return;
+        final originalHtml = _selectActiveHtml(article);
+        final displayHtml = nextTrimmed.isNotEmpty ? nextTrimmed : originalHtml;
+        ref
+            .read(readerSearchControllerProvider(articleId).notifier)
+            .setDocumentHtml(displayHtml);
+      },
+      fireImmediately: false,
+    );
   }
 
   void _listenArticle(int articleId) {
@@ -220,20 +265,30 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         // Prefetch images when content changes.
         final prevA = prev?.valueOrNull;
         final prevHtml = prevA == null ? '' : _selectActiveHtml(prevA);
-        final html = a == null ? '' : _selectActiveHtml(a);
-        if (a == null || html.isEmpty) return;
-        if (prevA != null && prevA.id == a.id && prevHtml == html) return;
+        final originalHtml = a == null ? '' : _selectActiveHtml(a);
+        if (a == null || originalHtml.isEmpty) return;
+        if (prevA != null && prevA.id == a.id && prevHtml == originalHtml) {
+          return;
+        }
+
+        final translatedHtml =
+            (ref.read(articleAiControllerProvider(articleId)).translationHtml ??
+                    '')
+                .trim();
+        final displayHtml = translatedHtml.isNotEmpty
+            ? translatedHtml
+            : originalHtml;
 
         ref
             .read(readerSearchControllerProvider(articleId).notifier)
-            .setDocumentHtml(html);
+            .setDocumentHtml(displayHtml);
 
-        final maxPrefetch = html.length >= 50000 ? 6 : 24;
+        final maxPrefetch = originalHtml.length >= 50000 ? 6 : 24;
         unawaited(
           ref
               .read(articleCacheServiceProvider)
               .prefetchImagesFromHtml(
-                html,
+                originalHtml,
                 baseUrl: Uri.tryParse(a.link),
                 maxImages: maxPrefetch,
                 maxConcurrent: 3,
@@ -701,6 +756,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     _resizeTimer?.cancel();
     _prefetchTimer?.cancel();
     _articleSub?.close();
+    _translationHtmlSub?.close();
     _fullTextSub?.close();
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
@@ -744,7 +800,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                     '')
                 .trim();
 
-        final aiState = ref.watch(articleAiControllerProvider(widget.articleId));
+        final aiState = ref.watch(
+          articleAiControllerProvider(widget.articleId),
+        );
         final translatedHtml = (aiState.translationHtml ?? '').trim();
         final html = translatedHtml.isNotEmpty ? translatedHtml : originalHtml;
 
@@ -812,8 +870,10 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const Spacer(),
-                        if (aiState.summaryStatus == ArticleAiTaskStatus.queued ||
-                            aiState.summaryStatus == ArticleAiTaskStatus.running)
+                        if (aiState.summaryStatus ==
+                                ArticleAiTaskStatus.queued ||
+                            aiState.summaryStatus ==
+                                ArticleAiTaskStatus.running)
                           const SizedBox(
                             width: 14,
                             height: 14,
@@ -849,9 +909,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                               l10n.cachedPromptOutdated,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                           ),
@@ -914,11 +974,15 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 searchState.currentAnchorId,
               );
 
-        final languageBanner = aiState.showLanguageMismatchBanner &&
+        final languageBanner =
+            aiState.showLanguageMismatchBanner &&
                 aiState.sourceLanguageTag != null
             ? Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(12),
@@ -944,7 +1008,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                       onPressed: () => unawaited(
                         ref
                             .read(
-                              articleAiControllerProvider(widget.articleId).notifier,
+                              articleAiControllerProvider(
+                                widget.articleId,
+                              ).notifier,
                             )
                             .disableLanguageMismatchReminder(),
                       ),
@@ -957,43 +1023,43 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
 
         final translationOutdatedBanner =
             aiState.translationOutdated && aiState.translationMode != null
-                ? Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+            ? Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.cachedPromptOutdated,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(12),
+                    TextButton(
+                      onPressed: () => unawaited(
+                        ref
+                            .read(
+                              articleAiControllerProvider(
+                                widget.articleId,
+                              ).notifier,
+                            )
+                            .ensureTranslation(
+                              mode: aiState.translationMode!,
+                              force: true,
+                            ),
+                      ),
+                      child: Text(l10n.regenerate),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.cachedPromptOutdated,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => unawaited(
-                            ref
-                                .read(
-                                  articleAiControllerProvider(
-                                    widget.articleId,
-                                  ).notifier,
-                                )
-                                .ensureTranslation(
-                                  mode: aiState.translationMode!,
-                                  force: true,
-                                ),
-                          ),
-                          child: Text(l10n.regenerate),
-                        ),
-                      ],
-                    ),
-                  )
-                : null;
+                  ],
+                ),
+              )
+            : null;
 
         final bottomOverlay = Positioned(
           left: 0,
@@ -1105,10 +1171,11 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
               final controller = ref.read(
                 readerSearchControllerProvider(widget.articleId).notifier,
               );
-              final isVisible =
-                  ref.read(readerSearchControllerProvider(widget.articleId))
-                      .visible;
+              final isVisible = ref
+                  .read(readerSearchControllerProvider(widget.articleId))
+                  .visible;
               if (!isVisible) {
+                _syncSearchDocumentHtml(widget.articleId);
                 controller.open();
                 return null;
               }

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
 
 import '../l10n/app_localizations.dart';
@@ -36,7 +37,16 @@ class _DbRecoveryNoticeOverlayState
   }
 
   Future<void> _checkAndShow() async {
-    final isar = ref.read(isarProvider);
+    // Best-effort overlay: in widget tests or non-DB environments, `isarProvider`
+    // may not be overridden.
+    //
+    // Do not fail the whole app tree in that case.
+    Isar isar;
+    try {
+      isar = ref.read(isarProvider);
+    } on UnimplementedError {
+      return;
+    }
     final directory = isar.directory?.trim();
     if (directory == null || directory.isEmpty) return;
 
