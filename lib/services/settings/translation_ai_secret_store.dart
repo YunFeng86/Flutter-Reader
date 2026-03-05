@@ -2,11 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class TranslationAiSecretStore {
   TranslationAiSecretStore({FlutterSecureStorage? storage})
-    : _storage =
-          storage ??
-          const FlutterSecureStorage(
-            aOptions: AndroidOptions(encryptedSharedPreferences: true),
-          );
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 

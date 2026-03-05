@@ -60,8 +60,8 @@ String normalizeLanguageTag(String tag) {
 
   final out = <String>[
     languageCode,
-    if (scriptCode != null) scriptCode,
-    if (regionCode != null) regionCode,
+    ...?(scriptCode == null ? null : [scriptCode]),
+    ...?(regionCode == null ? null : [regionCode]),
   ];
   return out.join('-');
 }

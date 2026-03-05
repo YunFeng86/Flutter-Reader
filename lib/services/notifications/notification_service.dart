@@ -68,7 +68,7 @@ class NotificationService {
       );
 
       await _notificationsPlugin.initialize(
-        initSettings,
+        settings: initSettings,
         onDidReceiveNotificationResponse: _handleNotificationResponse,
       );
 
@@ -284,10 +284,10 @@ class NotificationService {
 
     await ensureInitialized();
     await _notificationsPlugin.show(
-      0, // Fixed ID for summary
-      l10n.notificationNewArticlesTitle,
-      l10n.notificationNewArticlesBody(count),
-      details,
+      id: 0, // Fixed ID for summary
+      title: l10n.notificationNewArticlesTitle,
+      body: l10n.notificationNewArticlesBody(count),
+      notificationDetails: details,
       payload: 'home',
     );
   }
@@ -329,18 +329,18 @@ class NotificationService {
     if (newArticles.length == 1) {
       final article = newArticles.first;
       await _notificationsPlugin.show(
-        article.id, // Use article ID as notification ID
-        l10n.notificationNewArticleTitle,
-        article.title,
-        details,
+        id: article.id, // Use article ID as notification ID
+        title: l10n.notificationNewArticleTitle,
+        body: article.title,
+        notificationDetails: details,
         payload: article.id.toString(),
       );
     } else {
       await _notificationsPlugin.show(
-        0, // Fixed ID for summary
-        l10n.notificationNewArticlesTitle,
-        l10n.notificationNewArticlesBody(newArticles.length),
-        details,
+        id: 0, // Fixed ID for summary
+        title: l10n.notificationNewArticlesTitle,
+        body: l10n.notificationNewArticlesBody(newArticles.length),
+        notificationDetails: details,
         payload: 'home',
       );
     }

@@ -96,7 +96,7 @@ class _StaggeredRevealState extends State<StaggeredReveal> {
           alignment: Alignment.topCenter,
           children: <Widget>[
             ...previousChildren,
-            if (currentChild != null) currentChild,
+            ...?(currentChild == null ? null : [currentChild]),
           ],
         );
       },

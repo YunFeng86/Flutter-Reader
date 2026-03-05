@@ -67,7 +67,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.38.5'  # 匹配本地开发环境（自带Dart 3.10.4）
+          flutter-version: '3.38.9'  # 匹配本地开发环境（自带 Dart 3.10.8）
           channel: 'stable'
           cache: true  # 启用Flutter SDK缓存，加速后续构建
 
