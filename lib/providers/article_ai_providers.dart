@@ -155,6 +155,8 @@ class ArticleAiController
 
   @override
   ArticleAiState build(int articleId) {
+    state = ArticleAiState.initial(articleId);
+
     ref.onDispose(() {
       _contentHashRequestId++;
       _summaryRequestId++;
@@ -192,7 +194,7 @@ class ArticleAiController
       _refreshLanguageBanner();
     }, fireImmediately: true);
 
-    return ArticleAiState.initial(articleId);
+    return state;
   }
 
   int? _effectiveCategoryId() {

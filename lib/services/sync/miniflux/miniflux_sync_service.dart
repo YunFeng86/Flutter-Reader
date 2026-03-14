@@ -23,7 +23,7 @@ import '../sync_mutex.dart';
 import '../sync_status_reporter.dart';
 import 'miniflux_client.dart';
 
-class MinifluxSyncService implements SyncServiceBase {
+class MinifluxSyncService implements SyncServiceBase, OutboxFlushCapable {
   MinifluxSyncService({
     required this.account,
     required Dio dio,
@@ -366,6 +366,7 @@ class MinifluxSyncService implements SyncServiceBase {
     return (processed: raw.length, total: total);
   }
 
+  @override
   Future<bool> flushOutboxSafe() async {
     return SyncMutex.instance.run('sync', () async {
       try {

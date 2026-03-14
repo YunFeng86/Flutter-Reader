@@ -128,6 +128,10 @@ abstract class SyncServiceBase {
   });
 }
 
+abstract class OutboxFlushCapable {
+  Future<bool> flushOutboxSafe();
+}
+
 class SyncService implements SyncServiceBase {
   SyncService({
     required FeedRepository feeds,

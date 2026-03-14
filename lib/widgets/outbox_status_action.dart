@@ -8,8 +8,7 @@ import '../providers/account_providers.dart';
 import '../providers/outbox_status_providers.dart';
 import '../providers/service_providers.dart';
 import '../services/accounts/account.dart';
-import '../services/sync/fever/fever_sync_service.dart';
-import '../services/sync/miniflux/miniflux_sync_service.dart';
+import '../services/sync/sync_service.dart';
 
 class OutboxStatusAction extends ConsumerWidget {
   const OutboxStatusAction({super.key});
@@ -36,8 +35,7 @@ class OutboxStatusAction extends ConsumerWidget {
       final before = pending;
       final svc = ref.read(syncServiceProvider);
       final ok = switch (svc) {
-        MinifluxSyncService s => await s.flushOutboxSafe(),
-        FeverSyncService s => await s.flushOutboxSafe(),
+        OutboxFlushCapable s => await s.flushOutboxSafe(),
         _ => false,
       };
 

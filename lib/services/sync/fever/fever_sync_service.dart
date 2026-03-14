@@ -25,7 +25,7 @@ import '../sync_status_reporter.dart';
 import '../../../utils/keyword_filter.dart';
 import 'fever_client.dart';
 
-class FeverSyncService implements SyncServiceBase {
+class FeverSyncService implements SyncServiceBase, OutboxFlushCapable {
   FeverSyncService({
     required this.account,
     required Dio dio,
@@ -159,6 +159,7 @@ class FeverSyncService implements SyncServiceBase {
     );
   }
 
+  @override
   Future<bool> flushOutboxSafe() async {
     return SyncMutex.instance.run('sync', () async {
       try {

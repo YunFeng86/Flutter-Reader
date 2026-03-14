@@ -1,15 +1,25 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+TargetPlatform get _effectiveTargetPlatform =>
+    debugFleurTargetPlatformOverride ?? defaultTargetPlatform;
+
+TargetPlatform? debugFleurTargetPlatformOverride;
+
 bool get isDesktop =>
     !kIsWeb &&
-    (defaultTargetPlatform == TargetPlatform.windows ||
-        defaultTargetPlatform == TargetPlatform.macOS ||
-        defaultTargetPlatform == TargetPlatform.linux);
+    (_effectiveTargetPlatform == TargetPlatform.windows ||
+        _effectiveTargetPlatform == TargetPlatform.macOS ||
+        _effectiveTargetPlatform == TargetPlatform.linux);
 
-bool get isIOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+bool get isAndroid =>
+    !kIsWeb && _effectiveTargetPlatform == TargetPlatform.android;
 
-bool get isMacOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+bool get isIOS => !kIsWeb && _effectiveTargetPlatform == TargetPlatform.iOS;
+
+bool get isMacOS => !kIsWeb && _effectiveTargetPlatform == TargetPlatform.macOS;
+
+bool get supportsBackgroundSyncPlatform => isAndroid || isIOS;
 
 class IosShareBridge {
   static const MethodChannel _channel = MethodChannel(

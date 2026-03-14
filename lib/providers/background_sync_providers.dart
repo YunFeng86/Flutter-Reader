@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,6 +7,76 @@ import '../services/background/background_sync_service.dart';
 import 'account_providers.dart';
 import 'app_settings_providers.dart';
 import 'outbox_status_providers.dart';
+import '../utils/platform.dart';
+
+abstract class BackgroundSyncScheduler {
+  Future<void> schedulePeriodic({required Duration frequency});
+  Future<void> cancelPeriodic();
+}
+
+class WorkmanagerBackgroundSyncScheduler implements BackgroundSyncScheduler {
+  const WorkmanagerBackgroundSyncScheduler();
+
+  @override
+  Future<void> schedulePeriodic({required Duration frequency}) {
+    return BackgroundSyncService.schedulePeriodic(frequency: frequency);
+  }
+
+  @override
+  Future<void> cancelPeriodic() {
+    return BackgroundSyncService.cancelPeriodic();
+  }
+}
+
+final backgroundSyncSchedulerProvider = Provider<BackgroundSyncScheduler>(
+  (ref) => const WorkmanagerBackgroundSyncScheduler(),
+);
+
+class BackgroundSyncScheduleDecision {
+  const BackgroundSyncScheduleDecision({
+    required this.enabled,
+    required this.frequency,
+  });
+
+  final bool enabled;
+  final Duration? frequency;
+}
+
+BackgroundSyncScheduleDecision resolveBackgroundSyncScheduleDecision({
+  required bool refreshEnabled,
+  required bool outboxCapable,
+  required AsyncValue<int> pendingAsync,
+  required bool? lastEnabled,
+  required int stallCount,
+}) {
+  final pending = pendingAsync.valueOrNull;
+  final hasPendingOutbox = (pending ?? 0) > 0;
+
+  var enabled = refreshEnabled;
+  if (!enabled && outboxCapable) {
+    if (pending != null) {
+      enabled = hasPendingOutbox;
+    } else if (pendingAsync.hasError) {
+      enabled = lastEnabled ?? false;
+    } else {
+      enabled = lastEnabled ?? false;
+    }
+  }
+
+  if (!enabled) {
+    return const BackgroundSyncScheduleDecision(
+      enabled: false,
+      frequency: null,
+    );
+  }
+
+  return BackgroundSyncScheduleDecision(
+    enabled: true,
+    frequency: refreshEnabled
+        ? null
+        : BackgroundSyncController.outboxBackoffFrequencyForStalls(stallCount),
+  );
+}
 
 class BackgroundSyncController extends AutoDisposeNotifier<void> {
   Duration? _lastFrequency;
@@ -15,10 +84,11 @@ class BackgroundSyncController extends AutoDisposeNotifier<void> {
 
   @override
   void build() {
-    if (!Platform.isAndroid && !Platform.isIOS) return;
+    if (!supportsBackgroundSyncPlatform) return;
 
     final appSettings = ref.watch(appSettingsProvider).valueOrNull;
     final account = ref.watch(activeAccountProvider);
+    final scheduler = ref.watch(backgroundSyncSchedulerProvider);
 
     final refreshMinutes = appSettings?.autoRefreshMinutes ?? 0;
     final syncEnabled = appSettings?.syncEnabled ?? true;
@@ -28,46 +98,35 @@ class BackgroundSyncController extends AutoDisposeNotifier<void> {
         account.type == AccountType.miniflux ||
         account.type == AccountType.fever;
     final pendingAsync = ref.watch(outboxPendingCountProvider);
-    final pending = pendingAsync.valueOrNull;
-    final hasPendingOutbox = (pending ?? 0) > 0;
-
-    // Only schedule background work when there is something meaningful to do:
-    // - auto refresh enabled, or
-    // - outbox has pending actions to flush.
-    var enabled = refreshEnabled;
-    if (!enabled && outboxCapable) {
-      if (pending != null) {
-        enabled = hasPendingOutbox;
-      } else if (pendingAsync.hasError) {
-        // Avoid flapping when file IO/path provider is temporarily unavailable.
-        enabled = _lastEnabled ?? false;
-      } else {
-        // Loading: keep previous state; default to disabled to honor the user's
-        // "silent" expectation when background sync is off.
-        enabled = _lastEnabled ?? false;
-      }
-    }
+    final decision = resolveBackgroundSyncScheduleDecision(
+      refreshEnabled: refreshEnabled,
+      outboxCapable: outboxCapable,
+      pendingAsync: pendingAsync,
+      lastEnabled: _lastEnabled,
+      stallCount: ref.watch(outboxFlushStallCountProvider),
+    );
+    final enabled = decision.enabled;
 
     if (!enabled) {
       if (_lastEnabled == false) return;
       _lastEnabled = false;
       _lastFrequency = null;
-      unawaited(BackgroundSyncService.cancelPeriodic());
+      unawaited(scheduler.cancelPeriodic());
       return;
     }
 
     final frequency = refreshEnabled
         ? Duration(minutes: refreshMinutes)
-        : _outboxBackoffFrequency(ref.watch(outboxFlushStallCountProvider));
+        : decision.frequency!;
 
     if (_lastEnabled == true && _lastFrequency == frequency) return;
     _lastEnabled = true;
     _lastFrequency = frequency;
 
-    unawaited(BackgroundSyncService.schedulePeriodic(frequency: frequency));
+    unawaited(scheduler.schedulePeriodic(frequency: frequency));
   }
 
-  static Duration _outboxBackoffFrequency(int stalls) {
+  static Duration outboxBackoffFrequencyForStalls(int stalls) {
     const baseMinutes = 15;
     final step = stalls < 0 ? 0 : (stalls > 4 ? 4 : stalls);
     final minutes = baseMinutes * (1 << step);

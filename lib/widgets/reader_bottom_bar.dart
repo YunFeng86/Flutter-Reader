@@ -125,9 +125,11 @@ class ReaderBottomBar extends ConsumerWidget {
                     final isBusy =
                         aiState.summaryStatus == ArticleAiTaskStatus.queued ||
                         aiState.summaryStatus == ArticleAiTaskStatus.running;
-                    final hasSummary =
-                        (aiState.summaryText ?? '').trim().isNotEmpty;
+                    final hasSummary = (aiState.summaryText ?? '')
+                        .trim()
+                        .isNotEmpty;
                     return IconButton(
+                      key: const Key('reader_ai_summary_button'),
                       tooltip: l10n.aiSummaryAction,
                       onPressed: isBusy
                           ? null
@@ -164,8 +166,9 @@ class ReaderBottomBar extends ConsumerWidget {
                             ArticleAiTaskStatus.queued ||
                         aiState.translationStatus ==
                             ArticleAiTaskStatus.running;
-                    final hasTranslation =
-                        (aiState.translationHtml ?? '').trim().isNotEmpty;
+                    final hasTranslation = (aiState.translationHtml ?? '')
+                        .trim()
+                        .isNotEmpty;
 
                     Future<void> openSheet() async {
                       await showModalBottomSheet<void>(
@@ -177,11 +180,11 @@ class ReaderBottomBar extends ConsumerWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                ListTile(title: Text(l10n.translationMode)),
                                 ListTile(
-                                  title: Text(l10n.translationMode),
-                                ),
-                                ListTile(
-                                  leading: const Icon(Icons.auto_awesome_outlined),
+                                  leading: const Icon(
+                                    Icons.auto_awesome_outlined,
+                                  ),
                                   title: Text(l10n.immersiveTranslation),
                                   onTap: () {
                                     Navigator.of(context).pop();
@@ -200,7 +203,8 @@ class ReaderBottomBar extends ConsumerWidget {
                                     Navigator.of(context).pop();
                                     unawaited(
                                       controller.ensureTranslation(
-                                        mode: ArticleTranslationMode.traditional,
+                                        mode:
+                                            ArticleTranslationMode.traditional,
                                         force: aiState.translationOutdated,
                                       ),
                                     );
@@ -223,6 +227,7 @@ class ReaderBottomBar extends ConsumerWidget {
                     }
 
                     return IconButton(
+                      key: const Key('reader_translate_button'),
                       tooltip: l10n.translateAction,
                       onPressed: isBusy ? null : () => unawaited(openSheet()),
                       icon: isBusy
@@ -298,6 +303,7 @@ class ReaderBottomBar extends ConsumerWidget {
                         article.contentSource == ContentSource.extractionFailed;
 
                     return IconButton(
+                      key: const Key('reader_full_text_button'),
                       tooltip: extractionFailed
                           ? l10n.fullTextRetry
                           : hasFull && showFull
