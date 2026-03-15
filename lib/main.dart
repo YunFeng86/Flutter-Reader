@@ -8,6 +8,7 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:window_manager/window_manager.dart';
 
 import 'app/account_gate.dart';
+import 'app/app.dart';
 import 'services/background/background_sync_service.dart';
 import 'services/logging/app_logger.dart';
 import 'utils/platform.dart';
@@ -60,7 +61,7 @@ Future<void> main() async {
         });
       }
 
-      runApp(const ProviderScope(child: AccountGate()));
+      runApp(const ProviderScope(child: AppRuntimeHost(child: AccountGate())));
     },
     (error, stackTrace) {
       AppLogger.e(

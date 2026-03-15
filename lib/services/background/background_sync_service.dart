@@ -1,12 +1,10 @@
-import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:workmanager/workmanager.dart';
 
+import '../../providers/service_providers.dart';
 import '../../db/isar_db.dart';
 import '../../models/feed.dart';
 import '../../repositories/article_repository.dart';
@@ -14,18 +12,9 @@ import '../../repositories/category_repository.dart';
 import '../../repositories/feed_repository.dart';
 import '../accounts/account.dart';
 import '../accounts/account_store.dart';
-import '../accounts/credential_store.dart';
-import '../cache/article_cache_service.dart';
-import '../cache/image_meta_store.dart';
-import '../extract/article_extractor.dart';
 import '../logging/app_logger.dart';
-import '../notifications/notification_service.dart';
-import '../rss/feed_parser.dart';
-import '../rss/rss_client.dart';
 import '../settings/app_settings.dart';
 import '../settings/app_settings_store.dart';
-import '../sync/fever/fever_sync_service.dart';
-import '../sync/miniflux/miniflux_sync_service.dart';
 import '../sync/outbox/outbox_store.dart';
 import '../sync/sync_mutex.dart';
 import '../sync/sync_service.dart';
@@ -40,8 +29,8 @@ void backgroundSyncCallbackDispatcher() {
     WidgetsFlutterBinding.ensureInitialized();
     try {
       await AppLogger.ensureInitialized();
-    } catch (_) {
-      // ignore: best-effort
+    } catch (e, st) {
+      debugPrint('Background logger init failed: $e\n$st');
     }
 
     try {
@@ -71,8 +60,12 @@ class BackgroundSyncService {
       _initialized = true;
     } on MissingPluginException {
       // Best-effort: running on an unsupported platform.
-    } catch (_) {
-      // ignore: best-effort
+    } catch (e) {
+      AppLogger.w(
+        'Background sync scheduler init failed',
+        tag: 'bg',
+        error: e,
+      );
     }
   }
 
@@ -95,8 +88,12 @@ class BackgroundSyncService {
       );
     } on MissingPluginException {
       // ignore: best-effort
-    } catch (_) {
-      // ignore: best-effort
+    } catch (e) {
+      AppLogger.w(
+        'Background sync periodic scheduling failed',
+        tag: 'bg',
+        error: e,
+      );
     }
   }
 
@@ -106,8 +103,12 @@ class BackgroundSyncService {
       await Workmanager().cancelByUniqueName(kBackgroundSyncUniqueName);
     } on MissingPluginException {
       // ignore: best-effort
-    } catch (_) {
-      // ignore: best-effort
+    } catch (e) {
+      AppLogger.w(
+        'Background sync periodic cancellation failed',
+        tag: 'bg',
+        error: e,
+      );
     }
   }
 }
@@ -229,8 +230,12 @@ class BackgroundSyncRunner {
             // Record attempt early to prevent repeated costly wakeups.
             await prefs.setInt(key, now.millisecondsSinceEpoch);
           }
-        } catch (_) {
-          // ignore: best-effort gating (fall back to refreshing)
+        } catch (e) {
+          AppLogger.w(
+            'Background sync refresh gating failed; continuing with refresh',
+            tag: 'bg',
+            error: e,
+          );
         }
       }
 
@@ -263,9 +268,10 @@ class BackgroundSyncRunner {
         final feeds = FeedRepository(isar);
         final categories = CategoryRepository(isar);
         final articles = ArticleRepository(isar);
-        final dio = _createDio();
+        final dio = createAppDio();
         final syncServiceBuilder = _syncServiceBuilder;
         final loadAllFeeds = _loadAllFeeds;
+        final notifications = createNotificationService();
 
         final svc = syncServiceBuilder != null
             ? syncServiceBuilder(
@@ -276,26 +282,18 @@ class BackgroundSyncRunner {
                 outbox: _outboxStore,
                 appSettingsStore: _appSettingsStore,
               )
-            : _buildSyncService(
+            : buildSyncServiceForAccount(
                 account: activeAccount,
-                dio: dio,
-                credentials: CredentialStore(),
                 feeds: feeds,
                 categories: categories,
                 articles: articles,
                 outbox: _outboxStore,
                 appSettingsStore: _appSettingsStore,
-                cache: ArticleCacheService(
-                  CacheManager(
-                    Config(
-                      'fleur_images',
-                      stalePeriod: const Duration(days: 45),
-                      maxNrOfCacheObjects: 1200,
-                    ),
-                  ),
-                  ImageMetaStore(),
-                ),
-                extractor: ArticleExtractor(dio),
+                dio: dio,
+                credentials: createCredentialStore(),
+                notifications: notifications,
+                cache: createArticleCacheService(),
+                extractor: createArticleExtractor(dio: dio),
               );
 
         if (hasPendingOutbox) {
@@ -319,84 +317,6 @@ class BackgroundSyncRunner {
         await isar.close();
       }
     });
-  }
-
-  Dio _createDio() {
-    final dio = Dio(
-      BaseOptions(
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 20),
-        sendTimeout: const Duration(seconds: 10),
-        followRedirects: true,
-        maxRedirects: 5,
-      ),
-    );
-    if (kDebugMode) {
-      dio.interceptors.add(
-        LogInterceptor(
-          requestHeader: false,
-          requestBody: false,
-          responseHeader: false,
-          responseBody: false,
-          error: true,
-        ),
-      );
-    }
-    return dio;
-  }
-
-  SyncServiceBase _buildSyncService({
-    required Account account,
-    required Dio dio,
-    required CredentialStore credentials,
-    required FeedRepository feeds,
-    required CategoryRepository categories,
-    required ArticleRepository articles,
-    required OutboxStore outbox,
-    required AppSettingsStore appSettingsStore,
-    required ArticleCacheService cache,
-    required ArticleExtractor extractor,
-  }) {
-    switch (account.type) {
-      case AccountType.local:
-        return SyncService(
-          feeds: feeds,
-          categories: categories,
-          articles: articles,
-          client: RssClient(dio),
-          parser: FeedParser(),
-          notifications: NotificationService(),
-          cache: cache,
-          extractor: extractor,
-          appSettingsStore: appSettingsStore,
-        );
-      case AccountType.miniflux:
-        return MinifluxSyncService(
-          account: account,
-          dio: dio,
-          credentials: credentials,
-          feeds: feeds,
-          categories: categories,
-          articles: articles,
-          outbox: outbox,
-          appSettingsStore: appSettingsStore,
-          cache: cache,
-          extractor: extractor,
-        );
-      case AccountType.fever:
-        return FeverSyncService(
-          account: account,
-          dio: dio,
-          credentials: credentials,
-          feeds: feeds,
-          categories: categories,
-          articles: articles,
-          outbox: outbox,
-          appSettingsStore: appSettingsStore,
-          notifications: NotificationService(),
-          cache: cache,
-        );
-    }
   }
 
   Future<void> _flushOutboxSafe(Account account, SyncServiceBase svc) async {

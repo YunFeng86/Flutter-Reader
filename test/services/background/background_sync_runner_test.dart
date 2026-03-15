@@ -4,11 +4,18 @@ import 'package:isar/isar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:fleur/models/feed.dart';
+import 'package:fleur/providers/service_providers.dart';
+import 'package:fleur/repositories/article_repository.dart';
+import 'package:fleur/repositories/category_repository.dart';
+import 'package:fleur/repositories/feed_repository.dart';
 import 'package:fleur/services/accounts/account.dart';
 import 'package:fleur/services/accounts/account_store.dart';
 import 'package:fleur/services/background/background_sync_service.dart';
 import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/settings/app_settings_store.dart';
+import 'package:fleur/services/sync/fever/fever_sync_service.dart';
+import 'package:fleur/services/sync/miniflux/miniflux_sync_service.dart';
+import 'package:fleur/services/sync/sync_service.dart';
 import 'package:fleur/services/sync/outbox/outbox_store.dart';
 import 'package:fleur/utils/platform.dart';
 
@@ -267,5 +274,73 @@ void main() {
     expect(syncService.flushCalls, 1);
     expect(syncService.refreshCalls, isEmpty);
     expect(isar.closeCalls, 1);
+  });
+
+  test('shared sync assembly keeps service selection and Dio defaults aligned', () {
+    final isar = _FakeIsar();
+    final dio = createAppDio();
+    final cache = createArticleCacheService();
+    final extractor = createArticleExtractor(dio: dio);
+    final notifications = createNotificationService();
+    final outbox = FakeOutboxStore();
+    final appSettingsStore = FakeAppSettingsStore(AppSettings.defaults());
+    final feeds = FeedRepository(isar);
+    final categories = CategoryRepository(isar);
+    final articles = ArticleRepository(isar);
+
+    expect(dio.options.connectTimeout, const Duration(seconds: 10));
+    expect(dio.options.receiveTimeout, const Duration(seconds: 20));
+    expect(dio.options.sendTimeout, const Duration(seconds: 10));
+    expect(dio.options.maxRedirects, 5);
+
+    final localService = buildSyncServiceForAccount(
+      account: buildTestAccount(type: AccountType.local),
+      feeds: feeds,
+      categories: categories,
+      articles: articles,
+      outbox: outbox,
+      appSettingsStore: appSettingsStore,
+      dio: dio,
+      credentials: createCredentialStore(),
+      notifications: notifications,
+      cache: cache,
+      extractor: extractor,
+    );
+    final minifluxService = buildSyncServiceForAccount(
+      account: buildTestAccount(
+        type: AccountType.miniflux,
+        baseUrl: 'https://example.com',
+      ),
+      feeds: feeds,
+      categories: categories,
+      articles: articles,
+      outbox: outbox,
+      appSettingsStore: appSettingsStore,
+      dio: dio,
+      credentials: createCredentialStore(),
+      notifications: notifications,
+      cache: cache,
+      extractor: extractor,
+    );
+    final feverService = buildSyncServiceForAccount(
+      account: buildTestAccount(
+        type: AccountType.fever,
+        baseUrl: 'https://example.com',
+      ),
+      feeds: feeds,
+      categories: categories,
+      articles: articles,
+      outbox: outbox,
+      appSettingsStore: appSettingsStore,
+      dio: dio,
+      credentials: createCredentialStore(),
+      notifications: notifications,
+      cache: cache,
+      extractor: extractor,
+    );
+
+    expect(localService, isA<SyncService>());
+    expect(minifluxService, isA<MinifluxSyncService>());
+    expect(feverService, isA<FeverSyncService>());
   });
 }

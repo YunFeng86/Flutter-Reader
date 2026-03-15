@@ -14,6 +14,7 @@ import 'package:fleur/services/ai/ai_request_queue.dart';
 import 'package:fleur/services/ai/ai_service_client.dart';
 import 'package:fleur/services/cache/ai_content_cache_store.dart';
 import 'package:fleur/services/cache/image_meta_store.dart';
+import 'package:fleur/services/notifications/notification_service.dart';
 import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/settings/reader_settings.dart';
 import 'package:fleur/services/settings/reader_settings_store.dart';
@@ -393,6 +394,52 @@ class InMemoryImageMetaStore extends ImageMetaStore {
   @override
   Future<void> clear() async {
     _entries.clear();
+  }
+}
+
+class FakeNotificationService extends NotificationService {
+  int bindTapHandlerCalls = 0;
+  int initCalls = 0;
+  int actualInitCalls = 0;
+  int permissionCalls = 0;
+  int actualPermissionCalls = 0;
+  bool throwOnInit = false;
+  bool throwOnRequestPermissions = false;
+
+  bool _initialized = false;
+  bool _permissionRequested = false;
+  void Function(NotificationTap tap)? _handler;
+
+  @override
+  void setOnNotificationTap(void Function(NotificationTap tap) handler) {
+    bindTapHandlerCalls++;
+    _handler = handler;
+  }
+
+  @override
+  Future<void> init() async {
+    initCalls++;
+    if (throwOnInit) {
+      throw Exception('fake notification init failed');
+    }
+    if (_initialized) return;
+    _initialized = true;
+    actualInitCalls++;
+  }
+
+  @override
+  Future<void> requestPermissions() async {
+    permissionCalls++;
+    if (throwOnRequestPermissions) {
+      throw Exception('fake notification permission failed');
+    }
+    if (_permissionRequested) return;
+    _permissionRequested = true;
+    actualPermissionCalls++;
+  }
+
+  void dispatch(NotificationTap tap) {
+    _handler?.call(tap);
   }
 }
 

@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
 import '../../models/article.dart';
+import '../logging/app_logger.dart';
 
 sealed class NotificationTap {
   const NotificationTap();
@@ -81,8 +82,12 @@ class NotificationService {
         if (didLaunch && response != null) {
           _handleNotificationResponse(response);
         }
-      } catch (_) {
-        // ignore: best-effort
+      } catch (e) {
+        AppLogger.w(
+          'Notification launch details lookup failed',
+          tag: 'notify',
+          error: e,
+        );
       }
 
       _initialized = true;
@@ -134,8 +139,12 @@ class NotificationService {
       await macos?.requestPermissions(alert: true, badge: true, sound: true);
     } on MissingPluginException {
       _permissionRequested = false;
-    } catch (_) {
-      // ignore: best-effort; do not break app startup
+    } catch (e) {
+      AppLogger.w(
+        'Notification permission request failed',
+        tag: 'notify',
+        error: e,
+      );
     }
   }
 

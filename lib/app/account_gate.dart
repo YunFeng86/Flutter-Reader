@@ -7,6 +7,7 @@ import 'package:isar/isar.dart';
 import '../db/isar_db.dart';
 import '../providers/account_providers.dart';
 import '../providers/core_providers.dart';
+import '../providers/service_providers.dart';
 import '../services/accounts/account.dart';
 import '../services/data_integrity_startup_service.dart';
 import 'app.dart';
@@ -36,6 +37,7 @@ class _AccountGateState extends ConsumerState<AccountGate> {
   Widget build(BuildContext context) {
     final accountsAsync = ref.watch(accountsControllerProvider);
     final activeAccount = ref.watch(activeAccountProvider);
+    final notificationService = ref.watch(notificationServiceProvider);
 
     if (accountsAsync.isLoading) {
       return const MaterialApp(
@@ -161,7 +163,10 @@ class _AccountGateState extends ConsumerState<AccountGate> {
 
     return ProviderScope(
       key: ValueKey('account:${activeAccount.id}'),
-      overrides: [isarProvider.overrideWithValue(isar)],
+      overrides: [
+        isarProvider.overrideWithValue(isar),
+        notificationServiceProvider.overrideWithValue(notificationService),
+      ],
       child: const App(),
     );
   }
