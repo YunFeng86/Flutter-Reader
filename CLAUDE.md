@@ -34,6 +34,12 @@ dart fix --apply             # Auto-fix issues (async patterns, bool literals, e
 flutter test
 ```
 
+## Current Boundary Contract
+
+- Windows 10/11 is the only officially supported platform in this repository.
+- Android, iOS, macOS, and Linux are preview targets: useful for local validation, but not yet described as production-ready release paths.
+- Web is currently unsupported in this repository; `flutter build web` is expected to fail until the current web-target blockers are resolved.
+
 ## Architecture Overview
 
 This is a **Flutter RSS reader** built with **Clean Architecture** and **Riverpod** state management.
@@ -72,7 +78,7 @@ lib/
 - `Category`: User-defined categories
 
 **Key Design Patterns**:
-1. **Denormalization**: `categoryId` duplicated in Articles for fast filtering (see [feed_repository.dart](lib/repositories/feed_repository.dart))
+1. **Denormalized category filter (under review)**: `categoryId` is duplicated in Articles for fast category filtering (see [feed_repository.dart](lib/repositories/feed_repository.dart)). Keep benchmark interpretation consistent before treating this optimization as permanently justified.
 2. **Dual Content Storage**: Articles store both RSS `content` and extracted `fullContent`
 3. **Stream-based Queries**: Repositories return `Stream<List<T>>` for reactive UI updates
 

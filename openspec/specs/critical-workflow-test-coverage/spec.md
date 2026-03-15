@@ -1,7 +1,7 @@
 # critical-workflow-test-coverage Specification
 
 ## Purpose
-TBD - created by archiving change strengthen-critical-test-coverage. Update Purpose after archive.
+Define the minimum regression coverage required for high-risk reading, AI, sync, and settings workflows so refactors cannot silently break critical user paths.
 ## Requirements
 ### Requirement: High-risk reading workflows must have deterministic regression tests
 The project MUST provide deterministic high-level tests for the reading experience so that changes to reading UI, extracted content handling, translation display, and progress restoration cannot silently regress.
@@ -37,4 +37,3 @@ The project MUST provide widget-level regression tests for AI service settings a
 #### Scenario: Settings interactions preserve expected outcomes
 - **WHEN** a contributor changes AI service configuration dialogs, translation provider selection, prompt reset behavior, target language selection, or subscription detail inheritance controls
 - **THEN** widget tests SHALL verify the expected persisted result and visible UI state for global, category, and feed-specific settings paths
-

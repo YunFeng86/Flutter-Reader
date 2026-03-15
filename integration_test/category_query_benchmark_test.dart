@@ -13,6 +13,11 @@ import 'package:fleur/models/tag.dart';
 /// Performance benchmark test to validate the value of categoryId denormalization.
 ///
 /// This integration test runs on a real device/emulator with native Isar libraries.
+/// Canonical retention metric: percentage of time saved versus the slower
+/// two-step query.
+/// Retention bar: >=30% saved time.
+/// Results below the bar keep the denormalization under review rather than
+/// treating it as permanently justified.
 ///
 /// Run with: flutter test integration_test/category_query_benchmark_test.dart
 void main() {
@@ -79,8 +84,11 @@ void main() {
     await tester.pumpAndSettle();
 
     // Calculate performance difference
-    final speedup = ((avg2 - avg1) / avg2 * 100).toStringAsFixed(1);
+    final savedPercent = (avg2 - avg1) / avg2 * 100;
+    final savedPercentText = savedPercent.toStringAsFixed(1);
     final diff = (avg2 - avg1).toStringAsFixed(0);
+    final speedupRatio = (avg2 / avg1).toStringAsFixed(2);
+    const retentionBarPercent = 30.0;
 
     stdout.writeln('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     stdout.writeln('📊 Category Query Performance Benchmark');
@@ -97,8 +105,10 @@ void main() {
     );
     stdout.writeln();
     stdout.writeln(
-      'Result: Method 1 is $speedup% faster ($diff μs improvement)',
+      'Primary retention metric: $savedPercentText% time saved ($diff μs improvement)',
     );
+    stdout.writeln('Speedup ratio (diagnostic only): ${speedupRatio}x');
+    stdout.writeln('Retention bar: >= ${retentionBarPercent.toStringAsFixed(0)}%');
     stdout.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // Assert that Method 1 is faster
@@ -108,32 +118,21 @@ void main() {
       reason: 'Direct categoryId query should be faster than two-step approach',
     );
 
-    // Performance analysis
-    final improvementRatio = avg2 / avg1;
-    if (improvementRatio >= 1.3) {
+    // Below the retention bar, keep the denormalization under review instead
+    // of treating it as self-justifying.
+    if (savedPercent >= retentionBarPercent) {
       stdout.writeln(
-        '✅ Performance improvement ($speedup%) justifies denormalization',
-      );
-      stdout.writeln(
-        '   Speedup ratio: ${improvementRatio.toStringAsFixed(2)}x\n',
-      );
-    } else if (improvementRatio >= 1.15) {
-      stdout.writeln('⚠️  Moderate improvement ($speedup%)');
-      stdout.writeln(
-        '   Speedup ratio: ${improvementRatio.toStringAsFixed(2)}x',
-      );
-      stdout.writeln(
-        '   Denormalization may still be worth it for UX responsiveness\n',
+        '✅ Saved time ($savedPercentText%) clears the retention bar',
       );
     } else {
-      stdout.writeln('❌ Low improvement ($speedup%)');
       stdout.writeln(
-        '   Speedup ratio: ${improvementRatio.toStringAsFixed(2)}x',
+        '⚠️  Saved time ($savedPercentText%) is below the retention bar',
       );
       stdout.writeln(
-        '   Consider removing denormalization - complexity cost may not justify gains\n',
+        '   Keep denormalization under review before adding more maintenance complexity',
       );
     }
+    stdout.writeln();
   });
 }
 

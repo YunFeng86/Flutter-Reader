@@ -16,8 +16,11 @@ import '../test_utils/isar_test_utils.dart';
 /// 1. Direct categoryId query (current implementation with denormalization)
 /// 2. Two-step query via feedId (alternative without denormalization)
 ///
-/// Expected result: Method 1 should be significantly faster (>30% improvement)
-/// to justify the complexity cost of maintaining denormalized data.
+/// Canonical retention metric: percentage of time saved versus the slower
+/// two-step query.
+/// Retention bar: >=30% saved time.
+/// Results below the bar keep the denormalization under review rather than
+/// treating it as permanently justified.
 void main() {
   Isar? isar;
   Directory? tempDir;
@@ -69,8 +72,11 @@ void main() {
     final avg2 = stopwatch2.elapsedMicroseconds / iterations;
 
     // Calculate performance difference
-    final speedup = ((avg2 - avg1) / avg2 * 100).toStringAsFixed(1);
+    final savedPercent = (avg2 - avg1) / avg2 * 100;
+    final savedPercentText = savedPercent.toStringAsFixed(1);
     final diff = (avg2 - avg1).toStringAsFixed(0);
+    final speedupRatio = (avg2 / avg1).toStringAsFixed(2);
+    const retentionBarPercent = 30.0;
 
     stdout.writeln('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     stdout.writeln('📊 Category Query Performance Benchmark');
@@ -87,8 +93,10 @@ void main() {
     );
     stdout.writeln();
     stdout.writeln(
-      'Result: Method 1 is $speedup% faster ($diff μs improvement)',
+      'Primary retention metric: $savedPercentText% time saved ($diff μs improvement)',
     );
+    stdout.writeln('Speedup ratio (diagnostic only): ${speedupRatio}x');
+    stdout.writeln('Retention bar: >= ${retentionBarPercent.toStringAsFixed(0)}%');
     stdout.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // Assert that Method 1 is faster
@@ -98,19 +106,18 @@ void main() {
       reason: 'Direct categoryId query should be faster than two-step approach',
     );
 
-    // We expect at least 30% improvement to justify the denormalization complexity
-    // If the improvement is less than 30%, the denormalization might not be worth it
-    final improvementThreshold = avg2 * 0.7;
-    if (avg1 < improvementThreshold) {
+    // Below the retention bar, keep the denormalization under review instead
+    // of treating it as self-justifying.
+    if (savedPercent >= retentionBarPercent) {
       stdout.writeln(
-        '✅ Performance improvement ($speedup%) justifies denormalization',
+        '✅ Saved time ($savedPercentText%) clears the retention bar',
       );
     } else {
       stdout.writeln(
-        '⚠️  Performance improvement ($speedup%) is below 30% threshold',
+        '⚠️  Saved time ($savedPercentText%) is below the retention bar',
       );
       stdout.writeln(
-        '   Consider removing denormalization if complexity cost is high',
+        '   Keep denormalization under review before adding more maintenance complexity',
       );
     }
   });

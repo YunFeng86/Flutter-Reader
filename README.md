@@ -15,26 +15,22 @@
 
 ## 📱 支持平台
 
-| Android | iOS | Windows | macOS | Linux | Web |
-|:-------:|:---:|:-------:|:-----:|:-----:|:---:|
-| 🔄 | 🔄 | ✅ | 🔄 | 🔄 | ❌ |
+平台状态按以下边界声明维护：
 
-### ✅ 正式支持（已测试）
+- **正式支持** - 当前持续验证，并具备基本发布准备度
+- **预览支持** - 代码路径存在，但尚未完成常规验证或发布链路产品化
+- **暂不支持** - 当前构建或运行不属于支持路径
 
-- **Windows 10/11 (x64)** - 经过充分测试，稳定可用
+| 平台 | 状态 | 当前依据 |
+|------|------|----------|
+| Windows 10/11 (x64) | ✅ 正式支持 | 当前主要验证与发布目标，已稳定使用 |
+| Android | 🔄 预览支持 | 可用于开发验证，但 release 仍使用 debug 签名，未完成正式发布链路 |
+| iOS | 🔄 预览支持 | 代码路径存在，尚未建立常规验证与发布流程 |
+| macOS 11+ | 🔄 预览支持 | 可尝试运行，但窗口行为与打包未常规验证 |
+| Linux (x64) | 🔄 预览支持 | 可尝试运行，但 GTK、通知与打包未常规验证 |
+| Web | ❌ 暂不支持 | 当前 `flutter build web` 在本仓库上失败，未纳入支持路径 |
 
-### 🔄 理论支持（未经测试）
-
-- **Android** - 代码理论上支持，但未在真机测试
-- **iOS** - 代码理论上支持，但未在真机测试
-- **macOS 11+** - 依赖 `window_manager`，窗口行为未验证
-- **Linux (x64)** - 依赖 GTK 3.0+，通知系统可能需要额外配置
-
-**如果你在这些平台上成功运行，请在 [Issues](https://github.com/YunFeng86/Fleur/issues) 报告你的系统信息和遇到的问题。**
-
-### ❌ 暂不支持
-
-- **Web** - Isar 数据库不支持 Web 平台
+**如果你在预览平台上成功运行，请在 [Issues](https://github.com/YunFeng86/Fleur/issues) 报告你的系统信息和遇到的问题。**
 
 ## 🚀 快速开始
 
@@ -66,35 +62,34 @@ dart run build_runner build --delete-conflicting-outputs
 ### 运行应用
 
 ```bash
-# 开发模式运行
-flutter run
-
-# 指定设备运行
+# 正式支持路径
 flutter run -d windows
-flutter run -d macos
-flutter run -d chrome
 ```
+
+```bash
+# 预览平台自行验证（先使用 `flutter devices` 确认设备 ID）
+flutter run -d macos
+flutter run -d linux
+flutter run -d <android-device-id>
+flutter run -d <ios-device-id>
+```
+
+- Android 预览构建目前仅适合本地验证；release 产物仍使用 debug 签名，**不应视为正式发布包**。
+- Web 当前不提供受支持的运行命令；本仓库上的 `flutter build web` 仍会因现有 Web 目标阻塞项失败。
 
 ### 构建发布版本
 
 ```bash
-# Android APK
-flutter build apk
-
-# iOS
-flutter build ios
-
-# Windows
+# 正式支持发布构建
 flutter build windows
+```
 
-# macOS
+```bash
+# 预览平台验证构建（不代表正式发布就绪）
+flutter build apk
+flutter build ios
 flutter build macos
-
-# Linux
 flutter build linux
-
-# Web
-flutter build web
 ```
 
 ## 🏗️ 项目架构
@@ -138,6 +133,12 @@ flutter test
 # 运行集成测试
 flutter test integration_test
 ```
+
+### 当前已知边界
+
+- `Article.categoryId` 去规范化目前仍保留，但 benchmark 使用统一的“慢路径时间节省百分比”口径评估；低于 30% 保留线时应进入复盘，而不是继续默认其复杂度已被证明合理。
+- Android、iOS、macOS、Linux 当前都属于预览支持；如果需要把其中任一平台提升为正式支持，应先补齐常规验证与发布准备度。
+- Web 在当前仓库中仍不纳入支持路径，相关兼容性问题需要单独处理。
 
 ## 📄 License
 
