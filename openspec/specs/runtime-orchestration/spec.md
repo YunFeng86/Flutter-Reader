@@ -1,7 +1,7 @@
 # runtime-orchestration Specification
 
 ## Purpose
-TBD - created by archiving change centralize-runtime-orchestration. Update Purpose after archive.
+Define the runtime lifecycle orchestration boundaries that keep startup side effects out of widget build paths, unify foreground/background sync assembly, and preserve observability for best-effort runtime failures.
 ## Requirements
 ### Requirement: Application startup side effects MUST be owned by explicit runtime lifecycle boundaries
 The application MUST execute startup and long-lived runtime side effects through explicit lifecycle-owned orchestration boundaries rather than directly from widget `build()` paths.
@@ -35,4 +35,3 @@ Runtime operations that are allowed to fail without aborting the primary user fl
 #### Scenario: Runtime capability is unavailable on the current platform
 - **WHEN** a runtime feature is skipped because the platform or plugin does not support it
 - **THEN** the code SHALL handle that case through an explicit unsupported-path branch or categorized exception handling rather than a generic catch-all that obscures the reason
-
