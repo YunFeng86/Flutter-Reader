@@ -157,7 +157,13 @@ class ArticleAiController
   AppSettings _appSettings = AppSettings.defaults();
   TranslationAiSettings? _translationSettings;
   AppLocalizations? _l10n;
-  Locale _uiLocale = PlatformDispatcher.instance.locale;
+  Locale _uiLocale = supportedAppLocaleForTag(
+    defaultTargetLanguageTagForAppLocale(
+      null,
+      PlatformDispatcher.instance.locale,
+    ),
+  );
+  String _defaultTargetLanguageTag = 'en';
   String _targetLanguageTag = 'und';
   String _activeHtml = '';
   bool _activeShowExtracted = false;
@@ -217,12 +223,16 @@ class ArticleAiController
   }
 
   void _handleAppSettings(AppSettings? next) {
-    _appSettings = next ?? AppSettings.defaults();
-    final localeTag = (_appSettings.localeTag ?? '').trim();
-    final uiTag = localeTag.isNotEmpty
-        ? normalizeLanguageTag(localeTag)
-        : languageTagForLocale(PlatformDispatcher.instance.locale);
-    _uiLocale = localeFromLanguageTag(uiTag);
+    _appSettings = (next ?? AppSettings.defaults()).normalized();
+    final runtimeTag = runtimeLanguageTagForAppLocale(
+      _appSettings.localeTag,
+      PlatformDispatcher.instance.locale,
+    );
+    _uiLocale = supportedAppLocaleForTag(runtimeTag);
+    _defaultTargetLanguageTag = defaultTargetLanguageTagForAppLocale(
+      _appSettings.localeTag,
+      PlatformDispatcher.instance.locale,
+    );
     _l10n = lookupAppLocalizations(_uiLocale);
     _refreshTargetLanguage();
     _refreshLanguageBanner();
@@ -239,9 +249,12 @@ class ArticleAiController
   void _refreshTargetLanguage() {
     final settings = _translationSettings;
     final rawTarget = settings?.targetLanguageTag;
-    final uiTag = languageTagForLocale(_uiLocale);
-    final resolved = normalizeLanguageTag(rawTarget ?? uiTag);
-    _targetLanguageTag = resolved.isEmpty ? uiTag : resolved;
+    final resolved = rawTarget == null || rawTarget.trim().isEmpty
+        ? _defaultTargetLanguageTag
+        : canonicalLanguageIdentityTag(rawTarget);
+    _targetLanguageTag = resolved == unknownLanguageTag
+        ? _defaultTargetLanguageTag
+        : resolved;
     if (state.targetLanguageTag != _targetLanguageTag) {
       _summaryRequestId++;
       _translationRequestId++;
@@ -339,16 +352,16 @@ class ArticleAiController
   }
 
   void _refreshLanguageBanner() {
-    final source = state.sourceLanguageTag;
-    final target = _targetLanguageTag;
+    final source = canonicalKnownLanguageTagOrNull(state.sourceLanguageTag);
+    final target = canonicalKnownLanguageTagOrNull(_targetLanguageTag);
     final disabled =
         _translationSettings?.disabledTranslationReminderLanguages ??
         const <String>[];
     final shouldShow =
         source != null &&
-        source.trim().isNotEmpty &&
-        normalizeLanguageTag(source) != normalizeLanguageTag(target) &&
-        !disabled.contains(source.trim()) &&
+        target != null &&
+        source != target &&
+        !disabled.contains(source) &&
         state.translationStatus == ArticleAiTaskStatus.idle &&
         state.translationHtml == null;
     state = state.copyWith(showLanguageMismatchBanner: shouldShow);
@@ -428,11 +441,9 @@ class ArticleAiController
     if (_effectiveAutoTranslate() &&
         state.translationStatus == ArticleAiTaskStatus.idle &&
         (state.translationHtml ?? '').trim().isEmpty) {
-      final source = state.sourceLanguageTag;
-      if (source != null &&
-          source.trim().isNotEmpty &&
-          normalizeLanguageTag(source) !=
-              normalizeLanguageTag(_targetLanguageTag)) {
+      final source = canonicalKnownLanguageTagOrNull(state.sourceLanguageTag);
+      final target = canonicalKnownLanguageTagOrNull(_targetLanguageTag);
+      if (source != null && target != null && source != target) {
         unawaited(
           ensureTranslation(
             mode: ArticleTranslationMode.immersive,
@@ -444,7 +455,7 @@ class ArticleAiController
   }
 
   Future<void> disableLanguageMismatchReminder() async {
-    final source = state.sourceLanguageTag?.trim();
+    final source = canonicalKnownLanguageTagOrNull(state.sourceLanguageTag);
     if (source == null || source.isEmpty) return;
     await ref
         .read(translationAiSettingsProvider.notifier)

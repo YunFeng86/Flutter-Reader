@@ -276,7 +276,7 @@ void main() {
           .setLocaleTag('zh_Hant');
       await tester.pump();
 
-      expect(localeTags, ['en', 'zh_Hant']);
+      expect(localeTags, ['en', 'zh-Hant']);
     },
   );
 

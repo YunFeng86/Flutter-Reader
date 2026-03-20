@@ -16,8 +16,9 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
   }
 
   Future<void> save(AppSettings next) async {
-    state = AsyncValue.data(next);
-    await ref.read(appSettingsStoreProvider).save(next);
+    final normalized = next.normalized();
+    state = AsyncValue.data(normalized);
+    await ref.read(appSettingsStoreProvider).save(normalized);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {

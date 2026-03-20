@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:fleur/providers/translation_ai_settings_providers.dart';
 import 'package:fleur/services/settings/translation_ai_settings.dart';
+import 'package:fleur/utils/language_utils.dart';
 import '../test_utils/critical_workflow_test_support.dart';
 
 void main() {
@@ -124,4 +125,54 @@ void main() {
     final settings = await container.read(translationAiSettingsProvider.future);
     expect(settings.aiServices.single.name, 'After');
   });
+
+  test('setTargetLanguageTag canonicalizes equivalent language tags', () async {
+    final store = FakeTranslationAiSettingsStore(
+      TranslationAiSettings.defaults(),
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        translationAiSettingsStoreProvider.overrideWithValue(store),
+        translationAiSecretStoreProvider.overrideWithValue(
+          FakeTranslationAiSecretStore(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    await container.read(translationAiSettingsProvider.future);
+    final controller = container.read(translationAiSettingsProvider.notifier);
+    await controller.setTargetLanguageTag('zh-Hans-CN');
+
+    expect(store.settings.targetLanguageTag, 'zh-Hans');
+  });
+
+  test(
+    'disable reminder deduplicates equivalent language identities',
+    () async {
+      final store = FakeTranslationAiSettingsStore(
+        TranslationAiSettings.defaults(),
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          translationAiSettingsStoreProvider.overrideWithValue(store),
+          translationAiSecretStoreProvider.overrideWithValue(
+            FakeTranslationAiSecretStore(),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(translationAiSettingsProvider.future);
+      final controller = container.read(translationAiSettingsProvider.notifier);
+      await controller.disableTranslationReminderForLanguage('en-GB');
+      await controller.disableTranslationReminderForLanguage('en');
+
+      expect(store.settings.disabledTranslationReminderLanguages, <String>[
+        canonicalLanguageIdentityTag('en'),
+      ]);
+    },
+  );
 }

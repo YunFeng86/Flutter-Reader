@@ -1,3 +1,5 @@
+import '../../utils/language_utils.dart';
+
 class TranslationAiSettings {
   const TranslationAiSettings({
     required this.version,
@@ -247,7 +249,12 @@ class TranslationAiSettings {
       }
     }
 
-    final normalizedTargetLang = (targetLanguageTag ?? '').trim();
+    final normalizedTargetLang = (() {
+      final raw = (targetLanguageTag ?? '').trim();
+      if (raw.isEmpty) return '';
+      final canonical = canonicalLanguageIdentityTag(raw);
+      return canonical == unknownLanguageTag ? '' : canonical;
+    })();
 
     String? normalizeOptionalString(String? v) {
       final s = (v ?? '').trim();
@@ -257,7 +264,8 @@ class TranslationAiSettings {
     final normalizedDisabledReminderLangs = <String>[];
     final seenLangs = <String>{};
     for (final raw in disabledTranslationReminderLanguages) {
-      final s = raw.trim();
+      final canonical = canonicalLanguageIdentityTag(raw);
+      final s = canonical == unknownLanguageTag ? '' : canonical;
       if (s.isEmpty) continue;
       if (!seenLangs.add(s)) continue;
       normalizedDisabledReminderLangs.add(s);

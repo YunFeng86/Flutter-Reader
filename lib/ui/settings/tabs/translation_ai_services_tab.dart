@@ -1,11 +1,14 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 
 import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_settings_providers.dart';
 import '../../../providers/translation_ai_settings_providers.dart';
+import '../../../services/settings/app_settings.dart';
 import '../../../services/settings/translation_ai_settings.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
@@ -28,6 +31,8 @@ class TranslationAiServicesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final appSettings =
+        ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
     final settingsAsync = ref.watch(translationAiSettingsProvider);
 
     return settingsAsync.when(
@@ -449,13 +454,16 @@ class TranslationAiServicesTab extends ConsumerWidget {
         );
 
         final uiLocale = Localizations.localeOf(context);
-        final uiLanguageTag = languageTagForLocale(uiLocale);
-        final effectiveTargetLanguageTag = normalizeLanguageTag(
-          settings.targetLanguageTag ?? uiLanguageTag,
+        final followAppTargetLanguageTag = defaultTargetLanguageTagForAppLocale(
+          appSettings.localeTag,
+          PlatformDispatcher.instance.locale,
+        );
+        final effectiveTargetLanguageTag = canonicalLanguageIdentityTag(
+          settings.targetLanguageTag ?? followAppTargetLanguageTag,
         );
 
         final targetLanguageSubtitle = settings.targetLanguageTag == null
-            ? '${l10n.followAppLanguage} · ${localizedLanguageNameForTag(uiLocale, uiLanguageTag)}'
+            ? '${l10n.followAppLanguage} · ${localizedLanguageNameForTag(uiLocale, followAppTargetLanguageTag)}'
             : localizedLanguageNameForTag(uiLocale, effectiveTargetLanguageTag);
 
         final defaultAiSummaryPromptTemplate = l10n
@@ -509,7 +517,7 @@ class TranslationAiServicesTab extends ConsumerWidget {
         Future<void> pickTargetLanguage() async {
           const commonLanguageTags = <String>[
             'en',
-            'zh',
+            'zh-Hans',
             'zh-Hant',
             'ja',
             'ko',
@@ -545,7 +553,7 @@ class TranslationAiServicesTab extends ConsumerWidget {
                           subtitle: Text(
                             localizedLanguageNameForTag(
                               uiLocale,
-                              uiLanguageTag,
+                              followAppTargetLanguageTag,
                             ),
                           ),
                           trailing: settings.targetLanguageTag == null

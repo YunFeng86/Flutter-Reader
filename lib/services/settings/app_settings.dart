@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../network/user_agents.dart';
 import '../../theme/seed_color_presets.dart';
+import '../../utils/language_utils.dart';
 
 enum ArticleGroupMode { none, day }
 
@@ -249,7 +250,7 @@ class AppSettings {
       return MinifluxWebFetchMode.clientReadability;
     }
 
-    return AppSettings(
+    final loaded = AppSettings(
       themeMode: mode,
       useDynamicColor: useDynamicColor is! bool || useDynamicColor,
       seedColorPreset: parseSeedColorPreset(seedColorPreset),
@@ -286,6 +287,47 @@ class AppSettings {
       webUserAgent: webUserAgent is String && webUserAgent.trim().isNotEmpty
           ? webUserAgent
           : UserAgents.webForCurrentPlatform(),
+    );
+    return loaded.normalized();
+  }
+
+  AppSettings normalized() {
+    final normalizedLocaleTag = (() {
+      final raw = (localeTag ?? '').trim();
+      if (raw.isEmpty) return null;
+      final normalized = normalizeAppLocaleTag(raw);
+      return normalized.isEmpty ? null : normalized;
+    })();
+    final normalizedRssUserAgent = rssUserAgent.trim().isEmpty
+        ? UserAgents.rss
+        : rssUserAgent.trim();
+    final normalizedWebUserAgent = webUserAgent.trim().isEmpty
+        ? UserAgents.webForCurrentPlatform()
+        : webUserAgent.trim();
+
+    return AppSettings(
+      themeMode: themeMode,
+      useDynamicColor: useDynamicColor,
+      seedColorPreset: seedColorPreset,
+      localeTag: normalizedLocaleTag,
+      autoMarkRead: autoMarkRead,
+      autoRefreshMinutes: autoRefreshMinutes,
+      autoRefreshConcurrency: autoRefreshConcurrency,
+      articleGroupMode: articleGroupMode,
+      articleSortOrder: articleSortOrder,
+      searchInContent: searchInContent,
+      cleanupReadOlderThanDays: cleanupReadOlderThanDays,
+      filterEnabled: filterEnabled,
+      filterKeywords: filterKeywords,
+      syncEnabled: syncEnabled,
+      syncImages: syncImages,
+      syncWebPages: syncWebPages,
+      showAiSummary: showAiSummary,
+      autoTranslate: autoTranslate,
+      minifluxEntriesLimit: minifluxEntriesLimit,
+      minifluxWebFetchMode: minifluxWebFetchMode,
+      rssUserAgent: normalizedRssUserAgent,
+      webUserAgent: normalizedWebUserAgent,
     );
   }
 }

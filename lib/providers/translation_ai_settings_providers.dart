@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/settings/translation_ai_secret_store.dart';
 import '../services/settings/translation_ai_settings.dart';
 import '../services/settings/translation_ai_settings_store.dart';
+import '../utils/language_utils.dart';
 
 final translationAiSettingsStoreProvider = Provider<TranslationAiSettingsStore>(
   (ref) => TranslationAiSettingsStore(),
@@ -63,7 +64,7 @@ class TranslationAiSettingsController
   }
 
   Future<void> disableTranslationReminderForLanguage(String languageTag) async {
-    final trimmed = languageTag.trim();
+    final trimmed = canonicalKnownLanguageTagOrNull(languageTag)?.trim() ?? '';
     if (trimmed.isEmpty) return;
     final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
     if (cur.disabledTranslationReminderLanguages.contains(trimmed)) return;
@@ -78,7 +79,7 @@ class TranslationAiSettingsController
   }
 
   Future<void> enableTranslationReminderForLanguage(String languageTag) async {
-    final trimmed = languageTag.trim();
+    final trimmed = canonicalKnownLanguageTagOrNull(languageTag)?.trim() ?? '';
     if (trimmed.isEmpty) return;
     final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
     final next = cur.disabledTranslationReminderLanguages

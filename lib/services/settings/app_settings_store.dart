@@ -22,8 +22,7 @@ class AppSettingsStore {
       final loaded = AppSettings.fromJson(decoded.cast<String, Object?>());
       final migrated = _migrateIfNeeded(loaded);
       // Only persist when we actually loaded an on-disk settings file.
-      if (migrated.webUserAgent != loaded.webUserAgent ||
-          migrated.rssUserAgent != loaded.rssUserAgent) {
+      if (jsonEncode(migrated.toJson()) != jsonEncode(loaded.toJson())) {
         try {
           await save(migrated);
         } catch (_) {
@@ -46,13 +45,14 @@ class AppSettingsStore {
   }
 
   AppSettings _migrateIfNeeded(AppSettings cur) {
+    var next = cur.normalized();
     // If user never customized UA (still legacy Windows default), use a
     // platform-aware default to avoid "Windows NT" on non-Windows builds.
     final platformDefault = UserAgents.webForCurrentPlatform();
-    if (cur.webUserAgent.trim() == UserAgents.web &&
+    if (next.webUserAgent.trim() == UserAgents.web &&
         platformDefault.trim() != UserAgents.web) {
-      return cur.copyWith(webUserAgent: platformDefault);
+      next = next.copyWith(webUserAgent: platformDefault);
     }
-    return cur;
+    return next;
   }
 }

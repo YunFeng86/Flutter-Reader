@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/theme/seed_color_presets.dart';
+import 'package:fleur/utils/language_utils.dart';
 
 void main() {
   test('AppSettings defaults useDynamicColor to true', () {
@@ -79,6 +80,65 @@ void main() {
     expect(
       restored.minifluxWebFetchMode,
       MinifluxWebFetchMode.serverFetchContent,
+    );
+  });
+
+  test('AppSettings normalizes equivalent app locale tags', () {
+    final restored = AppSettings.fromJson(<String, Object?>{
+      'localeTag': 'zh-Hans-CN',
+    });
+    expect(restored.localeTag, 'zh');
+  });
+
+  test('LanguageIdentity keeps normalized tag and canonical compare key', () {
+    final identity = LanguageIdentity.fromTag('en-GB');
+    expect(identity.normalizedTag, 'en-GB');
+    expect(identity.compareKey, 'en');
+    expect(identity.displayKey, 'en');
+  });
+
+  test('canonicalLanguageIdentityTag folds chinese and regional variants', () {
+    expect(canonicalLanguageIdentityTag('zh-Hans-CN'), 'zh-Hans');
+    expect(canonicalLanguageIdentityTag('zh-HK'), 'zh-Hant');
+    expect(canonicalLanguageIdentityTag('en-GB'), 'en');
+  });
+
+  test('supportedAppLocaleForTag falls back to supported UI locales', () {
+    expect(
+      languageTagForLocale(supportedAppLocaleForTag('zh-Hant-HK')),
+      'zh-Hant',
+    );
+    expect(languageTagForLocale(supportedAppLocaleForTag('fr-FR')), 'en');
+  });
+
+  test(
+    'defaultTargetLanguageTagForAppLocale preserves system language identity',
+    () {
+      expect(
+        defaultTargetLanguageTagForAppLocale(
+          null,
+          const Locale.fromSubtags(languageCode: 'fr', countryCode: 'FR'),
+        ),
+        'fr',
+      );
+      expect(
+        defaultTargetLanguageTagForAppLocale(
+          'zh-Hant-HK',
+          const Locale.fromSubtags(languageCode: 'fr', countryCode: 'FR'),
+        ),
+        'zh-Hant',
+      );
+    },
+  );
+
+  test('localizedLanguageNameForTag shows canonical chinese name', () {
+    expect(
+      localizedLanguageNameForTag(const Locale('en'), 'zh-Hans-CN'),
+      'Chinese (Simplified)',
+    );
+    expect(
+      localizedLanguageNameForTag(const Locale('zh'), 'zh-Hant-HK'),
+      '繁體中文',
     );
   });
 }

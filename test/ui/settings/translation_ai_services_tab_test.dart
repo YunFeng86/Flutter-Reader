@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:fleur/providers/app_settings_providers.dart';
 import 'package:fleur/providers/translation_ai_settings_providers.dart';
+import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/settings/translation_ai_settings.dart';
 import 'package:fleur/ui/settings/tabs/translation_ai_services_tab.dart';
 
@@ -12,16 +14,22 @@ void main() {
     WidgetTester tester, {
     required FakeTranslationAiSettingsStore store,
     FakeTranslationAiSecretStore? secrets,
+    AppSettings? appSettings,
+    Locale locale = const Locale('en'),
   }) async {
     await pumpLocalizedTestApp(
       tester,
       home: const Scaffold(body: TranslationAiServicesTab()),
       overrides: [
+        appSettingsStoreProvider.overrideWithValue(
+          FakeAppSettingsStore(appSettings ?? AppSettings.defaults()),
+        ),
         translationAiSettingsStoreProvider.overrideWithValue(store),
         translationAiSecretStoreProvider.overrideWithValue(
           secrets ?? FakeTranslationAiSecretStore(),
         ),
       ],
+      locale: locale,
       size: const Size(900, 1200),
     );
     await tester.pumpAndSettle();
@@ -112,4 +120,37 @@ void main() {
     expect(store.settings.deepL.endpoint, DeepLEndpoint.pro);
     expect(await secrets.getDeepLApiKey(), 'deep-key');
   });
+
+  testWidgets('shows canonical target language name instead of raw tag', (
+    tester,
+  ) async {
+    final store = FakeTranslationAiSettingsStore(
+      TranslationAiSettings.defaults().copyWith(
+        targetLanguageTag: 'zh-Hans-CN',
+      ),
+    );
+
+    await pumpTab(tester, store: store);
+
+    expect(find.text('Chinese (Simplified)'), findsOneWidget);
+    expect(find.text('zh-Hans-CN'), findsNothing);
+  });
+
+  testWidgets(
+    'follow app language uses resolved target identity instead of fallback UI locale',
+    (tester) async {
+      final store = FakeTranslationAiSettingsStore(
+        TranslationAiSettings.defaults(),
+      );
+
+      await pumpTab(
+        tester,
+        store: store,
+        appSettings: AppSettings.defaults().copyWith(localeTag: 'fr-FR'),
+        locale: const Locale('en'),
+      );
+
+      expect(find.text('Follow app language · French'), findsOneWidget);
+    },
+  );
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,12 +17,31 @@ import 'package:fleur/services/cache/ai_content_cache_store.dart';
 import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/settings/translation_ai_settings.dart';
 import 'package:fleur/services/translation/article_translation.dart';
+import 'package:fleur/services/translation/translation_service.dart';
+import 'package:fleur/utils/language_detector.dart';
+import 'package:fleur/utils/language_utils.dart';
 
 import '../test_utils/critical_workflow_test_support.dart';
 
 void main() {
   const articleId = 1;
   const accountId = 'article-ai-test';
+
+  test('LanguageDetector returns canonical script-aware identities', () {
+    expect(
+      LanguageDetector.detectLanguageTag(
+        '这是一个关于阅读体验和翻译设置的测试文本，这篇文章会重复一些词语，让系统更容易判断为简体中文内容。',
+      ),
+      'zh-Hans',
+    );
+    expect(
+      LanguageDetector.detectLanguageTag(
+        '這是一篇關於閱讀體驗與翻譯設定的測試文章，內容會重複幾次，讓系統更容易判斷為繁體中文。',
+      ),
+      'zh-Hant',
+    );
+    expect(LanguageDetector.detectLanguageTag('中文'), unknownLanguageTag);
+  });
 
   Feed buildFeed() {
     return Feed()
@@ -164,10 +184,10 @@ void main() {
     'uses cached summary and reports outdated prompt without calling AI',
     () async {
       final article = buildArticle();
-      const targetLanguageTag = 'zh';
+      const targetLanguageTag = 'zh-Hans';
       final service = buildAiService();
       final settings = TranslationAiSettings.defaults().copyWith(
-        targetLanguageTag: targetLanguageTag,
+        targetLanguageTag: canonicalLanguageIdentityTag(targetLanguageTag),
         defaultAiServiceId: service.id,
         aiServices: [service],
         aiSummaryPrompt: 'new prompt {{content}}',
@@ -279,8 +299,179 @@ void main() {
 
       final state = container.read(articleAiControllerProvider(articleId));
       expect(state.sourceLanguageTag, isNotNull);
-      expect(state.targetLanguageTag, 'zh');
+      expect(state.targetLanguageTag, 'zh-Hans');
       expect(state.showLanguageMismatchBanner, isTrue);
+    },
+  );
+
+  test(
+    'does not show mismatch for equivalent english regional target tag',
+    () async {
+      final service = buildAiService();
+      final translator = FakeTranslationService();
+      final container = buildContainer(
+        articleStream: Stream.value(
+          buildArticle(
+            html:
+                '<p>This article is written in English with enough repeated '
+                'latin words to trigger the language detector reliably. '
+                'English text English text English text English text.</p>',
+          ),
+        ),
+        appSettings: AppSettings.defaults().copyWith(autoTranslate: true),
+        translationSettings: TranslationAiSettings.defaults().copyWith(
+          targetLanguageTag: 'en-GB',
+          defaultAiServiceId: service.id,
+          aiServices: [service],
+        ),
+        secrets: FakeTranslationAiSecretStore(
+          aiServiceApiKeys: <String, String>{service.id: 'secret-key'},
+        ),
+        translationService: translator,
+      );
+
+      final sub = container.listen<ArticleAiState>(
+        articleAiControllerProvider(articleId),
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      await container.read(appSettingsProvider.future);
+      await container.read(translationAiSettingsProvider.future);
+      await flushAsync();
+
+      final state = container.read(articleAiControllerProvider(articleId));
+      expect(state.sourceLanguageTag, 'en');
+      expect(state.targetLanguageTag, 'en');
+      expect(state.showLanguageMismatchBanner, isFalse);
+      expect(translator.translatedInputs, isEmpty);
+    },
+  );
+
+  test(
+    'does not show mismatch for equivalent chinese target variants',
+    () async {
+      final service = buildAiService();
+      final translator = FakeTranslationService();
+      final container = buildContainer(
+        articleStream: Stream.value(
+          buildArticle(
+            html:
+                '<p>这是一篇关于翻译设置和阅读体验的测试文章，这篇文章会重复一些词语，让系统更容易判定为简体中文内容。'
+                '这是一篇关于翻译设置和阅读体验的测试文章，这篇文章会重复一些词语，让系统更容易判定为简体中文内容。</p>',
+          ),
+        ),
+        appSettings: AppSettings.defaults().copyWith(autoTranslate: true),
+        translationSettings: TranslationAiSettings.defaults().copyWith(
+          targetLanguageTag: 'zh-Hans-CN',
+          defaultAiServiceId: service.id,
+          aiServices: [service],
+        ),
+        secrets: FakeTranslationAiSecretStore(
+          aiServiceApiKeys: <String, String>{service.id: 'secret-key'},
+        ),
+        translationService: translator,
+      );
+
+      final sub = container.listen<ArticleAiState>(
+        articleAiControllerProvider(articleId),
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      await container.read(appSettingsProvider.future);
+      await container.read(translationAiSettingsProvider.future);
+      await flushAsync();
+
+      final state = container.read(articleAiControllerProvider(articleId));
+      expect(state.sourceLanguageTag, 'zh-Hans');
+      expect(state.targetLanguageTag, 'zh-Hans');
+      expect(state.showLanguageMismatchBanner, isFalse);
+      expect(translator.translatedInputs, isEmpty);
+    },
+  );
+
+  test(
+    'unknown source identity suppresses mismatch and auto translation',
+    () async {
+      final service = buildAiService();
+      final translator = FakeTranslationService();
+      final container = buildContainer(
+        articleStream: Stream.value(buildArticle(html: '<p>中文</p>')),
+        appSettings: AppSettings.defaults().copyWith(autoTranslate: true),
+        translationSettings: TranslationAiSettings.defaults().copyWith(
+          targetLanguageTag: 'fr',
+          defaultAiServiceId: service.id,
+          aiServices: [service],
+        ),
+        secrets: FakeTranslationAiSecretStore(
+          aiServiceApiKeys: <String, String>{service.id: 'secret-key'},
+        ),
+        translationService: translator,
+      );
+
+      final sub = container.listen<ArticleAiState>(
+        articleAiControllerProvider(articleId),
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      await container.read(appSettingsProvider.future);
+      await container.read(translationAiSettingsProvider.future);
+      await flushAsync();
+
+      final state = container.read(articleAiControllerProvider(articleId));
+      expect(state.sourceLanguageTag, unknownLanguageTag);
+      expect(state.showLanguageMismatchBanner, isFalse);
+      expect(translator.translatedInputs, isEmpty);
+    },
+  );
+
+  test(
+    'falls back to supported UI locale while preserving target identity',
+    () async {
+      final service = buildAiService();
+      final aiClient = FakeAiServiceClient();
+      final container = buildContainer(
+        articleStream: Stream.value(buildArticle()),
+        appSettings: AppSettings.defaults().copyWith(
+          localeTag: 'fr-FR',
+          showAiSummary: true,
+        ),
+        translationSettings: TranslationAiSettings.defaults().copyWith(
+          defaultAiServiceId: service.id,
+          aiServices: [service],
+        ),
+        secrets: FakeTranslationAiSecretStore(
+          aiServiceApiKeys: <String, String>{service.id: 'secret-key'},
+        ),
+        aiClient: aiClient,
+      );
+
+      final sub = container.listen<ArticleAiState>(
+        articleAiControllerProvider(articleId),
+        (previous, next) {},
+        fireImmediately: true,
+      );
+      addTearDown(sub.close);
+
+      await container.read(appSettingsProvider.future);
+      await container.read(translationAiSettingsProvider.future);
+      await flushAsync();
+
+      final state = container.read(articleAiControllerProvider(articleId));
+      expect(state.targetLanguageTag, 'fr');
+
+      await container
+          .read(articleAiControllerProvider(articleId).notifier)
+          .ensureSummary();
+      await flushAsync();
+
+      expect(aiClient.prompts, isNotEmpty);
+      expect(aiClient.prompts.single, contains('French'));
     },
   );
 
@@ -341,7 +532,7 @@ void main() {
 
     var state = container.read(articleAiControllerProvider(articleId));
     expect(state.translationStatus, ArticleAiTaskStatus.ready);
-    expect(state.translationHtml, contains('[zh] Hello world'));
+    expect(state.translationHtml, contains('[zh-Hans] Hello world'));
 
     controller.add(
       buildArticle(html: '<p>Updated article text</p>', contentHash: 'hash-2'),
@@ -359,9 +550,156 @@ void main() {
 
     state = container.read(articleAiControllerProvider(articleId));
     expect(state.translationStatus, ArticleAiTaskStatus.ready);
-    expect(state.translationHtml, contains('[zh] Updated article text'));
+    expect(state.translationHtml, contains('[zh-Hans] Updated article text'));
     expect(translator.translatedInputs, hasLength(2));
     expect(translator.translatedInputs.first, contains('Hello world'));
     expect(translator.translatedInputs.last, 'Updated article text');
   });
+
+  test(
+    'translation service maps canonical chinese identities for providers',
+    () async {
+      final requests = <RequestOptions>[];
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            requests.add(options);
+            final host = options.uri.host;
+            final path = options.uri.path;
+
+            if (host == 'translate.googleapis.com') {
+              handler.resolve(
+                Response<String>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: '[[["google-ok"]]]',
+                ),
+              );
+              return;
+            }
+
+            if (host == 'edge.microsoft.com' && path == '/translate/auth') {
+              handler.resolve(
+                Response<String>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: 'token',
+                ),
+              );
+              return;
+            }
+
+            if (host == 'api-edge.cognitive.microsofttranslator.com' &&
+                path == '/translate') {
+              handler.resolve(
+                Response<List<dynamic>>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: [
+                    {
+                      'translations': [
+                        {'text': 'bing-ok'},
+                      ],
+                    },
+                  ],
+                ),
+              );
+              return;
+            }
+
+            if (host == 'fanyi-api.baidu.com') {
+              handler.resolve(
+                Response<String>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: '{"trans_result":[{"dst":"baidu-ok"}]}',
+                ),
+              );
+              return;
+            }
+
+            if (host == 'api.deepl.com' && path == '/v2/translate') {
+              handler.resolve(
+                Response<Map<String, Object?>>(
+                  requestOptions: options,
+                  statusCode: 200,
+                  data: <String, Object?>{
+                    'translations': [
+                      <String, Object?>{'text': 'deepl-ok'},
+                    ],
+                  },
+                ),
+              );
+              return;
+            }
+
+            handler.reject(DioException(requestOptions: options));
+          },
+        ),
+      );
+
+      final service = TranslationService(dio: dio);
+      final secrets = FakeTranslationAiSecretStore(
+        deepLApiKey: 'deep-key',
+        baiduCredentials: (appId: 'app-id', appKey: 'app-key'),
+      );
+      final settings = TranslationAiSettings.defaults().copyWith(
+        deepL: const DeepLSettings(endpoint: DeepLEndpoint.pro),
+      );
+
+      await service.translateText(
+        provider: const TranslationProviderSelection.googleWeb(),
+        settings: settings,
+        secrets: secrets,
+        text: 'hello',
+        targetLanguageTag: 'zh-Hans-CN',
+      );
+      await service.translateText(
+        provider: const TranslationProviderSelection.bingWeb(),
+        settings: settings,
+        secrets: secrets,
+        text: 'hello',
+        targetLanguageTag: 'zh-Hant-HK',
+      );
+      await service.translateText(
+        provider: const TranslationProviderSelection.baiduApi(),
+        settings: settings,
+        secrets: secrets,
+        text: 'hello',
+        targetLanguageTag: 'zh-Hans-CN',
+      );
+      await service.translateText(
+        provider: const TranslationProviderSelection.deepLApi(),
+        settings: settings,
+        secrets: secrets,
+        text: 'hello',
+        targetLanguageTag: 'zh-Hant-HK',
+      );
+
+      final googleRequest = requests.firstWhere(
+        (request) => request.uri.host == 'translate.googleapis.com',
+      );
+      expect(googleRequest.uri.queryParameters['tl'], 'zh-CN');
+
+      final bingRequest = requests.firstWhere(
+        (request) =>
+            request.uri.host == 'api-edge.cognitive.microsofttranslator.com',
+      );
+      expect(bingRequest.uri.queryParameters['to'], 'zh-Hant');
+
+      final baiduRequest = requests.firstWhere(
+        (request) => request.uri.host == 'fanyi-api.baidu.com',
+      );
+      expect((baiduRequest.data as Map<String, Object?>)['to'], 'zh');
+
+      final deepLRequest = requests.firstWhere(
+        (request) => request.uri.host == 'api.deepl.com',
+      );
+      expect(
+        (deepLRequest.data as Map<String, Object?>)['target_lang'],
+        'ZH-HANT',
+      );
+    },
+  );
 }

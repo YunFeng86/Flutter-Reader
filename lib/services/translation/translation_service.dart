@@ -27,8 +27,10 @@ class TranslationService {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return '';
 
-    final tag = normalizeLanguageTag(targetLanguageTag);
-    if (tag.isEmpty) throw ArgumentError('targetLanguageTag is empty');
+    final tag = canonicalLanguageIdentityTag(targetLanguageTag);
+    if (tag == unknownLanguageTag) {
+      throw ArgumentError('targetLanguageTag is empty');
+    }
 
     try {
       return switch (provider.kind) {
@@ -72,27 +74,26 @@ class TranslationService {
   }
 
   String _googleLangCode(String tag) {
-    final t = normalizeLanguageTag(tag);
+    final t = canonicalLanguageIdentityTag(tag);
     return switch (t) {
-      'zh' || 'zh-Hans' => 'zh-CN',
+      'zh-Hans' => 'zh-CN',
       'zh-Hant' => 'zh-TW',
       _ => t.split('-').first,
     };
   }
 
   String _bingLangCode(String tag) {
-    final t = normalizeLanguageTag(tag);
+    final t = canonicalLanguageIdentityTag(tag);
     return switch (t) {
-      'zh' || 'zh-Hans' => 'zh-Hans',
+      'zh-Hans' => 'zh-Hans',
       'zh-Hant' => 'zh-Hant',
       _ => t.split('-').first,
     };
   }
 
   String _deeplLangCode(String tag) {
-    final t = normalizeLanguageTag(tag);
+    final t = canonicalLanguageIdentityTag(tag);
     return switch (t) {
-      'zh' => 'ZH',
       'zh-Hans' => 'ZH-HANS',
       'zh-Hant' => 'ZH-HANT',
       _ => t.split('-').first.toUpperCase(),
@@ -100,9 +101,9 @@ class TranslationService {
   }
 
   String _baiduLangCode(String tag) {
-    final t = normalizeLanguageTag(tag);
+    final t = canonicalLanguageIdentityTag(tag);
     return switch (t) {
-      'zh' || 'zh-Hans' => 'zh',
+      'zh-Hans' => 'zh',
       'zh-Hant' => 'cht',
       _ => t.split('-').first.toLowerCase(),
     };
