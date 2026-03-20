@@ -108,7 +108,9 @@ void main() {
       'Primary retention metric: $savedPercentText% time saved ($diff μs improvement)',
     );
     stdout.writeln('Speedup ratio (diagnostic only): ${speedupRatio}x');
-    stdout.writeln('Retention bar: >= ${retentionBarPercent.toStringAsFixed(0)}%');
+    stdout.writeln(
+      'Retention bar: >= ${retentionBarPercent.toStringAsFixed(0)}%',
+    );
     stdout.writeln('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
     // Assert that Method 1 is faster

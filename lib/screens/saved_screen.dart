@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/hero_tags.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
@@ -74,6 +75,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final surfaces = Theme.of(context).fleurSurface;
     final starredCount = ref.watch(starredCountProvider).valueOrNull;
     final readLaterCount = ref.watch(readLaterCountProvider).valueOrNull;
     final searchQuery = ref.watch(articleSearchQueryProvider);
@@ -215,13 +217,13 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
           final id = widget.selectedArticleId;
           if (id == null) {
             return Container(
-              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              color: surfaces.reader,
               alignment: Alignment.center,
               child: Text(l10n.selectAnArticle),
             );
           }
           return Container(
-            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+            color: surfaces.reader,
             child: ReaderView(
               key: ValueKey('saved-reader-$id'),
               articleId: id,
@@ -269,6 +271,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
     ArticleListEmptyState state,
   ) {
     final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
     final isStarred = state.starredOnly && !state.readLaterOnly;
     final title = isStarred
         ? l10n.starred
@@ -277,7 +280,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
     final icon = isStarred ? Icons.star_border : Icons.bookmark_border;
 
     return Container(
-      color: theme.colorScheme.surfaceContainerLow,
+      color: surfaces.list,
       alignment: Alignment.center,
       padding: const EdgeInsets.all(24),
       child: ConstrainedBox(
@@ -289,7 +292,7 @@ class _SavedScreenState extends ConsumerState<SavedScreen> {
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest,
+                color: surfaces.floating,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 54, color: theme.colorScheme.primary),

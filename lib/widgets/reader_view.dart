@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/gestures.dart';
@@ -30,6 +31,8 @@ import '../services/reader_search_service.dart';
 import '../services/settings/app_settings.dart';
 import '../services/settings/reader_settings.dart';
 import '../services/settings/reader_progress_store.dart';
+import '../theme/app_theme.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/content_hash.dart';
 import '../utils/language_utils.dart';
@@ -779,9 +782,14 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
       ),
       data: (article) {
         final l10n = AppLocalizations.of(context)!;
+        final baseTheme = Theme.of(context);
+        final sceneTheme = AppTheme.readerScene(baseTheme);
+        final sceneSurfaces = sceneTheme.fleurSurface;
+        final sceneStates = sceneTheme.fleurState;
+        final readerTokens = sceneTheme.fleurReader;
         if (article == null) {
           return Container(
-            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+            color: sceneSurfaces.reader,
             alignment: Alignment.center,
             child: Text(l10n.notFound),
           );
@@ -831,27 +839,16 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         final inlineHeader = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
+            Text(title, style: readerTokens.titleStyle),
             const SizedBox(height: 8),
-            Text(
-              dateStr,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
+            Text(dateStr, style: readerTokens.metaStyle),
             if (showSummarySection) ...[
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
+                  color: readerTokens.summarySurface,
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,13 +858,14 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                         Icon(
                           Icons.summarize_outlined,
                           size: 18,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          color: sceneTheme.colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           l10n.aiSummaryAction,
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                          style: sceneTheme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const Spacer(),
                         if (aiState.summaryStatus ==
@@ -886,20 +884,14 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                         (aiState.summaryError ?? '').trim().isNotEmpty)
                       Text(
                         aiState.summaryError!.trim(),
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.error,
+                        style: sceneTheme.textTheme.bodyMedium?.copyWith(
+                          color: sceneStates.errorAccent,
                         ),
                       )
                     else if (summaryText.isNotEmpty)
-                      Text(
-                        summaryText,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      )
+                      Text(summaryText, style: readerTokens.summaryStyle)
                     else
-                      Text(
-                        l10n.generating,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
+                      Text(l10n.generating, style: readerTokens.summaryStyle),
                     if (aiState.summaryOutdated) ...[
                       const SizedBox(height: 8),
                       Row(
@@ -907,12 +899,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                           Expanded(
                             child: Text(
                               l10n.cachedPromptOutdated,
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
+                              style: sceneTheme.textTheme.bodySmall?.copyWith(
+                                color: sceneTheme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ),
                           TextButton(
@@ -963,7 +952,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             : (searchState.highlight?.highlightedChunks ?? <String>[html]);
 
         final contentWidget = html.isEmpty
-            ? Center(child: Text(article.link))
+            ? Center(child: Text(article.link, style: readerTokens.bodyStyle))
             : _buildContentWidget(
                 context,
                 displayChunks,
@@ -984,7 +973,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  color: readerTokens.bannerSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1001,7 +990,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                             aiState.targetLanguageTag,
                           ),
                         ),
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: sceneTheme.textTheme.bodySmall,
                       ),
                     ),
                     TextButton(
@@ -1030,7 +1019,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                  color: readerTokens.bannerSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -1038,7 +1027,7 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                     Expanded(
                       child: Text(
                         l10n.cachedPromptOutdated,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: sceneTheme.textTheme.bodySmall,
                       ),
                     ),
                     TextButton(
@@ -1071,8 +1060,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
               if (languageBanner != null)
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: ReaderView.maxReadingWidth,
+                    constraints: BoxConstraints(
+                      maxWidth: readerTokens.maxWidth,
                     ),
                     child: languageBanner,
                   ),
@@ -1080,17 +1069,15 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
               if (translationOutdatedBanner != null)
                 Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                      maxWidth: ReaderView.maxReadingWidth,
+                    constraints: BoxConstraints(
+                      maxWidth: readerTokens.maxWidth,
                     ),
                     child: translationOutdatedBanner,
                   ),
                 ),
               Center(
                 child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: ReaderView.maxReadingWidth,
-                  ),
+                  constraints: BoxConstraints(maxWidth: readerTokens.maxWidth),
                   child: ReaderBottomBar(
                     article: article,
                     onShowSettings: () =>
@@ -1124,32 +1111,35 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         );
 
         if (showAppBar) {
-          return Scaffold(
-            appBar: AppBar(
-              title: null, // Title is inline
-              automaticallyImplyLeading: true,
-              leading: widget.showBack
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      tooltip: MaterialLocalizations.of(
-                        context,
-                      ).backButtonTooltip,
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go(widget.fallbackBackLocation);
-                        }
-                      },
-                    )
-                  : null,
-              actions: const [], // Actions moved to bottom bar
+          return Theme(
+            data: sceneTheme,
+            child: Scaffold(
+              appBar: AppBar(
+                title: null, // Title is inline
+                automaticallyImplyLeading: true,
+                leading: widget.showBack
+                    ? IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        tooltip: MaterialLocalizations.of(
+                          context,
+                        ).backButtonTooltip,
+                        onPressed: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(widget.fallbackBackLocation);
+                          }
+                        },
+                      )
+                    : null,
+                actions: const [], // Actions moved to bottom bar
+              ),
+              body: body,
             ),
-            body: body,
           );
         }
 
-        return body;
+        return Theme(data: sceneTheme, child: body);
       },
     );
   }
@@ -1340,6 +1330,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     final cacheManager = ref.read(cacheManagerProvider);
     _currentImageBaseUrl = Uri.tryParse(article.link);
     final theme = Theme.of(context);
+    final states = theme.fleurState;
+    final reader = theme.fleurReader;
+    final contentHorizontalPadding = math.max(
+      settings.horizontalPadding,
+      reader.contentPaddingHorizontal,
+    );
 
     String rgba(Color c, {double alpha = 1}) {
       final a = (c.a * alpha).clamp(0.0, 1.0);
@@ -1359,8 +1355,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
       final isCurrent =
           currentAnchorId != null && element.id == currentAnchorId;
       final bg = isCurrent
-          ? rgba(theme.colorScheme.secondaryContainer, alpha: 0.95)
-          : rgba(theme.colorScheme.tertiaryContainer, alpha: 0.8);
+          ? rgba(states.selectionTint, alpha: 0.95)
+          : rgba(reader.bannerSurface, alpha: 0.8);
       return <String, String>{
         'background-color': bg,
         'padding': '0 2px',
@@ -1381,15 +1377,13 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: ReaderView.maxReadingWidth,
-                ),
+                constraints: BoxConstraints(maxWidth: reader.maxWidth),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
-                    settings.horizontalPadding,
-                    24, // Top padding
-                    settings.horizontalPadding,
-                    100, // Bottom padding for floating bar
+                    contentHorizontalPadding,
+                    reader.contentPaddingTop,
+                    contentHorizontalPadding,
+                    reader.contentPaddingBottom,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1405,10 +1399,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                         buildAsync: true,
                         onLoadingBuilder: _buildImageLoadingPlaceholder,
                         customStylesBuilder: searchStyles,
-                        textStyle: TextStyle(
+                        textStyle: reader.bodyStyle.copyWith(
                           fontSize: settings.fontSize,
                           height: settings.lineHeight,
-                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         onTapUrl: _onTapUrl,
                         onTapImage: _onTapImage,
@@ -1431,19 +1424,17 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
       contextMenuBuilder: _buildContextMenu,
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: ReaderView.maxReadingWidth,
-          ),
+          constraints: BoxConstraints(maxWidth: reader.maxWidth),
           child: _wrapScrollable(
             child: ListView.builder(
               key: _listViewKey,
               controller: _scrollController,
               cacheExtent: 1200,
               padding: EdgeInsets.fromLTRB(
-                settings.horizontalPadding,
-                24,
-                settings.horizontalPadding,
-                100,
+                contentHorizontalPadding,
+                reader.contentPaddingTop,
+                contentHorizontalPadding,
+                reader.contentPaddingBottom,
               ),
               itemCount: chunks.length + 1,
               itemBuilder: (context, index) {
@@ -1466,10 +1457,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                     buildAsync: true,
                     onLoadingBuilder: _buildImageLoadingPlaceholder,
                     customStylesBuilder: searchStyles,
-                    textStyle: TextStyle(
+                    textStyle: reader.bodyStyle.copyWith(
                       fontSize: settings.fontSize,
                       height: settings.lineHeight,
-                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                     onTapUrl: _onTapUrl,
                     onTapImage: _onTapImage,
@@ -1598,7 +1588,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     final overlayBox = overlay.context.findRenderObject();
     if (overlayBox is! RenderBox) return;
     final local = overlayBox.globalToLocal(position);
-    final theme = Theme.of(context);
+    final theme = AppTheme.readerScene(Theme.of(context));
+    final surfaces = theme.fleurSurface;
     _autoScrollOverlay = OverlayEntry(
       builder: (context) {
         return Positioned(
@@ -1612,11 +1603,8 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                 height: 28,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant,
-                    width: 1,
-                  ),
+                  color: surfaces.floating,
+                  border: Border.all(color: surfaces.subtleDivider, width: 1),
                   boxShadow: [
                     BoxShadow(
                       color: theme.shadowColor.withValues(alpha: 0.15),
@@ -1829,7 +1817,6 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
     TextSelectionToolbarAnchors anchors,
     List<_QuickAction> actions,
   ) {
-    final theme = Theme.of(context);
     final children = actions
         .map(
           (action) => IconButton(
@@ -1850,10 +1837,12 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
         anchorAbove: anchors.primaryAnchor,
         anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
         toolbarBuilder: (context, child) {
+          final theme = Theme.of(context);
+          final surfaces = theme.fleurSurface;
           return Material(
             elevation: 4,
             borderRadius: BorderRadius.circular(999),
-            color: theme.colorScheme.surfaceContainerHigh,
+            color: surfaces.floating,
             shadowColor: theme.shadowColor.withValues(alpha: 0.2),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
@@ -2108,9 +2097,10 @@ class _ImagePlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final reader = theme.fleurReader;
     final base = DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHigh,
+        color: reader.codeBlockSurface,
         borderRadius: BorderRadius.circular(8),
       ),
       child: loadingProgress == null
@@ -2120,7 +2110,7 @@ class _ImagePlaceholder extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: loadingProgress,
                 minHeight: 3,
-                backgroundColor: theme.colorScheme.surfaceContainer,
+                backgroundColor: theme.fleurSurface.card,
                 color: theme.colorScheme.primary,
               ),
             ),

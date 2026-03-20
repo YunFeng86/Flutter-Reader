@@ -5,6 +5,8 @@ import 'package:fleur/l10n/app_localizations.dart';
 
 import '../providers/sync_status_providers.dart';
 import '../services/sync/sync_status_reporter.dart';
+import '../theme/fleur_theme_extensions.dart';
+import '../ui/motion.dart';
 
 class SyncStatusCapsuleHost extends ConsumerWidget {
   const SyncStatusCapsuleHost({
@@ -24,6 +26,8 @@ class SyncStatusCapsuleHost extends ConsumerWidget {
 
     final state = ref.watch(syncStatusControllerProvider);
     final visible = state.visible;
+    final reduceMotion = AppMotion.reduceMotion(context);
+    final duration = reduceMotion ? Duration.zero : AppMotion.short;
 
     return Stack(
       fit: StackFit.expand,
@@ -37,12 +41,12 @@ class SyncStatusCapsuleHost extends ConsumerWidget {
             padding: padding,
             child: AnimatedSlide(
               offset: visible ? Offset.zero : const Offset(0, 1),
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOutCubic,
+              duration: duration,
+              curve: AppMotion.standardCurve,
               child: AnimatedOpacity(
                 opacity: visible ? 1 : 0,
-                duration: const Duration(milliseconds: 120),
-                curve: Curves.easeOutCubic,
+                duration: duration,
+                curve: AppMotion.standardCurve,
                 child: IgnorePointer(
                   ignoring: !visible,
                   child: _SyncStatusCapsule(state: state),
@@ -85,7 +89,11 @@ class _SyncStatusCapsule extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
+    final tokens = theme.fleurState;
     final scheme = theme.colorScheme;
+    final reduceMotion = AppMotion.reduceMotion(context);
+    final duration = reduceMotion ? Duration.zero : AppMotion.medium;
 
     final label = _labelText(l10n, state.label);
     final detail = (state.detail ?? '').trim();
@@ -104,7 +112,7 @@ class _SyncStatusCapsule extends StatelessWidget {
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: scheme.onSurface,
+              color: tokens.syncAccent,
             ),
           )
         : Icon(
@@ -112,12 +120,14 @@ class _SyncStatusCapsule extends StatelessWidget {
                 ? Icons.error_outline
                 : Icons.check,
             size: 16,
-            color: scheme.onSurface,
+            color: state.label == SyncStatusLabel.failed
+                ? tokens.errorAccent
+                : tokens.syncAccent,
           );
 
     return Material(
       elevation: 6,
-      color: scheme.surfaceContainerHighest,
+      color: surfaces.floating,
       shape: const StadiumBorder(),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -136,9 +146,9 @@ class _SyncStatusCapsule extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 220),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
+                  duration: duration,
+                  switchInCurve: AppMotion.standardCurve,
+                  switchOutCurve: AppMotion.emphasizedAccelerate,
                   transitionBuilder: (child, animation) {
                     // Stage switches: new label scrolls in from top, old exits down.
                     final isIncoming = child.key == key;

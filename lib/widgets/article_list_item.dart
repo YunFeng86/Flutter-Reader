@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../models/article.dart';
 import '../providers/query_providers.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../utils/html_utils.dart';
 import '../utils/timeago_locale.dart';
 import 'favicon_circle.dart';
@@ -25,6 +26,8 @@ class ArticleListItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
+    final states = theme.fleurState;
     final isUnread = !article.isRead;
     final feedMap = ref.watch(feedMapProvider);
     final feed = feedMap[article.feedId];
@@ -45,14 +48,12 @@ class ArticleListItem extends ConsumerWidget {
 
     return Card(
       elevation: 0,
-      color: selected
-          ? theme.colorScheme.secondaryContainer
-          : theme.colorScheme.surfaceContainerHigh,
+      color: selected ? surfaces.cardSelected : surfaces.card,
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide.none,
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: surfaces.subtleDivider),
       ),
       child: InkWell(
         onTap: onTap,
@@ -68,7 +69,7 @@ class ArticleListItem extends ConsumerWidget {
                   child: Container(
                     width: 80,
                     height: 60,
-                    color: theme.colorScheme.surfaceContainerHighest,
+                    color: surfaces.floating,
                     child: Image.network(
                       imageUrl,
                       fit: BoxFit.cover,
@@ -141,9 +142,7 @@ class ArticleListItem extends ConsumerWidget {
                                   width: 8,
                                   height: 8,
                                   decoration: BoxDecoration(
-                                    color: theme
-                                        .colorScheme
-                                        .primary, // Status Color
+                                    color: theme.fleurState.unreadAccent,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
@@ -174,8 +173,10 @@ class ArticleListItem extends ConsumerWidget {
                     Text(
                       title.isEmpty ? article.link : title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight:
-                            FontWeight.w400, // Regular weight for M3 title
+                        fontWeight: isUnread
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        height: 1.2,
                         color: theme.colorScheme.onSurface,
                       ),
                       maxLines: 2,
@@ -185,11 +186,7 @@ class ArticleListItem extends ConsumerWidget {
                     // Star Icon (if starred)
                     if (article.isStarred) ...[
                       const SizedBox(height: 6),
-                      Icon(
-                        Icons.star,
-                        size: 14,
-                        color: theme.colorScheme.tertiary,
-                      ),
+                      Icon(Icons.star, size: 14, color: states.savedAccent),
                     ],
                   ],
                 ),

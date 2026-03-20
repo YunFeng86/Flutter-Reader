@@ -18,6 +18,9 @@ import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/settings/reader_progress_store.dart';
 import 'package:fleur/services/settings/reader_settings.dart';
 import 'package:fleur/services/settings/translation_ai_settings.dart';
+import 'package:fleur/theme/fleur_theme_extensions.dart';
+import 'package:fleur/widgets/reader_bottom_bar.dart';
+import 'package:fleur/widgets/reader_search_bar.dart';
 import 'package:fleur/widgets/reader_view.dart';
 
 import '../test_utils/critical_workflow_test_support.dart';
@@ -266,6 +269,51 @@ void main() {
     );
     expect(saved, isNotNull);
     expect(saved!.pixels, greaterThan(0));
+  });
+
+  testWidgets('reader scene applies themed search and toolbar surfaces', (
+    tester,
+  ) async {
+    await pumpReader(
+      tester,
+      article: buildArticle(),
+      appSettings: AppSettings.defaults().copyWith(autoMarkRead: false),
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(ReaderView)),
+    );
+    container.read(readerSearchControllerProvider(articleId).notifier).open();
+    await settleReader(tester, rounds: 4);
+
+    final bottomBarElement = tester.element(find.byType(ReaderBottomBar));
+    final sceneTheme = Theme.of(bottomBarElement);
+    final bottomBarContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(ReaderBottomBar),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    final bottomBarDecoration = bottomBarContainer.decoration as BoxDecoration?;
+
+    final searchBarMaterial = tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byType(ReaderSearchBar),
+            matching: find.byWidgetPredicate(
+              (widget) => widget is Material && widget.color != null,
+            ),
+          )
+          .first,
+    );
+
+    expect(sceneTheme.scaffoldBackgroundColor, sceneTheme.fleurSurface.reader);
+    expect(sceneTheme.cardTheme.color, sceneTheme.fleurReader.summarySurface);
+    expect(bottomBarDecoration?.color, sceneTheme.fleurReader.toolbarSurface);
+    expect(searchBarMaterial.color, sceneTheme.fleurReader.searchBarSurface);
+    expect(find.text('Find in page'), findsOneWidget);
   });
 
   testWidgets('restores reading progress after reopening the article', (

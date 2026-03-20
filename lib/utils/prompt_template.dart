@@ -29,4 +29,3 @@ class PromptTemplate {
     return digest.toString().substring(0, 32);
   }
 }
-

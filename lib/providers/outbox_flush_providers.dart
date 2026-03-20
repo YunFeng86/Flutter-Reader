@@ -26,7 +26,9 @@ class _OutboxFlushTimerHandle implements OutboxFlushTimerHandle {
   void cancel() => _timer.cancel();
 }
 
-final outboxFlushTimerFactoryProvider = Provider<OutboxFlushTimerFactory>((ref) {
+final outboxFlushTimerFactoryProvider = Provider<OutboxFlushTimerFactory>((
+  ref,
+) {
   return (delay, callback) => _OutboxFlushTimerHandle(Timer(delay, callback));
 });
 

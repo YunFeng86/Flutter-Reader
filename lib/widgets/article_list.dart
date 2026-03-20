@@ -13,6 +13,7 @@ import '../providers/query_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../services/settings/app_settings.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
 import '../ui/motion.dart';
@@ -135,6 +136,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
       error: (e, _) => Center(child: Text(l10n.errorMessage(e.toString()))),
       data: (data) {
         final items = data.items;
+        final surfaces = Theme.of(context).fleurSurface;
         if (items.isEmpty) {
           final emptyState = ArticleListEmptyState(
             searchQuery: searchQuery,
@@ -152,7 +154,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
             child = Text(unreadOnly ? l10n.noUnreadArticles : l10n.noArticles);
           }
           return Container(
-            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            color: surfaces.list,
             alignment: Alignment.center,
             child: child,
           );
@@ -193,7 +195,7 @@ class _ArticleListState extends ConsumerState<ArticleList> {
         }
 
         Widget list = Container(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          color: surfaces.list,
           child: Scrollbar(
             controller: _controller,
             thumbVisibility: isDesktop,
@@ -330,8 +332,8 @@ class _ArticleListState extends ConsumerState<ArticleList> {
         return TweenAnimationBuilder<double>(
           key: ValueKey(contextKey),
           tween: Tween<double>(begin: 0, end: 1),
-          duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
+          duration: AppMotion.short,
+          curve: AppMotion.standardCurve,
           builder: (context, t, child) {
             return Opacity(
               opacity: t,

@@ -43,15 +43,18 @@ class SubscriptionToolbar extends ConsumerWidget {
 
         void handleBack() => selectionNotifier.handleBack();
 
-        Widget buildActions() {
+        final useMirroredCenterLayout =
+            centerTitle && !isNarrow && showTitle && maxWidth >= 720;
+
+        Widget buildActions({bool preferCompact = false}) {
           // Responsive action priority:
           // 1) OPML import/export stay inline as long as width allows.
           // 2) Add subscription compresses before OPML drops into overflow.
           // 3) Only on very tight widths do we move actions into the "more" menu.
-          final showOpmlText = maxWidth >= 860;
-          final showOpmlInline = maxWidth >= 520;
-          final showAddText = maxWidth >= 680;
-          final showNewCategoryInline = maxWidth >= 440;
+          final showOpmlText = !preferCompact && maxWidth >= 860;
+          final showOpmlInline = maxWidth >= (preferCompact ? 620 : 520);
+          final showAddText = !preferCompact && maxWidth >= 680;
+          final showNewCategoryInline = maxWidth >= (preferCompact ? 520 : 440);
 
           final overflowActions = <_OverflowAction>[];
           if (!showOpmlInline) {
@@ -207,7 +210,7 @@ class SubscriptionToolbar extends ConsumerWidget {
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: centerTitle
+          child: useMirroredCenterLayout
               ? Row(
                   children: [
                     if (showPageTitle &&
@@ -225,7 +228,10 @@ class SubscriptionToolbar extends ConsumerWidget {
                     // full toolbar width (not just centered between start/end slots).
                     ExcludeSemantics(
                       child: IgnorePointer(
-                        child: Opacity(opacity: 0, child: buildActions()),
+                        child: Opacity(
+                          opacity: 0,
+                          child: buildActions(preferCompact: true),
+                        ),
                       ),
                     ),
                     Expanded(
@@ -240,7 +246,7 @@ class SubscriptionToolbar extends ConsumerWidget {
                             : const SizedBox.shrink(),
                       ),
                     ),
-                    buildActions(),
+                    buildActions(preferCompact: true),
                   ],
                 )
               : Row(
@@ -256,12 +262,17 @@ class SubscriptionToolbar extends ConsumerWidget {
                         icon: const Icon(Icons.arrow_back),
                         onPressed: handleBack,
                       ),
-                    if (showTitle)
-                      Text(
-                        l10n.subscriptions,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    const Spacer(),
+                    Expanded(
+                      child: showTitle
+                          ? Text(
+                              l10n.subscriptions,
+                              style: Theme.of(context).textTheme.titleLarge,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                    const SizedBox(width: 12),
                     buildActions(),
                   ],
                 ),

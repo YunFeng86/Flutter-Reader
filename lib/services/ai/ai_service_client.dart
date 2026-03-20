@@ -59,12 +59,7 @@ class AiServiceClient {
         ),
       };
     } catch (e, s) {
-      AppLogger.e(
-        'AI request failed',
-        tag: 'ai',
-        error: e,
-        stackTrace: s,
-      );
+      AppLogger.e('AI request failed', tag: 'ai', error: e, stackTrace: s);
       rethrow;
     }
   }
@@ -210,7 +205,9 @@ class AiServiceClient {
             ],
           },
         ],
-        'generationConfig': <String, Object?>{'maxOutputTokens': maxOutputTokens},
+        'generationConfig': <String, Object?>{
+          'maxOutputTokens': maxOutputTokens,
+        },
       },
       options: Options(
         headers: const <String, Object?>{'Content-Type': 'application/json'},
@@ -301,4 +298,3 @@ String prettyJson(Object? v) {
     return v.toString();
   }
 }
-

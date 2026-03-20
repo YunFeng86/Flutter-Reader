@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fleur/l10n/app_localizations.dart';
 
 import '../providers/reader_search_providers.dart';
-import '../ui/layout.dart';
+import '../theme/fleur_theme_extensions.dart';
+import '../ui/motion.dart';
 
 class ReaderSearchBar extends ConsumerStatefulWidget {
   const ReaderSearchBar({super.key, required this.articleId});
@@ -62,10 +63,14 @@ class ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final reader = theme.fleurReader;
+    final statesTheme = theme.fleurState;
     final state = ref.watch(readerSearchControllerProvider(widget.articleId));
     final controller = ref.read(
       readerSearchControllerProvider(widget.articleId).notifier,
     );
+    final reduceMotion = AppMotion.reduceMotion(context);
+    final duration = reduceMotion ? Duration.zero : AppMotion.short;
 
     if (!state.visible) {
       if (_wasVisible) {
@@ -75,17 +80,16 @@ class ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
         _focusNode.unfocus();
       }
       _wasVisible = false;
-      return const SizedBox.shrink();
     }
 
-    if (!_wasVisible) {
+    if (state.visible && !_wasVisible) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         _focusNode.requestFocus();
         _selectAll();
       });
     }
-    _wasVisible = true;
+    _wasVisible = state.visible;
 
     final counterText = '${state.currentMatchNumber}/${state.totalMatches}';
 
@@ -98,89 +102,100 @@ class ReaderSearchBarState extends ConsumerState<ReaderSearchBar> {
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: kMaxReadingWidth),
-            child: Material(
-              elevation: 6,
-              borderRadius: BorderRadius.circular(12),
-              color: theme.colorScheme.surfaceContainerHigh,
-              shadowColor: theme.shadowColor.withValues(alpha: 0.2),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.search,
-                      size: 18,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _controller,
-                        focusNode: _focusNode,
-                        onChanged: controller.setQuery,
-                        onSubmitted: (_) => controller.nextMatch(),
-                        textInputAction: TextInputAction.search,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          hintText: l10n.findInPage,
-                          border: InputBorder.none,
-                        ),
+            constraints: BoxConstraints(maxWidth: reader.maxWidth),
+            child: IgnorePointer(
+              ignoring: !state.visible,
+              child: AnimatedSlide(
+                offset: state.visible ? Offset.zero : const Offset(0, -0.08),
+                duration: duration,
+                curve: AppMotion.standardCurve,
+                child: AnimatedOpacity(
+                  opacity: state.visible ? 1 : 0,
+                  duration: duration,
+                  curve: AppMotion.standardCurve,
+                  child: Material(
+                    elevation: 6,
+                    borderRadius: BorderRadius.circular(12),
+                    color: reader.searchBarSurface,
+                    shadowColor: theme.shadowColor.withValues(alpha: 0.2),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 6,
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.search,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              focusNode: _focusNode,
+                              onChanged: controller.setQuery,
+                              onSubmitted: (_) => controller.nextMatch(),
+                              textInputAction: TextInputAction.search,
+                              decoration: InputDecoration(
+                                isDense: true,
+                                hintText: l10n.findInPage,
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(counterText, style: reader.metaStyle),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            iconSize: 20,
+                            tooltip: l10n.previousMatch,
+                            onPressed: state.totalMatches > 0
+                                ? controller.previousMatch
+                                : null,
+                            icon: const Icon(Icons.keyboard_arrow_up),
+                          ),
+                          IconButton(
+                            iconSize: 20,
+                            tooltip: l10n.nextMatch,
+                            onPressed: state.totalMatches > 0
+                                ? controller.nextMatch
+                                : null,
+                            icon: const Icon(Icons.keyboard_arrow_down),
+                          ),
+                          IconButton(
+                            iconSize: 20,
+                            tooltip: l10n.caseSensitive,
+                            onPressed: controller.toggleCaseSensitive,
+                            color: state.caseSensitive
+                                ? statesTheme.syncAccent
+                                : null,
+                            icon: const Icon(Icons.keyboard_capslock),
+                          ),
+                          if (state.isSearching) ...[
+                            const SizedBox(width: 4),
+                            const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
+                          IconButton(
+                            iconSize: 20,
+                            tooltip: l10n.close,
+                            onPressed: () {
+                              _controller.clear();
+                              controller.close(clearQuery: true);
+                            },
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      counterText,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      iconSize: 20,
-                      tooltip: l10n.previousMatch,
-                      onPressed: state.totalMatches > 0
-                          ? controller.previousMatch
-                          : null,
-                      icon: const Icon(Icons.keyboard_arrow_up),
-                    ),
-                    IconButton(
-                      iconSize: 20,
-                      tooltip: l10n.nextMatch,
-                      onPressed: state.totalMatches > 0
-                          ? controller.nextMatch
-                          : null,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                    ),
-                    IconButton(
-                      iconSize: 20,
-                      tooltip: l10n.caseSensitive,
-                      onPressed: controller.toggleCaseSensitive,
-                      color: state.caseSensitive
-                          ? theme.colorScheme.primary
-                          : null,
-                      icon: const Icon(Icons.keyboard_capslock),
-                    ),
-                    if (state.isSearching) ...[
-                      const SizedBox(width: 4),
-                      const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                      const SizedBox(width: 4),
-                    ],
-                    IconButton(
-                      iconSize: 20,
-                      tooltip: l10n.close,
-                      onPressed: () {
-                        _controller.clear();
-                        controller.close(clearQuery: true);
-                      },
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -63,4 +63,3 @@ Future<T?> showSidePanel<T>(
     },
   );
 }
-

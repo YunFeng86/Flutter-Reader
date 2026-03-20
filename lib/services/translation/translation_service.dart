@@ -61,7 +61,12 @@ class TranslationService {
         ),
       };
     } catch (e, s) {
-      AppLogger.e('Translate failed', tag: 'translate', error: e, stackTrace: s);
+      AppLogger.e(
+        'Translate failed',
+        tag: 'translate',
+        error: e,
+        stackTrace: s,
+      );
       rethrow;
     }
   }
@@ -192,10 +197,7 @@ class TranslationService {
     final uri = Uri.https(
       'api-edge.cognitive.microsofttranslator.com',
       '/translate',
-      <String, String>{
-        'api-version': '3.0',
-        'to': to,
-      },
+      <String, String>{'api-version': '3.0', 'to': to},
     );
     final res = await _dio.postUri<List<dynamic>>(
       uri,
@@ -302,10 +304,7 @@ class TranslationService {
 
     final res = await _dio.postUri<Map<String, Object?>>(
       uri,
-      data: <String, Object?>{
-        'text': text,
-        'target_lang': target,
-      },
+      data: <String, Object?>{'text': text, 'target_lang': target},
       options: Options(
         headers: <String, Object?>{'Authorization': 'DeepL-Auth-Key $apiKey'},
         contentType: Headers.formUrlEncodedContentType,
@@ -369,4 +368,3 @@ class TranslationService {
     throw StateError('Unexpected DeepLX response');
   }
 }
-

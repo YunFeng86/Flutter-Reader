@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/app_settings_providers.dart';
 import '../providers/query_providers.dart';
 import '../providers/unread_providers.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/hero_tags.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
@@ -78,6 +79,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final surfaces = Theme.of(context).fleurSurface;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
 
@@ -233,7 +235,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ),
                       )
                     : Container(
-                        color: Theme.of(context).colorScheme.surface,
+                        color: surfaces.list,
                         alignment: Alignment.center,
                         padding: const EdgeInsets.all(24),
                         child: Text(l10n.search),
@@ -247,13 +249,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           final id = widget.selectedArticleId;
           if (id == null) {
             return Container(
-              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              color: surfaces.reader,
               alignment: Alignment.center,
               child: Text(l10n.selectAnArticle),
             );
           }
           return Container(
-            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+            color: surfaces.reader,
             child: ReaderView(
               key: ValueKey('search-reader-$id'),
               articleId: id,

@@ -6,6 +6,8 @@ import 'package:window_manager/window_manager.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/fleur_theme_extensions.dart';
+import '../ui/motion.dart';
 import '../utils/platform.dart';
 
 class DesktopTitleBar extends StatefulWidget {
@@ -61,7 +63,10 @@ class _DesktopTitleBarState extends State<DesktopTitleBar> with WindowListener {
 
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final surfaces = theme.fleurSurface;
     final centerTitle = defaultTargetPlatform == TargetPlatform.macOS;
+    final reduceMotion = AppMotion.reduceMotion(context);
+    final duration = reduceMotion ? Duration.zero : AppMotion.short;
 
     final titleStyle = theme.textTheme.titleSmall?.copyWith(
       color: cs.onSurface,
@@ -69,7 +74,7 @@ class _DesktopTitleBarState extends State<DesktopTitleBar> with WindowListener {
     );
 
     return Material(
-      color: cs.surface,
+      color: surfaces.chrome,
       child: SizedBox(
         height: widget.height,
         child: LayoutBuilder(
@@ -109,9 +114,9 @@ class _DesktopTitleBarState extends State<DesktopTitleBar> with WindowListener {
                             ? Alignment.center
                             : Alignment.centerLeft,
                         child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 160),
-                          switchInCurve: Curves.easeOutCubic,
-                          switchOutCurve: Curves.easeInCubic,
+                          duration: duration,
+                          switchInCurve: AppMotion.standardCurve,
+                          switchOutCurve: AppMotion.emphasizedAccelerate,
                           transitionBuilder: (child, animation) {
                             return FadeTransition(
                               opacity: animation,
@@ -171,6 +176,7 @@ class _WindowButtons extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final states = theme.fleurState;
     final l10n = AppLocalizations.of(context)!;
 
     Widget btn({
@@ -181,10 +187,9 @@ class _WindowButtons extends StatelessWidget {
     }) {
       return Tooltip(
         message: tooltip,
-        waitDuration: const Duration(milliseconds: 400),
         child: InkWell(
           onTap: onPressed,
-          hoverColor: hover ?? cs.primary.withAlpha(31),
+          hoverColor: hover ?? states.hoverTint,
           child: SizedBox(
             width: 46,
             height: double.infinity,

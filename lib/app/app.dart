@@ -97,7 +97,8 @@ class App extends ConsumerWidget {
         builder: (lightDynamic, darkDynamic) {
           return MaterialApp.router(
             debugShowCheckedModeBanner: false,
-            onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+            onGenerateTitle: (context) =>
+                AppLocalizations.of(context)!.appTitle,
             builder: (context, child) {
               final content = child ?? const SizedBox.shrink();
               final wrapped = DbRecoveryNoticeOverlay(child: content);

@@ -30,4 +30,3 @@ bool _isCjkLike(int codePoint) {
   if (codePoint >= 0xAC00 && codePoint <= 0xD7AF) return true;
   return false;
 }
-

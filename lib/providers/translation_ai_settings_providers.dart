@@ -37,7 +37,9 @@ class TranslationAiSettingsController
   Future<void> setTargetLanguageTag(String? languageTag) async {
     final trimmed = (languageTag ?? '').trim();
     final cur = state.valueOrNull ?? TranslationAiSettings.defaults();
-    await save(cur.copyWith(targetLanguageTag: trimmed.isEmpty ? null : trimmed));
+    await save(
+      cur.copyWith(targetLanguageTag: trimmed.isEmpty ? null : trimmed),
+    );
   }
 
   Future<void> setAiSummaryPrompt(String? prompt) async {

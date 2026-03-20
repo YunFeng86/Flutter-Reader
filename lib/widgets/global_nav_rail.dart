@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/app_localizations.dart';
 import '../models/nav_destination.dart';
 import '../providers/account_providers.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/actions/global_nav_actions.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../ui/global_nav.dart';
@@ -19,12 +20,15 @@ class GlobalNavRail extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
+    final states = theme.fleurState;
     final dest = destinationForUri(currentUri);
     final selectedIndex = globalDestinationIndex(dest);
     final activeAccount = ref.watch(activeAccountProvider);
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainer,
+      color: surfaces.nav,
       child: Column(
         children: [
           Expanded(
@@ -35,9 +39,14 @@ class GlobalNavRail extends ConsumerWidget {
               selectedIndex: selectedIndex,
               leading: Padding(
                 padding: const EdgeInsets.only(top: 12, bottom: 8),
-                child: Icon(
-                  Icons.rss_feed,
-                  color: Theme.of(context).colorScheme.primary,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: states.selectionTint,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(Icons.rss_feed, color: theme.colorScheme.primary),
                 ),
               ),
               destinations: [
@@ -111,6 +120,7 @@ class GlobalNavRail extends ConsumerWidget {
                 message: activeAccount.name,
                 child: InkResponse(
                   radius: 24,
+                  hoverColor: states.hoverTint,
                   onTap: () async {
                     await showDialog<void>(
                       context: context,

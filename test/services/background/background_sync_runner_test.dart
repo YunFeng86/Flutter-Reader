@@ -276,71 +276,74 @@ void main() {
     expect(isar.closeCalls, 1);
   });
 
-  test('shared sync assembly keeps service selection and Dio defaults aligned', () {
-    final isar = _FakeIsar();
-    final dio = createAppDio();
-    final cache = createArticleCacheService();
-    final extractor = createArticleExtractor(dio: dio);
-    final notifications = createNotificationService();
-    final outbox = FakeOutboxStore();
-    final appSettingsStore = FakeAppSettingsStore(AppSettings.defaults());
-    final feeds = FeedRepository(isar);
-    final categories = CategoryRepository(isar);
-    final articles = ArticleRepository(isar);
+  test(
+    'shared sync assembly keeps service selection and Dio defaults aligned',
+    () {
+      final isar = _FakeIsar();
+      final dio = createAppDio();
+      final cache = createArticleCacheService();
+      final extractor = createArticleExtractor(dio: dio);
+      final notifications = createNotificationService();
+      final outbox = FakeOutboxStore();
+      final appSettingsStore = FakeAppSettingsStore(AppSettings.defaults());
+      final feeds = FeedRepository(isar);
+      final categories = CategoryRepository(isar);
+      final articles = ArticleRepository(isar);
 
-    expect(dio.options.connectTimeout, const Duration(seconds: 10));
-    expect(dio.options.receiveTimeout, const Duration(seconds: 20));
-    expect(dio.options.sendTimeout, const Duration(seconds: 10));
-    expect(dio.options.maxRedirects, 5);
+      expect(dio.options.connectTimeout, const Duration(seconds: 10));
+      expect(dio.options.receiveTimeout, const Duration(seconds: 20));
+      expect(dio.options.sendTimeout, const Duration(seconds: 10));
+      expect(dio.options.maxRedirects, 5);
 
-    final localService = buildSyncServiceForAccount(
-      account: buildTestAccount(type: AccountType.local),
-      feeds: feeds,
-      categories: categories,
-      articles: articles,
-      outbox: outbox,
-      appSettingsStore: appSettingsStore,
-      dio: dio,
-      credentials: createCredentialStore(),
-      notifications: notifications,
-      cache: cache,
-      extractor: extractor,
-    );
-    final minifluxService = buildSyncServiceForAccount(
-      account: buildTestAccount(
-        type: AccountType.miniflux,
-        baseUrl: 'https://example.com',
-      ),
-      feeds: feeds,
-      categories: categories,
-      articles: articles,
-      outbox: outbox,
-      appSettingsStore: appSettingsStore,
-      dio: dio,
-      credentials: createCredentialStore(),
-      notifications: notifications,
-      cache: cache,
-      extractor: extractor,
-    );
-    final feverService = buildSyncServiceForAccount(
-      account: buildTestAccount(
-        type: AccountType.fever,
-        baseUrl: 'https://example.com',
-      ),
-      feeds: feeds,
-      categories: categories,
-      articles: articles,
-      outbox: outbox,
-      appSettingsStore: appSettingsStore,
-      dio: dio,
-      credentials: createCredentialStore(),
-      notifications: notifications,
-      cache: cache,
-      extractor: extractor,
-    );
+      final localService = buildSyncServiceForAccount(
+        account: buildTestAccount(type: AccountType.local),
+        feeds: feeds,
+        categories: categories,
+        articles: articles,
+        outbox: outbox,
+        appSettingsStore: appSettingsStore,
+        dio: dio,
+        credentials: createCredentialStore(),
+        notifications: notifications,
+        cache: cache,
+        extractor: extractor,
+      );
+      final minifluxService = buildSyncServiceForAccount(
+        account: buildTestAccount(
+          type: AccountType.miniflux,
+          baseUrl: 'https://example.com',
+        ),
+        feeds: feeds,
+        categories: categories,
+        articles: articles,
+        outbox: outbox,
+        appSettingsStore: appSettingsStore,
+        dio: dio,
+        credentials: createCredentialStore(),
+        notifications: notifications,
+        cache: cache,
+        extractor: extractor,
+      );
+      final feverService = buildSyncServiceForAccount(
+        account: buildTestAccount(
+          type: AccountType.fever,
+          baseUrl: 'https://example.com',
+        ),
+        feeds: feeds,
+        categories: categories,
+        articles: articles,
+        outbox: outbox,
+        appSettingsStore: appSettingsStore,
+        dio: dio,
+        credentials: createCredentialStore(),
+        notifications: notifications,
+        cache: cache,
+        extractor: extractor,
+      );
 
-    expect(localService, isA<SyncService>());
-    expect(minifluxService, isA<MinifluxSyncService>());
-    expect(feverService, isA<FeverSyncService>());
-  });
+      expect(localService, isA<SyncService>());
+      expect(minifluxService, isA<MinifluxSyncService>());
+      expect(feverService, isA<FeverSyncService>());
+    },
+  );
 }

@@ -83,4 +83,3 @@ class LanguageDetector {
     return false;
   }
 }
-

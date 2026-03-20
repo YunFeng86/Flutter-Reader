@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 import '../widgets/global_nav_bar.dart';
 import '../widgets/global_nav_rail.dart';
@@ -38,6 +39,7 @@ class AppShell extends StatelessWidget {
       totalWidth: size.width,
       totalHeight: size.height,
     );
+    final surfaces = Theme.of(context).fleurSurface;
     final hideNavForReaderPage =
         _isArticleRoute(currentUri) &&
         !_isReaderEmbedded(spec: spec, uri: currentUri);
@@ -50,49 +52,52 @@ class AppShell extends StatelessWidget {
 
     final mode = spec.globalNavMode;
 
-    return switch (mode) {
-      GlobalNavMode.rail => GlobalNavScope(
-        hasGlobalNav: true,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            SizedBox(
-              width: kGlobalNavRailWidth,
-              child: GlobalNavRail(currentUri: currentUri),
-            ),
-            const SizedBox(width: kPaneGap),
-            Expanded(child: child),
-          ],
-        ),
-      ),
-      GlobalNavMode.bottom => GlobalNavScope(
-        hasGlobalNav: true,
-        child: Column(
-          children: [
-            // When we render our own bottom nav outside the page Scaffold, the
-            // default MediaQuery bottom padding (safe area) can create an extra
-            // blank region above the nav bar on iOS. Remove it so the page body
-            // uses the full height that's already constrained by this Column.
-            Expanded(
-              child: MediaQuery.removePadding(
-                context: context,
-                removeBottom: true,
-                child: child,
+    return DecoratedBox(
+      decoration: BoxDecoration(color: surfaces.chrome),
+      child: switch (mode) {
+        GlobalNavMode.rail => GlobalNavScope(
+          hasGlobalNav: true,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(
+                width: kGlobalNavRailWidth,
+                child: GlobalNavRail(currentUri: currentUri),
               ),
-            ),
-            // NavigationBar includes its own SafeArea internally. When used
-            // outside Scaffold.bottomNavigationBar, we must remove the *top*
-            // system padding from MediaQuery, otherwise NavigationBar's internal
-            // SafeArea will add status-bar padding and create a large blank
-            // region above the icons/labels (notably on iOS).
-            MediaQuery.removePadding(
-              context: context,
-              removeTop: true,
-              child: GlobalNavBar(currentUri: currentUri),
-            ),
-          ],
+              const SizedBox(width: kPaneGap),
+              Expanded(child: child),
+            ],
+          ),
         ),
-      ),
-    };
+        GlobalNavMode.bottom => GlobalNavScope(
+          hasGlobalNav: true,
+          child: Column(
+            children: [
+              // When we render our own bottom nav outside the page Scaffold, the
+              // default MediaQuery bottom padding (safe area) can create an extra
+              // blank region above the nav bar on iOS. Remove it so the page body
+              // uses the full height that's already constrained by this Column.
+              Expanded(
+                child: MediaQuery.removePadding(
+                  context: context,
+                  removeBottom: true,
+                  child: child,
+                ),
+              ),
+              // NavigationBar includes its own SafeArea internally. When used
+              // outside Scaffold.bottomNavigationBar, we must remove the *top*
+              // system padding from MediaQuery, otherwise NavigationBar's internal
+              // SafeArea will add status-bar padding and create a large blank
+              // region above the icons/labels (notably on iOS).
+              MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: GlobalNavBar(currentUri: currentUri),
+              ),
+            ],
+          ),
+        ),
+      },
+    );
   }
 }

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../ui/motion.dart';
+
 /// Reveals [child] after the current route transition completes (then [delay]).
 ///
 /// This is handy when you want motion to feel *sequenced* rather than everything
@@ -37,8 +39,7 @@ class _StaggeredRevealState extends State<StaggeredReveal> {
     if (_scheduled) return;
     _scheduled = true;
 
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.accessibleNavigation ?? false;
+    final reduceMotion = AppMotion.reduceMotion(context);
     if (reduceMotion || !widget.enabled) {
       _show = true;
       return;
@@ -83,14 +84,13 @@ class _StaggeredRevealState extends State<StaggeredReveal> {
 
   @override
   Widget build(BuildContext context) {
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.accessibleNavigation ?? false;
+    final reduceMotion = AppMotion.reduceMotion(context);
     if (reduceMotion || !widget.enabled) return widget.child;
 
     return AnimatedSwitcher(
       duration: widget.duration,
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
+      switchInCurve: AppMotion.standardCurve,
+      switchOutCurve: AppMotion.emphasizedAccelerate,
       layoutBuilder: (currentChild, previousChildren) {
         return Stack(
           alignment: Alignment.topCenter,
@@ -103,8 +103,8 @@ class _StaggeredRevealState extends State<StaggeredReveal> {
       transitionBuilder: (child, animation) {
         final curved = CurvedAnimation(
           parent: animation,
-          curve: Curves.easeOutCubic,
-          reverseCurve: Curves.easeInCubic,
+          curve: AppMotion.standardCurve,
+          reverseCurve: AppMotion.emphasizedAccelerate,
         );
         final slide = Tween<Offset>(
           begin: widget.slideBegin,

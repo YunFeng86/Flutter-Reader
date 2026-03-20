@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ui/motion.dart';
+
 /// A lightweight "play once" insertion effect (fade + slight slide).
 ///
 /// Use this for incremental list updates (e.g. new RSS items arriving) rather
@@ -21,14 +23,14 @@ class Appear extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!enabled) return child;
-    if (MediaQuery.maybeOf(context)?.accessibleNavigation ?? false) {
+    if (AppMotion.reduceMotion(context)) {
       return child;
     }
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0, end: 1),
       duration: duration,
-      curve: Curves.easeOutCubic,
+      curve: AppMotion.standardCurve,
       builder: (context, t, child) {
         final o = offset * (1 - t);
         return Opacity(

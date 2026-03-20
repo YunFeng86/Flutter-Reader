@@ -61,11 +61,7 @@ class BackgroundSyncService {
     } on MissingPluginException {
       // Best-effort: running on an unsupported platform.
     } catch (e) {
-      AppLogger.w(
-        'Background sync scheduler init failed',
-        tag: 'bg',
-        error: e,
-      );
+      AppLogger.w('Background sync scheduler init failed', tag: 'bg', error: e);
     }
   }
 

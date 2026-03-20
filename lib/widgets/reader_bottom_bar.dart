@@ -15,6 +15,7 @@ import '../providers/article_ai_providers.dart';
 import '../models/article.dart';
 import '../models/tag.dart';
 import '../services/translation/article_translation.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
 import 'favicon_avatar.dart';
@@ -33,6 +34,9 @@ class ReaderBottomBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
+    final states = theme.fleurState;
+    final reader = theme.fleurReader;
     final feedMap = ref.watch(feedMapProvider);
     final feed = feedMap[article.feedId];
     final feedTitleRaw = feed == null
@@ -50,7 +54,7 @@ class ReaderBottomBar extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
+        color: reader.toolbarSurface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         boxShadow: [
           BoxShadow(
@@ -77,7 +81,7 @@ class ReaderBottomBar extends ConsumerWidget {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHigh,
+                      color: surfaces.card,
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
@@ -146,9 +150,7 @@ class ReaderBottomBar extends ConsumerWidget {
                             )
                           : Icon(
                               Icons.summarize_outlined,
-                              color: hasSummary
-                                  ? theme.colorScheme.primary
-                                  : null,
+                              color: hasSummary ? states.syncAccent : null,
                             ),
                     );
                   },
@@ -238,9 +240,7 @@ class ReaderBottomBar extends ConsumerWidget {
                             )
                           : Icon(
                               Icons.translate,
-                              color: hasTranslation
-                                  ? theme.colorScheme.primary
-                                  : null,
+                              color: hasTranslation ? states.syncAccent : null,
                             ),
                     );
                   },
@@ -252,9 +252,7 @@ class ReaderBottomBar extends ConsumerWidget {
                       .toggleStar(article.id),
                   icon: Icon(
                     article.isStarred ? Icons.star : Icons.star_border,
-                    color: article.isStarred
-                        ? theme.colorScheme.tertiary
-                        : null,
+                    color: article.isStarred ? states.savedAccent : null,
                   ),
                 ),
                 IconButton(
@@ -282,9 +280,7 @@ class ReaderBottomBar extends ConsumerWidget {
                     article.isReadLater
                         ? Icons.watch_later
                         : Icons.watch_later_outlined,
-                    color: article.isReadLater
-                        ? theme.colorScheme.tertiary
-                        : null,
+                    color: article.isReadLater ? states.savedAccent : null,
                   ),
                 ),
                 // 原文/提取切换
@@ -343,9 +339,9 @@ class ReaderBottomBar extends ConsumerWidget {
                                   ? Icons.refresh
                                   : Icons.chrome_reader_mode,
                               color: extractionFailed
-                                  ? theme.colorScheme.error
+                                  ? states.errorAccent
                                   : showFull
-                                  ? theme.colorScheme.primary
+                                  ? states.syncAccent
                                   : null,
                             ),
                     );

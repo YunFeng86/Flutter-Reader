@@ -7,16 +7,24 @@ import 'package:flutter/material.dart';
 class AppMotion {
   const AppMotion._();
 
-  static const Duration pageTransitionDuration = Duration(milliseconds: 300);
+  static const Duration short = Duration(milliseconds: 140);
+  static const Duration medium = Duration(milliseconds: 220);
+  static const Duration emphasized = Duration(milliseconds: 300);
+
+  static const Duration pageTransitionDuration = emphasized;
   static const Duration pageReverseTransitionDuration = Duration(
     milliseconds: 260,
   );
 
   static const Curve emphasizedDecelerate = Curves.easeOutCubic;
   static const Curve emphasizedAccelerate = Curves.easeInCubic;
+  static const Curve standardCurve = Curves.easeOutCubic;
 
   static bool reduceMotion(BuildContext context) {
-    return MediaQuery.maybeOf(context)?.accessibleNavigation ?? false;
+    final mediaQuery = MediaQuery.maybeOf(context);
+    if (mediaQuery == null) return false;
+    return mediaQuery.accessibleNavigation ||
+        MediaQuery.disableAnimationsOf(context);
   }
 
   /// Section transitions tuned for pane-based navigation (Sidebar/List/Reader).
@@ -39,7 +47,7 @@ class AppMotion {
 
     final fade = CurvedAnimation(
       parent: animation,
-      curve: emphasizedDecelerate,
+      curve: standardCurve,
       reverseCurve: emphasizedAccelerate,
     );
     return FadeTransition(opacity: fade, child: child);

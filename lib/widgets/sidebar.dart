@@ -15,8 +15,10 @@ import '../providers/unread_providers.dart';
 import '../providers/sync_status_providers.dart';
 import '../services/accounts/account.dart';
 import '../services/sync/sync_status_reporter.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../ui/layout_spec.dart';
+import '../ui/motion.dart';
 import '../ui/global_nav.dart';
 import '../utils/context_extensions.dart';
 import '../utils/platform.dart';
@@ -114,6 +116,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
     // On desktop we sometimes show the sidebar inside a Scaffold drawer that is
     // *outside* the app's Navigator (see `App` overlay). In that case, using
     // `Navigator.of(context)` will throw. We only show a close button when the
@@ -135,7 +139,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final allUnreadCounts = ref.watch(allUnreadCountsProvider);
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainer,
+      color: surfaces.sidebar,
       child: Column(
         children: [
           Padding(
@@ -1042,10 +1046,12 @@ class _UnreadBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (count <= 0) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    final states = theme.fleurState;
     return Badge(
       label: Text('$count'),
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      textColor: Theme.of(context).colorScheme.onPrimary,
+      backgroundColor: states.unreadAccent,
+      textColor: theme.colorScheme.onPrimary,
     );
   }
 }
@@ -1072,20 +1078,29 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mimic the dense, rounded style from the reference
+    final theme = Theme.of(context);
+    final states = theme.fleurState;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ListTile(
         selected: selected,
-        leading: Icon(icon, size: 20, color: iconColor),
-        title: Text(title),
+        leading: Icon(
+          icon,
+          size: 20,
+          color: selected ? theme.colorScheme.primary : iconColor,
+        ),
+        title: Text(
+          title,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
         trailing: count != null && count! > 0 ? _UnreadBadge(count!) : null,
         onTap: onTap,
         dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        // Visual adjustments to match "denser" look
         visualDensity: VisualDensity.compact,
         contentPadding: EdgeInsets.only(left: 12 + indent, right: 12),
+        hoverColor: states.hoverTint,
       ),
     );
   }
@@ -1129,15 +1144,20 @@ class _AccountFooter extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
+    final states = theme.fleurState;
     final scheme = theme.colorScheme;
+    final reduceMotion = AppMotion.reduceMotion(context);
+    final duration = reduceMotion ? Duration.zero : AppMotion.short;
 
     final showSync = sync.visible;
     final syncText = _syncText(l10n);
 
     return Material(
-      color: scheme.surfaceContainerLow,
+      color: surfaces.card,
       child: InkWell(
         onTap: onTap,
+        hoverColor: states.hoverTint,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Row(
@@ -1155,9 +1175,9 @@ class _AccountFooter extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
+                      duration: duration,
+                      switchInCurve: AppMotion.standardCurve,
+                      switchOutCurve: AppMotion.emphasizedAccelerate,
                       transitionBuilder: (child, animation) {
                         return SizeTransition(
                           sizeFactor: animation,
@@ -1188,7 +1208,10 @@ class _AccountFooter extends StatelessWidget {
                                           ? Icons.error_outline
                                           : Icons.check,
                                       size: 12,
-                                      color: scheme.onSurfaceVariant,
+                                      color:
+                                          sync.label == SyncStatusLabel.failed
+                                          ? states.errorAccent
+                                          : states.syncAccent,
                                     ),
                                   const SizedBox(width: 6),
                                   Expanded(

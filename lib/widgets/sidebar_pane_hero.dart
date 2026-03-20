@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/fleur_theme_extensions.dart';
 import '../ui/hero_tags.dart';
 
 /// A visual "pane" that can Hero between sections.
@@ -11,11 +12,12 @@ class SidebarPaneHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final surfaces = theme.fleurSurface;
 
     Widget surface({double elevation = 0}) {
       return Material(
-        color: cs.surfaceContainer,
+        color: surfaces.sidebar,
         elevation: elevation,
         child: const SizedBox.expand(),
       );
@@ -32,9 +34,8 @@ class SidebarPaneHero extends StatelessWidget {
             toHeroContext,
           ) {
             // Add a tiny elevation during flight so the shrinking edge is readable.
-            final cs = Theme.of(context).colorScheme;
             return Material(
-              color: cs.surfaceContainer,
+              color: Theme.of(context).fleurSurface.sidebar,
               elevation: 2,
               child: const SizedBox.expand(),
             );

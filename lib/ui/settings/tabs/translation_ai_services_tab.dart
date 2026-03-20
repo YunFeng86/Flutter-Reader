@@ -378,8 +378,9 @@ class TranslationAiServicesTab extends ConsumerWidget {
                   automaticallyImplyLeading: false,
                   actions: [
                     IconButton(
-                      tooltip:
-                          MaterialLocalizations.of(context).closeButtonTooltip,
+                      tooltip: MaterialLocalizations.of(
+                        context,
+                      ).closeButtonTooltip,
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -457,22 +458,25 @@ class TranslationAiServicesTab extends ConsumerWidget {
             ? '${l10n.followAppLanguage} · ${localizedLanguageNameForTag(uiLocale, uiLanguageTag)}'
             : localizedLanguageNameForTag(uiLocale, effectiveTargetLanguageTag);
 
-        final defaultAiSummaryPromptTemplate = l10n.defaultAiSummaryPromptTemplate(
-          PromptTemplate.token(PromptTemplate.varLanguage),
-          PromptTemplate.token(PromptTemplate.varTitle),
-          PromptTemplate.token(PromptTemplate.varContent),
-        );
-        final defaultAiTranslationPromptTemplate =
-            l10n.defaultAiTranslationPromptTemplate(
+        final defaultAiSummaryPromptTemplate = l10n
+            .defaultAiSummaryPromptTemplate(
+              PromptTemplate.token(PromptTemplate.varLanguage),
+              PromptTemplate.token(PromptTemplate.varTitle),
+              PromptTemplate.token(PromptTemplate.varContent),
+            );
+        final defaultAiTranslationPromptTemplate = l10n
+            .defaultAiTranslationPromptTemplate(
               PromptTemplate.token(PromptTemplate.varLanguage),
               PromptTemplate.token(PromptTemplate.varTitle),
               PromptTemplate.token(PromptTemplate.varContent),
             );
 
         final effectiveAiSummaryPrompt =
-            ((settings.aiSummaryPrompt ?? defaultAiSummaryPromptTemplate).trim());
+            ((settings.aiSummaryPrompt ?? defaultAiSummaryPromptTemplate)
+                .trim());
         final effectiveAiTranslationPrompt =
-            ((settings.aiTranslationPrompt ?? defaultAiTranslationPromptTemplate)
+            ((settings.aiTranslationPrompt ??
+                    defaultAiTranslationPromptTemplate)
                 .trim());
 
         String? serviceNameById(String serviceId) {
@@ -490,10 +494,11 @@ class TranslationAiServicesTab extends ConsumerWidget {
         final explicitAiSummaryServiceId = settings.aiSummaryServiceId;
         final effectiveAiSummaryServiceId =
             explicitAiSummaryServiceId ?? defaultAiServiceId;
-        final effectiveAiSummaryServiceName = effectiveAiSummaryServiceId == null
+        final effectiveAiSummaryServiceName =
+            effectiveAiSummaryServiceId == null
             ? null
             : (serviceNameById(effectiveAiSummaryServiceId) ??
-                effectiveAiSummaryServiceId);
+                  effectiveAiSummaryServiceId);
 
         final aiSummaryServiceSubtitle = effectiveAiSummaryServiceName == null
             ? l10n.aiNotConfigured
@@ -514,8 +519,9 @@ class TranslationAiServicesTab extends ConsumerWidget {
             'ru',
           ];
 
-          final current =
-              settings.targetLanguageTag == null ? null : effectiveTargetLanguageTag;
+          final current = settings.targetLanguageTag == null
+              ? null
+              : effectiveTargetLanguageTag;
 
           final picked =
               await showModalBottomSheet<({bool isDefault, String? value})>(
@@ -537,23 +543,30 @@ class TranslationAiServicesTab extends ConsumerWidget {
                         ListTile(
                           title: Text(l10n.followAppLanguage),
                           subtitle: Text(
-                            localizedLanguageNameForTag(uiLocale, uiLanguageTag),
+                            localizedLanguageNameForTag(
+                              uiLocale,
+                              uiLanguageTag,
+                            ),
                           ),
                           trailing: settings.targetLanguageTag == null
                               ? const Icon(Icons.check)
                               : null,
-                          onTap: () => Navigator.of(context).pop(
-                            const (isDefault: true, value: null),
-                          ),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pop(const (isDefault: true, value: null)),
                         ),
                         for (final tag in commonLanguageTags)
                           ListTile(
-                            title: Text(localizedLanguageNameForTag(uiLocale, tag)),
-                            subtitle: Text(tag),
-                            trailing: current == tag ? const Icon(Icons.check) : null,
-                            onTap: () => Navigator.of(context).pop(
-                              (isDefault: false, value: tag),
+                            title: Text(
+                              localizedLanguageNameForTag(uiLocale, tag),
                             ),
+                            subtitle: Text(tag),
+                            trailing: current == tag
+                                ? const Icon(Icons.check)
+                                : null,
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pop((isDefault: false, value: tag)),
                           ),
                       ],
                     ),
@@ -592,13 +605,15 @@ class TranslationAiServicesTab extends ConsumerWidget {
                         ),
                         ListTile(
                           title: Text(l10n.defaultOption),
-                          subtitle: Text(defaultAiServiceName ?? l10n.aiNotConfigured),
+                          subtitle: Text(
+                            defaultAiServiceName ?? l10n.aiNotConfigured,
+                          ),
                           trailing: explicitAiSummaryServiceId == null
                               ? const Icon(Icons.check)
                               : null,
-                          onTap: () => Navigator.of(context).pop(
-                            const (isDefault: true, value: null),
-                          ),
+                          onTap: () => Navigator.of(
+                            context,
+                          ).pop(const (isDefault: true, value: null)),
                         ),
                         for (final s in enabled)
                           ListTile(
@@ -616,9 +631,9 @@ class TranslationAiServicesTab extends ConsumerWidget {
                             trailing: explicitAiSummaryServiceId == s.id
                                 ? const Icon(Icons.check)
                                 : null,
-                            onTap: () => Navigator.of(context).pop(
-                              (isDefault: false, value: s.id),
-                            ),
+                            onTap: () => Navigator.of(
+                              context,
+                            ).pop((isDefault: false, value: s.id)),
                           ),
                         if (enabled.isEmpty)
                           Padding(
@@ -663,7 +678,9 @@ class TranslationAiServicesTab extends ConsumerWidget {
           final result = await showDialog<({bool reset, String? value})>(
             context: context,
             builder: (context) {
-              final controller = TextEditingController(text: customPrompt ?? '');
+              final controller = TextEditingController(
+                text: customPrompt ?? '',
+              );
               return AlertDialog(
                 scrollable: true,
                 title: Text(title),
@@ -797,10 +814,10 @@ class TranslationAiServicesTab extends ConsumerWidget {
                       TextField(
                         controller: controller,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        decoration: InputDecoration(
-                          labelText: l10n.tpmLimit,
-                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        decoration: InputDecoration(labelText: l10n.tpmLimit),
                       ),
                     ],
                   ),

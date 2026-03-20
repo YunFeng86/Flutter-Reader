@@ -112,7 +112,9 @@ class AiContentCacheEntry {
       );
     } else {
       final modeName = (keyMap['translationMode'] as String?)?.trim() ?? '';
-      final mode = ArticleTranslationMode.values.where((m) => m.name == modeName);
+      final mode = ArticleTranslationMode.values.where(
+        (m) => m.name == modeName,
+      );
       if (mode.isEmpty) return null;
       final providerKind =
           (keyMap['translationProviderKind'] as String?)?.trim() ?? '';

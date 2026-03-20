@@ -570,9 +570,9 @@ class _SyncSection extends ConsumerWidget {
               );
             } else {
               unawaited(
-                ref.read(appSettingsProvider.notifier).setAutoTranslate(
-                  val ?? false,
-                ),
+                ref
+                    .read(appSettingsProvider.notifier)
+                    .setAutoTranslate(val ?? false),
               );
             }
           },

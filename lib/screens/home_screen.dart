@@ -10,6 +10,7 @@ import '../providers/query_providers.dart';
 import '../providers/repository_providers.dart';
 import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../widgets/article_list.dart';
 import '../widgets/reader_view.dart';
 import '../widgets/outbox_status_action.dart';
@@ -30,6 +31,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final surfaces = Theme.of(context).fleurSurface;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
     final showSyncCapsule =
@@ -349,9 +351,7 @@ class HomeScreen extends ConsumerWidget {
                     Expanded(
                       child: selectedArticleId == null
                           ? Container(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerLowest,
+                              color: surfaces.reader,
                               alignment: Alignment.center,
                               child: Text(l10n.selectAnArticle),
                             )
@@ -380,6 +380,7 @@ class HomeScreen extends ConsumerWidget {
     Future<void> Function() refreshAll,
     Future<void> Function() markAllRead,
   ) {
+    final surfaces = Theme.of(context).fleurSurface;
     final showSyncCapsule =
         LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
     // Desktop keyboard shortcuts stay enabled across all layouts.
@@ -416,13 +417,13 @@ class HomeScreen extends ConsumerWidget {
     Widget readerPane({required bool embedded}) {
       if (selectedArticleId == null) {
         return Container(
-          color: Theme.of(context).colorScheme.surfaceContainerLowest,
+          color: surfaces.reader,
           alignment: Alignment.center,
           child: Text(l10n.selectAnArticle),
         );
       }
       return Container(
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        color: surfaces.reader,
         child: ReaderView(
           key: ValueKey('home-reader-$selectedArticleId'),
           articleId: selectedArticleId!,

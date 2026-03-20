@@ -116,7 +116,8 @@ class TranslationAiSettings {
     'aiSummaryPrompt': aiSummaryPrompt,
     'aiTranslationPrompt': aiTranslationPrompt,
     'tpmLimit': tpmLimit,
-    'disabledTranslationReminderLanguages': disabledTranslationReminderLanguages,
+    'disabledTranslationReminderLanguages':
+        disabledTranslationReminderLanguages,
     'aiServices': aiServices.map((s) => s.toJson()).toList(growable: false),
     'defaultAiServiceId': defaultAiServiceId,
     'deepL': deepL.toJson(),
@@ -133,13 +134,14 @@ class TranslationAiSettings {
 
     final rawAiSummaryServiceId = json['aiSummaryServiceId'];
     final aiSummaryServiceId =
-        rawAiSummaryServiceId is String && rawAiSummaryServiceId.trim().isNotEmpty
-            ? rawAiSummaryServiceId.trim()
-            : null;
+        rawAiSummaryServiceId is String &&
+            rawAiSummaryServiceId.trim().isNotEmpty
+        ? rawAiSummaryServiceId.trim()
+        : null;
 
     final rawTargetLang = json['targetLanguageTag'];
-    final targetLanguageTag = rawTargetLang is String &&
-            rawTargetLang.trim().isNotEmpty
+    final targetLanguageTag =
+        rawTargetLang is String && rawTargetLang.trim().isNotEmpty
         ? rawTargetLang.trim()
         : null;
 
@@ -149,7 +151,9 @@ class TranslationAiSettings {
     }
 
     final aiSummaryPrompt = parseOptionalString(json['aiSummaryPrompt']);
-    final aiTranslationPrompt = parseOptionalString(json['aiTranslationPrompt']);
+    final aiTranslationPrompt = parseOptionalString(
+      json['aiTranslationPrompt'],
+    );
 
     final rawTpm = json['tpmLimit'];
     final tpmLimit = rawTpm is num ? rawTpm.toInt() : 0;
@@ -190,7 +194,8 @@ class TranslationAiSettings {
       aiSummaryPrompt: aiSummaryPrompt,
       aiTranslationPrompt: aiTranslationPrompt,
       tpmLimit: tpmLimit < 0 ? 0 : tpmLimit,
-      disabledTranslationReminderLanguages: disabledTranslationReminderLanguages,
+      disabledTranslationReminderLanguages:
+          disabledTranslationReminderLanguages,
       aiServices: services,
       defaultAiServiceId: defaultId,
       deepL: deepL,

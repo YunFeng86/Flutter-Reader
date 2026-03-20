@@ -50,29 +50,31 @@ class AiRequestQueue {
   void _pump() {
     if (_pumping) return;
     _pumping = true;
-    unawaited(Future<void>.microtask(() async {
-      try {
-        _timer?.cancel();
-        _timer = null;
-        _pruneUsage();
+    unawaited(
+      Future<void>.microtask(() async {
+        try {
+          _timer?.cancel();
+          _timer = null;
+          _pruneUsage();
 
-        while (_running < maxConcurrent) {
-          final next = _nextTask();
-          if (next == null) return;
+          while (_running < maxConcurrent) {
+            final next = _nextTask();
+            if (next == null) return;
 
-          final now = DateTime.now();
-          final delay = _delayFor(next.estimatedTokens, now: now);
-          if (delay > Duration.zero) {
-            _timer = Timer(delay, _pump);
-            return;
+            final now = DateTime.now();
+            final delay = _delayFor(next.estimatedTokens, now: now);
+            if (delay > Duration.zero) {
+              _timer = Timer(delay, _pump);
+              return;
+            }
+
+            _start(next, now: now);
           }
-
-          _start(next, now: now);
+        } finally {
+          _pumping = false;
         }
-      } finally {
-        _pumping = false;
-      }
-    }));
+      }),
+    );
   }
 
   _QueuedTask<dynamic>? _nextTask() {
