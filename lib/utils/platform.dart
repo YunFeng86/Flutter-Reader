@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 TargetPlatform get _effectiveTargetPlatform =>
     debugFleurTargetPlatformOverride ?? defaultTargetPlatform;
 
+TargetPlatform get effectiveTargetPlatform => _effectiveTargetPlatform;
+
 TargetPlatform? debugFleurTargetPlatformOverride;
 
 bool get isDesktop =>
@@ -18,6 +20,9 @@ bool get isAndroid =>
 bool get isIOS => !kIsWeb && _effectiveTargetPlatform == TargetPlatform.iOS;
 
 bool get isMacOS => !kIsWeb && _effectiveTargetPlatform == TargetPlatform.macOS;
+
+bool get isWindows =>
+    !kIsWeb && _effectiveTargetPlatform == TargetPlatform.windows;
 
 bool get supportsBackgroundSyncPlatform => isAndroid || isIOS;
 

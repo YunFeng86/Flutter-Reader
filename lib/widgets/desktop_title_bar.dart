@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
 import '../ui/motion.dart';
 import '../utils/platform.dart';
@@ -70,7 +71,7 @@ class _DesktopTitleBarState extends State<DesktopTitleBar> with WindowListener {
 
     final titleStyle = theme.textTheme.titleSmall?.copyWith(
       color: cs.onSurface,
-      fontWeight: FontWeight.w600,
+      fontWeight: AppTypography.platformWeight(FontWeight.w600),
     );
 
     return Material(

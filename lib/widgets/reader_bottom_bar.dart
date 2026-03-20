@@ -15,6 +15,7 @@ import '../providers/article_ai_providers.dart';
 import '../models/article.dart';
 import '../models/tag.dart';
 import '../services/translation/article_translation.dart';
+import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/tag_colors.dart';
@@ -98,7 +99,9 @@ class ReaderBottomBar extends ConsumerWidget {
                       feedTitle,
                       style: theme.textTheme.labelMedium?.copyWith(
                         color: theme.colorScheme.onSurface,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: AppTypography.platformWeight(
+                          FontWeight.w700,
+                        ),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,

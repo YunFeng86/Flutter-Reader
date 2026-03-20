@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../ui/layout.dart';
 import 'app_theme_profile.dart';
+import 'app_typography.dart';
 
 Color _blend(Color base, Color tint, int alpha) {
   return Color.alphaBlend(tint.withAlpha(alpha), base);
@@ -252,14 +253,14 @@ class FleurReaderTheme extends ThemeExtension<FleurReaderTheme> {
       contentPaddingTop: profile.readerTopPadding,
       contentPaddingBottom: profile.readerBottomPadding,
       titleStyle: (textTheme.headlineMedium ?? const TextStyle()).copyWith(
-        fontWeight: FontWeight.w700,
+        fontWeight: AppTypography.platformWeight(FontWeight.w700),
         letterSpacing: -0.7,
         height: 1.12,
         color: scheme.onSurface,
       ),
       metaStyle: (textTheme.labelLarge ?? const TextStyle()).copyWith(
         color: scheme.onSurfaceVariant,
-        fontWeight: FontWeight.w600,
+        fontWeight: AppTypography.platformWeight(FontWeight.w600),
       ),
       bodyStyle: (textTheme.bodyLarge ?? const TextStyle()).copyWith(
         color: scheme.onSurface,

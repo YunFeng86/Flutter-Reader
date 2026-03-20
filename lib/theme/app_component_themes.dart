@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_theme_profile.dart';
+import 'app_typography.dart';
 import 'fleur_theme_extensions.dart';
 
 class AppComponentThemes {
@@ -73,7 +74,9 @@ class AppComponentThemes {
           final selected = statesSet.contains(WidgetState.selected);
           return base.textTheme.labelMedium?.copyWith(
             color: selected ? scheme.onSurface : scheme.onSurfaceVariant,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+            fontWeight: AppTypography.platformWeight(
+              selected ? FontWeight.w700 : FontWeight.w600,
+            ),
           );
         }),
         iconTheme: WidgetStateProperty.resolveWith((statesSet) {

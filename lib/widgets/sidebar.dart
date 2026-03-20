@@ -15,6 +15,7 @@ import '../providers/unread_providers.dart';
 import '../providers/sync_status_providers.dart';
 import '../services/accounts/account.dart';
 import '../services/sync/sync_status_reporter.dart';
+import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
 import '../ui/actions/subscription_actions.dart';
 import '../ui/layout_spec.dart';
@@ -296,7 +297,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.primary,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: AppTypography.platformWeight(
+                                        FontWeight.w700,
+                                      ),
                                     ),
                               ),
                             ),
@@ -1092,7 +1095,9 @@ class _SidebarItem extends StatelessWidget {
         title: Text(
           title,
           style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+            fontWeight: AppTypography.platformWeight(
+              selected ? FontWeight.w700 : FontWeight.w600,
+            ),
           ),
         ),
         trailing: count != null && count! > 0 ? _UnreadBadge(count!) : null,

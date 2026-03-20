@@ -174,6 +174,24 @@ void main() {
     );
   });
 
+  test('Windows typography uses lighter emphasis than macOS', () {
+    debugFleurTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugFleurTargetPlatformOverride = null);
+
+    final windowsTheme = AppTheme.light();
+    expect(windowsTheme.textTheme.titleLarge?.fontWeight, FontWeight.w600);
+    expect(windowsTheme.textTheme.titleMedium?.fontWeight, FontWeight.w500);
+    expect(windowsTheme.fleurReader.titleStyle.fontWeight, FontWeight.w600);
+    expect(windowsTheme.fleurReader.metaStyle.fontWeight, FontWeight.w500);
+
+    debugFleurTargetPlatformOverride = TargetPlatform.macOS;
+    final macTheme = AppTheme.light();
+    expect(macTheme.textTheme.titleLarge?.fontWeight, FontWeight.w700);
+    expect(macTheme.textTheme.titleMedium?.fontWeight, FontWeight.w600);
+    expect(macTheme.fleurReader.titleStyle.fontWeight, FontWeight.w700);
+    expect(macTheme.fleurReader.metaStyle.fontWeight, FontWeight.w600);
+  });
+
   testWidgets('App shell switches between rail and bottom navigation', (
     tester,
   ) async {
@@ -451,6 +469,36 @@ void main() {
       expect(find.byIcon(Icons.star), findsOneWidget);
     },
   );
+
+  testWidgets('Article list item softens title weight on Windows', (
+    tester,
+  ) async {
+    debugFleurTargetPlatformOverride = TargetPlatform.windows;
+    addTearDown(() => debugFleurTargetPlatformOverride = null);
+
+    final feed = _buildFeed();
+    final article = _buildArticle(isRead: false, isStarred: false);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          feedsProvider.overrideWith((ref) => Stream.value([feed])),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: ArticleListItem(article: article, selected: false),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final title = tester.widget<Text>(find.text('Selected Article'));
+    expect(title.style?.fontWeight, FontWeight.w600);
+  });
 
   testWidgets(
     'Article list empty state keeps list surface and unread empty feedback',

@@ -1,8 +1,23 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/platform.dart' as platform;
+
 class AppTypography {
   const AppTypography._();
+
+  /// Windows CJK/system fonts often render one weight visually heavier than the
+  /// same nominal value on macOS. Soften emphasis there to keep hierarchy while
+  /// avoiding the "too black" look in dense reading/list UIs.
+  static FontWeight platformWeight(FontWeight weight) {
+    if (!platform.isWindows) return weight;
+
+    return switch (weight.index) {
+      5 => FontWeight.w500,
+      6 || 7 || 8 => FontWeight.w600,
+      _ => weight,
+    };
+  }
 
   static List<String> fontFallback() {
     if (kIsWeb) {
@@ -22,7 +37,7 @@ class AppTypography {
       ];
     }
 
-    return switch (defaultTargetPlatform) {
+    return switch (platform.effectiveTargetPlatform) {
       TargetPlatform.macOS || TargetPlatform.iOS => const [
         'PingFang SC',
         'PingFang TC',
@@ -34,6 +49,8 @@ class AppTypography {
         '.SF UI Text',
       ],
       TargetPlatform.windows => const [
+        'DengXian',
+        'DengXian Light',
         'Microsoft YaHei UI',
         'Microsoft YaHei',
         'SimHei',
@@ -69,22 +86,22 @@ class AppTypography {
 
     return applied.copyWith(
       headlineMedium: applied.headlineMedium?.copyWith(
-        fontWeight: FontWeight.w700,
+        fontWeight: platformWeight(FontWeight.w700),
         letterSpacing: -0.6,
         height: 1.12,
       ),
       titleLarge: applied.titleLarge?.copyWith(
-        fontWeight: FontWeight.w700,
+        fontWeight: platformWeight(FontWeight.w700),
         letterSpacing: -0.25,
         height: 1.18,
       ),
       titleMedium: applied.titleMedium?.copyWith(
-        fontWeight: FontWeight.w600,
+        fontWeight: platformWeight(FontWeight.w600),
         letterSpacing: -0.1,
         height: 1.24,
       ),
       titleSmall: applied.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
+        fontWeight: platformWeight(FontWeight.w600),
         height: 1.25,
       ),
       bodyLarge: applied.bodyLarge?.copyWith(height: 1.52, letterSpacing: 0.05),
@@ -97,15 +114,15 @@ class AppTypography {
         color: scheme.onSurfaceVariant,
       ),
       labelLarge: applied.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
+        fontWeight: platformWeight(FontWeight.w600),
         letterSpacing: 0.15,
       ),
       labelMedium: applied.labelMedium?.copyWith(
-        fontWeight: FontWeight.w600,
+        fontWeight: platformWeight(FontWeight.w600),
         letterSpacing: 0.18,
       ),
       labelSmall: applied.labelSmall?.copyWith(
-        fontWeight: FontWeight.w600,
+        fontWeight: platformWeight(FontWeight.w600),
         letterSpacing: 0.2,
       ),
     );

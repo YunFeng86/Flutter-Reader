@@ -32,6 +32,7 @@ import '../services/settings/app_settings.dart';
 import '../services/settings/reader_settings.dart';
 import '../services/settings/reader_progress_store.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 import '../utils/content_hash.dart';
@@ -864,7 +865,9 @@ class _ReaderViewState extends ConsumerState<ReaderView> {
                         Text(
                           l10n.aiSummaryAction,
                           style: sceneTheme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
+                            fontWeight: AppTypography.platformWeight(
+                              FontWeight.w700,
+                            ),
                           ),
                         ),
                         const Spacer(),

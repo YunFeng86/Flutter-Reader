@@ -4,6 +4,7 @@ import 'package:timeago/timeago.dart' as timeago;
 
 import '../models/article.dart';
 import '../providers/query_providers.dart';
+import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
 import '../utils/html_utils.dart';
 import '../utils/timeago_locale.dart';
@@ -120,7 +121,10 @@ class ArticleListItem extends ConsumerWidget {
                                           color: theme
                                               .colorScheme
                                               .onSurfaceVariant,
-                                          fontWeight: FontWeight.w500,
+                                          fontWeight:
+                                              AppTypography.platformWeight(
+                                                FontWeight.w500,
+                                              ),
                                         ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -173,9 +177,9 @@ class ArticleListItem extends ConsumerWidget {
                     Text(
                       title.isEmpty ? article.link : title,
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: isUnread
-                            ? FontWeight.w700
-                            : FontWeight.w600,
+                        fontWeight: AppTypography.platformWeight(
+                          isUnread ? FontWeight.w700 : FontWeight.w600,
+                        ),
                         height: 1.2,
                         color: theme.colorScheme.onSurface,
                       ),
