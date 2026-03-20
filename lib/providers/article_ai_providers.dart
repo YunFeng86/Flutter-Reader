@@ -134,6 +134,19 @@ const Object _unset = Object();
 final articleAiControllerProvider =
     AutoDisposeNotifierProviderFamily<ArticleAiController, ArticleAiState, int>(
       ArticleAiController.new,
+      dependencies: [
+        articleProvider,
+        appSettingsProvider,
+        translationAiSettingsProvider,
+        feedMapProvider,
+        categoriesProvider,
+        activeAccountProvider,
+        aiRequestQueueProvider,
+        aiServiceClientProvider,
+        translationServiceProvider,
+        aiContentCacheStoreProvider,
+        translationAiSecretStoreProvider,
+      ],
     );
 
 class ArticleAiController

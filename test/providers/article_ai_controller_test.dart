@@ -115,6 +115,51 @@ void main() {
     return container;
   }
 
+  test('inherits overridden article dependencies from nested scope', () async {
+    final root = ProviderContainer(
+      overrides: [
+        activeAccountProvider.overrideWithValue(
+          buildTestAccount(id: accountId, isPrimary: true),
+        ),
+        appSettingsStoreProvider.overrideWithValue(
+          FakeAppSettingsStore(AppSettings.defaults()),
+        ),
+        translationAiSettingsStoreProvider.overrideWithValue(
+          FakeTranslationAiSettingsStore(TranslationAiSettings.defaults()),
+        ),
+      ],
+    );
+    addTearDown(root.dispose);
+
+    final scoped = ProviderContainer(
+      parent: root,
+      overrides: [
+        articleProvider(
+          articleId,
+        ).overrideWith((ref) => Stream.value(buildArticle())),
+        feedsProvider.overrideWith((ref) => Stream.value([buildFeed()])),
+        categoriesProvider.overrideWith(
+          (ref) => Stream.value([buildCategory()]),
+        ),
+      ],
+    );
+    addTearDown(scoped.dispose);
+
+    final sub = scoped.listen<ArticleAiState>(
+      articleAiControllerProvider(articleId),
+      (previous, next) {},
+      fireImmediately: true,
+    );
+    addTearDown(sub.close);
+
+    await flushAsync();
+
+    expect(
+      scoped.read(articleAiControllerProvider(articleId)).articleId,
+      articleId,
+    );
+  });
+
   test(
     'uses cached summary and reports outdated prompt without calling AI',
     () async {
