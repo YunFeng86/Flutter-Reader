@@ -1,0 +1,28 @@
+pre-commit:
+  parallel: false
+  jobs:
+    - name: format-staged-dart
+      run: ./tool/quality/format_staged_dart.sh "{staged_files}"
+
+pre-push:
+  parallel: false
+  fail_on_changes: always
+  jobs:
+    - name: gen-l10n
+      glob:
+        - "lib/l10n/*.arb"
+        - "l10n.yaml"
+        - "pubspec.yaml"
+      run: flutter gen-l10n
+    - name: build-runner
+      glob:
+        - "lib/models/*.dart"
+        - "build.yaml"
+        - "pubspec.yaml"
+      exclude:
+        - "lib/models/*.g.dart"
+      run: dart run build_runner build --delete-conflicting-outputs
+    - name: analyze
+      run: flutter analyze
+    - name: test
+      run: flutter test

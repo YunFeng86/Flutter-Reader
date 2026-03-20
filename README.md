@@ -134,6 +134,45 @@ flutter test
 flutter test integration_test
 ```
 
+## ✅ 质量检查
+
+```bash
+# 格式化检查（排除 build_runner 生成文件）
+./tool/quality/format_dart.sh
+
+# 生成代码同步检查
+./tool/quality/check_generated_sources.sh
+
+# 静态分析
+flutter analyze
+
+# 单元 / Widget 测试
+flutter test
+```
+
+### Git Hooks
+
+仓库提供了 `lefthook.yml`，安装 Lefthook 后执行以下命令即可启用本地 hooks：
+
+```bash
+lefthook install
+```
+
+当前 `pre-commit` 会自动格式化暂存区中的 Dart 源文件，并重新加入暂存区：
+
+- 仅处理 `*.dart`
+- 自动跳过 `*.g.dart` 和 `*.freezed.dart`
+- 不运行 `analyze`、`test` 或代码生成，保证提交动作足够轻
+
+当前 `pre-push` 会按以下顺序执行：
+
+- 改动 `lib/l10n/*.arb`、`l10n.yaml` 或 `pubspec.yaml` 时运行 `flutter gen-l10n`
+- 改动 `lib/models/*.dart`、`build.yaml` 或 `pubspec.yaml` 时运行 `dart run build_runner build --delete-conflicting-outputs`
+- 始终运行 `flutter analyze`
+- 始终运行 `flutter test`
+
+如果生成命令改写了已跟踪文件，hook 会直接失败，避免漏提交流水线所需的生成物。
+
 ### 当前已知边界
 
 - `Article.categoryId` 去规范化目前仍保留，但 benchmark 使用统一的“慢路径时间节省百分比”口径评估；低于 30% 保留线时应进入复盘，而不是继续默认其复杂度已被证明合理。
