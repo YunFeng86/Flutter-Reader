@@ -19,6 +19,11 @@ class AppTypography {
     };
   }
 
+  static String? fontFamily() {
+    if (platform.isWindows) return 'Segoe UI';
+    return null;
+  }
+
   static List<String> fontFallback() {
     if (kIsWeb) {
       return const [
@@ -55,7 +60,6 @@ class AppTypography {
         'Microsoft YaHei',
         'SimHei',
         'SimSun',
-        'Segoe UI',
         'Noto Sans SC',
         'Noto Sans CJK SC',
         'Arial',

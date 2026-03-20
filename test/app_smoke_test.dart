@@ -22,6 +22,7 @@ import 'package:fleur/providers/unread_providers.dart';
 import 'package:fleur/services/settings/app_settings.dart';
 import 'package:fleur/services/sync/sync_status_reporter.dart';
 import 'package:fleur/theme/app_theme.dart';
+import 'package:fleur/theme/app_typography.dart';
 import 'package:fleur/theme/fleur_theme_extensions.dart';
 import 'package:fleur/ui/app_shell.dart';
 import 'package:fleur/utils/platform.dart';
@@ -179,6 +180,9 @@ void main() {
     addTearDown(() => debugFleurTargetPlatformOverride = null);
 
     final windowsTheme = AppTheme.light();
+    expect(AppTypography.fontFamily(), 'Segoe UI');
+    expect(AppTypography.fontFallback().first, 'DengXian');
+    expect(AppTypography.fontFallback()[2], 'Microsoft YaHei UI');
     expect(windowsTheme.textTheme.titleLarge?.fontWeight, FontWeight.w600);
     expect(windowsTheme.textTheme.titleMedium?.fontWeight, FontWeight.w500);
     expect(windowsTheme.fleurReader.titleStyle.fontWeight, FontWeight.w600);
@@ -186,6 +190,7 @@ void main() {
 
     debugFleurTargetPlatformOverride = TargetPlatform.macOS;
     final macTheme = AppTheme.light();
+    expect(AppTypography.fontFamily(), isNull);
     expect(macTheme.textTheme.titleLarge?.fontWeight, FontWeight.w700);
     expect(macTheme.textTheme.titleMedium?.fontWeight, FontWeight.w600);
     expect(macTheme.fleurReader.titleStyle.fontWeight, FontWeight.w700);

@@ -70,6 +70,7 @@ class AppTheme {
       useMaterial3: true,
       brightness: brightness,
       colorScheme: cs,
+      fontFamily: AppTypography.fontFamily(),
       fontFamilyFallback: AppTypography.fontFallback(),
     );
 
