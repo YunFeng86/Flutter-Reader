@@ -169,6 +169,36 @@ void main() {
     expect(errors, isEmpty);
   });
 
+  testWidgets(
+    'SettingsScreen: services detail does not overflow at large text scale',
+    (tester) async {
+      final errors = <FlutterErrorDetails>[];
+      final oldOnError = FlutterError.onError;
+      FlutterError.onError = (details) {
+        errors.add(details);
+        oldOnError?.call(details);
+      };
+
+      try {
+        await _pumpTestApp(
+          tester,
+          size: const Size(320, 800),
+          textScale: 2.0,
+          home: const SettingsScreen(),
+        );
+
+        await tester.tap(find.text('Services'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+      } finally {
+        FlutterError.onError = oldOnError;
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(errors, isEmpty);
+    },
+  );
+
   group('AboutTab', () {
     late PathProviderPlatform originalPlatform;
     late Directory tempDir;

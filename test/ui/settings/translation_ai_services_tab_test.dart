@@ -16,6 +16,7 @@ void main() {
     FakeTranslationAiSecretStore? secrets,
     AppSettings? appSettings,
     Locale locale = const Locale('en'),
+    Size size = const Size(900, 1200),
   }) async {
     await pumpLocalizedTestApp(
       tester,
@@ -30,7 +31,7 @@ void main() {
         ),
       ],
       locale: locale,
-      size: const Size(900, 1200),
+      size: size,
     );
     await tester.pumpAndSettle();
   }
@@ -151,6 +152,55 @@ void main() {
       );
 
       expect(find.text('Follow app language · French'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'ai service rows stay operable without overflow on narrow widths',
+    (tester) async {
+      final store = FakeTranslationAiSettingsStore(
+        TranslationAiSettings.defaults().copyWith(
+          aiServices: const [
+            AiServiceConfig(
+              id: 'svc-1',
+              name: 'Primary AI Service',
+              apiType: AiServiceApiType.openAiResponses,
+              baseUrl: 'https://api.example.com/v1',
+              defaultModel: 'gpt-5-mini-long-model-name',
+              enabled: true,
+            ),
+          ],
+          defaultAiServiceId: 'svc-1',
+        ),
+      );
+
+      final errors = <FlutterErrorDetails>[];
+      final oldOnError = FlutterError.onError;
+      FlutterError.onError = (details) {
+        errors.add(details);
+        oldOnError?.call(details);
+      };
+
+      try {
+        await pumpTab(tester, store: store, size: const Size(320, 900));
+
+        await tester.scrollUntilVisible(
+          find.text('Primary AI Service'),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+
+        await tester.tap(find.byType(Switch).last);
+        await tester.pumpAndSettle();
+
+        expect(store.settings.aiServices.single.enabled, isFalse);
+        expect(find.byIcon(Icons.more_vert), findsWidgets);
+      } finally {
+        FlutterError.onError = oldOnError;
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(errors, isEmpty);
     },
   );
 }

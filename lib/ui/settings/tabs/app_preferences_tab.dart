@@ -11,7 +11,6 @@ import '../../../providers/service_providers.dart';
 import '../../../providers/settings_providers.dart';
 import '../../../services/settings/app_settings.dart';
 import '../../../services/settings/reader_settings.dart';
-import '../../../theme/app_theme.dart';
 import '../../../theme/seed_color_presets.dart';
 import '../../../utils/context_extensions.dart';
 import '../../../utils/platform.dart';
@@ -19,7 +18,9 @@ import '../widgets/section_header.dart';
 import '../widgets/slider_tile.dart';
 
 class AppPreferencesTab extends ConsumerWidget {
-  const AppPreferencesTab({super.key});
+  const AppPreferencesTab({super.key, this.showPageTitle = true});
+
+  final bool showPageTitle;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,205 +43,202 @@ class AppPreferencesTab extends ConsumerWidget {
         !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
     final currentBrightness = Theme.of(context).brightness;
 
-    return SingleChildScrollView(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Language
-                SectionHeader(title: l10n.language),
-                Container(
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+    return SettingsPageBody(
+      children: [
+        if (showPageTitle) ...[
+          SectionHeader(title: l10n.appPreferences),
+          const SizedBox(height: 8),
+        ],
+        SettingsSection(
+          title: l10n.language,
+          child: SettingsCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String?>(
+                value: appSettings.localeTag,
+                isExpanded: true,
+                items: [
+                  DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text(l10n.systemLanguage),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String?>(
-                      value: appSettings.localeTag,
-                      isExpanded: true,
-                      items: [
-                        DropdownMenuItem<String?>(
-                          value: null,
-                          child: Text(l10n.systemLanguage),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'en',
-                          child: Text(l10n.english),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'zh',
-                          child: Text(l10n.chineseSimplified),
-                        ),
-                        DropdownMenuItem<String?>(
-                          value: 'zh-Hant',
-                          child: Text(l10n.chineseTraditional),
-                        ),
-                      ],
-                      onChanged: (v) {
-                        unawaited(() async {
-                          await ref
-                              .read(appSettingsProvider.notifier)
-                              .setLocaleTag(v);
-                          if (!context.mounted) return;
-                          if (!isMacOS) return;
-                          context.showSnack(l10n.macosMenuLanguageRestartHint);
-                        }());
-                      },
-                    ),
+                  DropdownMenuItem<String?>(
+                    value: 'en',
+                    child: Text(l10n.english),
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // Theme
-                SectionHeader(title: l10n.theme),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.settings_brightness_outlined,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.themeMode,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.system,
-                        label: Text(l10n.system),
-                        icon: const Icon(Icons.brightness_auto),
-                      ),
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.light,
-                        label: Text(l10n.light),
-                        icon: const Icon(Icons.light_mode_outlined),
-                      ),
-                      ButtonSegment<ThemeMode>(
-                        value: ThemeMode.dark,
-                        label: Text(l10n.dark),
-                        icon: const Icon(Icons.dark_mode_outlined),
-                      ),
-                    ],
-                    selected: {appSettings.themeMode},
-                    onSelectionChanged: (selected) {
-                      if (selected.isEmpty) return;
-                      unawaited(
-                        ref
-                            .read(appSettingsProvider.notifier)
-                            .setThemeMode(selected.first),
-                      );
-                    },
+                  DropdownMenuItem<String?>(
+                    value: 'zh',
+                    child: Text(l10n.chineseSimplified),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
+                  DropdownMenuItem<String?>(
+                    value: 'zh-Hant',
+                    child: Text(l10n.chineseTraditional),
+                  ),
+                ],
+                onChanged: (v) {
+                  unawaited(() async {
+                    await ref
+                        .read(appSettingsProvider.notifier)
+                        .setLocaleTag(v);
+                    if (!context.mounted) return;
+                    if (!isMacOS) return;
+                    context.showSnack(l10n.macosMenuLanguageRestartHint);
+                  }());
+                },
+              ),
+            ),
+          ),
+        ),
+        SettingsSection(
+          title: l10n.theme,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.palette_outlined,
-                      size: 20,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.seedColorPreset,
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: l10n.resetToDefault,
-                      onPressed: () {
-                        unawaited(
-                          ref
-                              .read(appSettingsProvider.notifier)
-                              .save(
-                                appSettings.copyWith(
-                                  themeMode: ThemeMode.system,
-                                  useDynamicColor: true,
-                                  seedColorPreset: SeedColorPreset.blue,
-                                ),
-                              ),
-                        );
-                      },
-                      icon: const Icon(Icons.restart_alt),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    if (isAndroid)
-                      Tooltip(
-                        message: l10n.dynamicColorSubtitle,
-                        child: _ThemeColorCard(
-                          selected: appSettings.useDynamicColor,
-                          scheme: Theme.of(context).colorScheme,
-                          semanticLabel: l10n.dynamicColor,
-                          trailingIcon: const Icon(Icons.colorize, size: 18),
-                          onTap: () {
-                            unawaited(
-                              ref
-                                  .read(appSettingsProvider.notifier)
-                                  .setUseDynamicColor(true),
-                            );
-                          },
-                        ),
-                      ),
-                    for (final p in SeedColorPreset.values)
-                      Tooltip(
-                        message: seedPresetLabel(p),
-                        child: _ThemeColorCard(
-                          selected:
-                              !appSettings.useDynamicColor &&
-                              appSettings.seedColorPreset == p,
-                          scheme: ColorScheme.fromSeed(
-                            seedColor: p.seedColor,
-                            brightness: currentBrightness,
+                    Text(l10n.themeMode, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SegmentedButton<ThemeMode>(
+                        segments: [
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.system,
+                            label: Text(l10n.system),
+                            icon: const Icon(Icons.brightness_auto),
                           ),
-                          semanticLabel: seedPresetLabel(p),
-                          onTap: () {
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.light,
+                            label: Text(l10n.light),
+                            icon: const Icon(Icons.light_mode_outlined),
+                          ),
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.dark,
+                            label: Text(l10n.dark),
+                            icon: const Icon(Icons.dark_mode_outlined),
+                          ),
+                        ],
+                        selected: {appSettings.themeMode},
+                        onSelectionChanged: (selected) {
+                          if (selected.isEmpty) return;
+                          unawaited(
+                            ref
+                                .read(appSettingsProvider.notifier)
+                                .setThemeMode(selected.first),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l10n.seedColorPreset,
+                            style: theme.textTheme.titleSmall,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: l10n.resetToDefault,
+                          onPressed: () {
                             unawaited(
                               ref
                                   .read(appSettingsProvider.notifier)
                                   .save(
                                     appSettings.copyWith(
-                                      useDynamicColor: false,
-                                      seedColorPreset: p,
+                                      themeMode: ThemeMode.system,
+                                      useDynamicColor: true,
+                                      seedColorPreset: SeedColorPreset.blue,
                                     ),
                                   ),
                             );
                           },
+                          icon: const Icon(Icons.restart_alt),
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        if (isAndroid)
+                          Tooltip(
+                            message: l10n.dynamicColorSubtitle,
+                            child: _ThemeColorCard(
+                              selected: appSettings.useDynamicColor,
+                              scheme: Theme.of(context).colorScheme,
+                              semanticLabel: l10n.dynamicColor,
+                              trailingIcon: const Icon(
+                                Icons.colorize,
+                                size: 18,
+                              ),
+                              onTap: () {
+                                unawaited(
+                                  ref
+                                      .read(appSettingsProvider.notifier)
+                                      .setUseDynamicColor(true),
+                                );
+                              },
+                            ),
+                          ),
+                        for (final p in SeedColorPreset.values)
+                          Tooltip(
+                            message: seedPresetLabel(p),
+                            child: _ThemeColorCard(
+                              selected:
+                                  !appSettings.useDynamicColor &&
+                                  appSettings.seedColorPreset == p,
+                              scheme: ColorScheme.fromSeed(
+                                seedColor: p.seedColor,
+                                brightness: currentBrightness,
+                              ),
+                              semanticLabel: seedPresetLabel(p),
+                              onTap: () {
+                                unawaited(
+                                  ref
+                                      .read(appSettingsProvider.notifier)
+                                      .save(
+                                        appSettings.copyWith(
+                                          useDynamicColor: false,
+                                          seedColorPreset: p,
+                                        ),
+                                      ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.seedColorPresetSubtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
+                    ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.seedColorPresetSubtitle,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Reader Settings (Font Size, etc.)
-                SectionHeader(title: l10n.readerSettings),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
+              ),
+            ],
+          ),
+        ),
+        SettingsSection(
+          title: l10n.readerSettings,
+          child: SettingsCard(
+            padding: EdgeInsets.zero,
+            child: SettingsTileGroup(
+              children: [
+                SettingsSwitchTile(
                   title: Text(l10n.autoMarkRead),
                   value: appSettings.autoMarkRead,
                   onChanged: (v) =>
@@ -276,103 +274,100 @@ class AppPreferencesTab extends ConsumerWidget {
                       .read(readerSettingsProvider.notifier)
                       .save(readerSettings.copyWith(horizontalPadding: v)),
                 ),
-                const SizedBox(height: 24),
-
-                // Cleanup
-                SectionHeader(title: l10n.storage),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(child: Text(l10n.clearImageCacheSubtitle)),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      OutlinedButton(
-                        onPressed: () async {
-                          await ref.read(cacheManagerProvider).emptyCache();
-                          await ref.read(imageMetaStoreProvider).clear();
-                          if (!context.mounted) return;
-                          context.showSnack(l10n.cacheCleared);
-                        },
-                        child: Text(l10n.clearImageCache),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.cleanupReadArticles,
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButton<int?>(
-                              value: appSettings.cleanupReadOlderThanDays,
-                              isExpanded: true,
-                              items: [
-                                DropdownMenuItem<int?>(
-                                  value: null,
-                                  child: Text(l10n.off),
-                                ),
-                                for (final d in const [7, 30, 90, 180])
-                                  DropdownMenuItem<int?>(
-                                    value: d,
-                                    child: Text(l10n.days(d)),
-                                  ),
-                              ],
-                              onChanged: (v) => ref
-                                  .read(appSettingsProvider.notifier)
-                                  .setCleanupReadOlderThanDays(v),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          OutlinedButton(
-                            onPressed:
-                                appSettings.cleanupReadOlderThanDays == null
-                                ? null
-                                : () async {
-                                    final days =
-                                        appSettings.cleanupReadOlderThanDays!;
-                                    final cutoff = DateTime.now()
-                                        .toUtc()
-                                        .subtract(Duration(days: days));
-                                    final n = await ref
-                                        .read(articleRepositoryProvider)
-                                        .deleteReadUnstarredOlderThan(cutoff);
-                                    if (!context.mounted) return;
-                                    context.showSnack(l10n.cleanedArticles(n));
-                                  },
-                            child: Text(l10n.cleanupNow),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),
         ),
-      ),
+        SettingsSection(
+          title: l10n.storage,
+          bottomSpacing: 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.clearImageCacheSubtitle,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () async {
+                        await ref.read(cacheManagerProvider).emptyCache();
+                        await ref.read(imageMetaStoreProvider).clear();
+                        if (!context.mounted) return;
+                        context.showSnack(l10n.cacheCleared);
+                      },
+                      child: Text(l10n.clearImageCache),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.cleanupReadArticles,
+                      style: theme.textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(minWidth: 240),
+                          child: DropdownButton<int?>(
+                            value: appSettings.cleanupReadOlderThanDays,
+                            isExpanded: true,
+                            items: [
+                              DropdownMenuItem<int?>(
+                                value: null,
+                                child: Text(l10n.off),
+                              ),
+                              for (final d in const [7, 30, 90, 180])
+                                DropdownMenuItem<int?>(
+                                  value: d,
+                                  child: Text(l10n.days(d)),
+                                ),
+                            ],
+                            onChanged: (v) => ref
+                                .read(appSettingsProvider.notifier)
+                                .setCleanupReadOlderThanDays(v),
+                          ),
+                        ),
+                        OutlinedButton(
+                          onPressed:
+                              appSettings.cleanupReadOlderThanDays == null
+                              ? null
+                              : () async {
+                                  final days =
+                                      appSettings.cleanupReadOlderThanDays!;
+                                  final cutoff = DateTime.now()
+                                      .toUtc()
+                                      .subtract(Duration(days: days));
+                                  final n = await ref
+                                      .read(articleRepositoryProvider)
+                                      .deleteReadUnstarredOlderThan(cutoff);
+                                  if (!context.mounted) return;
+                                  context.showSnack(l10n.cleanedArticles(n));
+                                },
+                          child: Text(l10n.cleanupNow),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

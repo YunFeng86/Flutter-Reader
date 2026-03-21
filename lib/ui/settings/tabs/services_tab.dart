@@ -10,7 +10,6 @@ import '../../../providers/repository_providers.dart';
 import '../../../providers/service_providers.dart';
 import '../../../services/accounts/account.dart';
 import '../../../services/settings/app_settings.dart';
-import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../../dialogs/add_account_dialogs.dart';
 import '../widgets/section_header.dart';
@@ -159,248 +158,217 @@ class ServicesTab extends ConsumerWidget {
       }
     }
 
-    return SingleChildScrollView(
-      child: Align(
-        alignment: Alignment.topCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+    return SettingsPageBody(
+      children: [
+        if (showPageTitle) ...[
+          SectionHeader(title: l10n.services),
+          const SizedBox(height: 8),
+        ],
+        SettingsSection(
+          title: l10n.account,
+          child: SettingsCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (showPageTitle) SectionHeader(title: l10n.services),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        l10n.account,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: activeAccount.id,
-                                isExpanded: true,
-                                items: (accounts?.accounts ?? const [])
-                                    .map(
-                                      (a) => DropdownMenuItem<String>(
-                                        value: a.id,
-                                        child: Text(
-                                          '${a.name} (${a.type.wire})',
-                                        ),
-                                      ),
-                                    )
-                                    .toList(growable: false),
-                                onChanged: (v) {
-                                  if (v == null) return;
-                                  unawaited(
-                                    ref
-                                        .read(
-                                          accountsControllerProvider.notifier,
-                                        )
-                                        .setActive(v),
-                                  );
-                                },
-                              ),
-                            ),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: activeAccount.id,
+                    isExpanded: true,
+                    items: (accounts?.accounts ?? const [])
+                        .map(
+                          (a) => DropdownMenuItem<String>(
+                            value: a.id,
+                            child: Text('${a.name} (${a.type.wire})'),
                           ),
-                          const SizedBox(width: 8),
-                          OutlinedButton.icon(
-                            onPressed: addAccount,
-                            icon: const Icon(Icons.add),
-                            label: Text(l10n.add),
-                          ),
-                          const SizedBox(width: 4),
-                          IconButton(
-                            tooltip: l10n.more,
-                            onPressed: () async {
-                              await showDialog<void>(
-                                context: context,
-                                useRootNavigator: true,
-                                builder: (context) =>
-                                    const AccountManagerDialog(),
-                              );
-                            },
-                            icon: const Icon(Icons.manage_accounts_outlined),
-                          ),
-                        ],
-                      ),
-                    ],
+                        )
+                        .toList(growable: false),
+                    onChanged: (v) {
+                      if (v == null) return;
+                      unawaited(
+                        ref
+                            .read(accountsControllerProvider.notifier)
+                            .setActive(v),
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.autoRefreshSubtitle,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<int?>(
-                          value: interval,
-                          isExpanded: true,
-                          items: [
-                            DropdownMenuItem<int?>(
-                              value: null,
-                              child: Text(l10n.off),
-                            ),
-                            for (final m in const [5, 15, 30, 60])
-                              DropdownMenuItem<int?>(
-                                value: m,
-                                child: Text(l10n.everyMinutes(m)),
-                              ),
-                          ],
-                          onChanged: (v) => ref
-                              .read(appSettingsProvider.notifier)
-                              .setAutoRefreshMinutes(v),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.refreshConcurrency,
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: appSettings.autoRefreshConcurrency,
-                          isExpanded: true,
-                          items: [
-                            for (final c in [1, 2, 4, 6])
-                              DropdownMenuItem(
-                                value: c,
-                                child: Text(c.toString()),
-                              ),
-                          ],
-                          onChanged: (v) {
-                            if (v == null) return;
-                            unawaited(
-                              ref
-                                  .read(appSettingsProvider.notifier)
-                                  .setAutoRefreshConcurrency(v),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: refreshNow,
-                        icon: const Icon(Icons.refresh),
-                        label: Text(l10n.refreshAll),
-                      ),
-                    ],
-                  ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: addAccount,
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.add),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        await showDialog<void>(
+                          context: context,
+                          useRootNavigator: true,
+                          builder: (context) => const AccountManagerDialog(),
+                        );
+                      },
+                      icon: const Icon(Icons.manage_accounts_outlined),
+                      label: Text(l10n.more),
+                    ),
+                  ],
                 ),
-                if (activeAccount.type == AccountType.miniflux) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.minifluxStrategy,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.minifluxStrategySubtitle,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.minifluxEntriesLimit,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton<int>(
-                            value: appSettings.minifluxEntriesLimit,
-                            isExpanded: true,
-                            items: [
-                              for (final v in const [100, 200, 400, 800, 1200])
-                                DropdownMenuItem(value: v, child: Text('$v')),
-                              DropdownMenuItem(
-                                value: 0,
-                                child: Text(l10n.unlimited),
-                              ),
-                            ],
-                            onChanged: (v) {
-                              if (v == null) return;
-                              unawaited(
-                                ref
-                                    .read(appSettingsProvider.notifier)
-                                    .setMinifluxEntriesLimit(v),
-                              );
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          l10n.minifluxWebFetchMode,
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.minifluxWebFetchModeSubtitle,
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: 8),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton<MinifluxWebFetchMode>(
-                            value: appSettings.minifluxWebFetchMode,
-                            isExpanded: true,
-                            items: [
-                              DropdownMenuItem(
-                                value: MinifluxWebFetchMode.clientReadability,
-                                child: Text(l10n.minifluxWebFetchModeClient),
-                              ),
-                              DropdownMenuItem(
-                                value: MinifluxWebFetchMode.serverFetchContent,
-                                child: Text(l10n.minifluxWebFetchModeServer),
-                              ),
-                            ],
-                            onChanged: (v) {
-                              if (v == null) return;
-                              unawaited(
-                                ref
-                                    .read(appSettingsProvider.notifier)
-                                    .setMinifluxWebFetchMode(v),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
         ),
-      ),
+        SettingsSection(
+          title: l10n.refreshAll,
+          description: l10n.autoRefreshSubtitle,
+          child: SettingsCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.autoRefreshSubtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<int?>(
+                    value: interval,
+                    isExpanded: true,
+                    items: [
+                      DropdownMenuItem<int?>(
+                        value: null,
+                        child: Text(l10n.off),
+                      ),
+                      for (final m in const [5, 15, 30, 60])
+                        DropdownMenuItem<int?>(
+                          value: m,
+                          child: Text(l10n.everyMinutes(m)),
+                        ),
+                    ],
+                    onChanged: (v) => ref
+                        .read(appSettingsProvider.notifier)
+                        .setAutoRefreshMinutes(v),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.refreshConcurrency,
+                  style: theme.textTheme.titleSmall,
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<int>(
+                    value: appSettings.autoRefreshConcurrency,
+                    isExpanded: true,
+                    items: [
+                      for (final c in [1, 2, 4, 6])
+                        DropdownMenuItem(value: c, child: Text(c.toString())),
+                    ],
+                    onChanged: (v) {
+                      if (v == null) return;
+                      unawaited(
+                        ref
+                            .read(appSettingsProvider.notifier)
+                            .setAutoRefreshConcurrency(v),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: refreshNow,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(l10n.refreshAll),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (activeAccount.type == AccountType.miniflux)
+          SettingsSection(
+            title: l10n.minifluxStrategy,
+            description: l10n.minifluxStrategySubtitle,
+            bottomSpacing: 0,
+            child: SettingsCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.minifluxStrategySubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.minifluxEntriesLimit,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<int>(
+                      value: appSettings.minifluxEntriesLimit,
+                      isExpanded: true,
+                      items: [
+                        for (final v in const [100, 200, 400, 800, 1200])
+                          DropdownMenuItem(value: v, child: Text('$v')),
+                        DropdownMenuItem(value: 0, child: Text(l10n.unlimited)),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        unawaited(
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .setMinifluxEntriesLimit(v),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    l10n.minifluxWebFetchMode,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.minifluxWebFetchModeSubtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonHideUnderline(
+                    child: DropdownButton<MinifluxWebFetchMode>(
+                      value: appSettings.minifluxWebFetchMode,
+                      isExpanded: true,
+                      items: [
+                        DropdownMenuItem(
+                          value: MinifluxWebFetchMode.clientReadability,
+                          child: Text(l10n.minifluxWebFetchModeClient),
+                        ),
+                        DropdownMenuItem(
+                          value: MinifluxWebFetchMode.serverFetchContent,
+                          child: Text(l10n.minifluxWebFetchModeServer),
+                        ),
+                      ],
+                      onChanged: (v) {
+                        if (v == null) return;
+                        unawaited(
+                          ref
+                              .read(appSettingsProvider.notifier)
+                              .setMinifluxWebFetchMode(v),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

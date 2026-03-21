@@ -9,24 +9,20 @@ import '../models/category.dart';
 import '../models/feed.dart';
 import '../providers/account_providers.dart';
 import '../providers/query_providers.dart';
-import '../providers/repository_providers.dart';
-import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../providers/sync_status_providers.dart';
 import '../services/accounts/account.dart';
 import '../services/sync/sync_status_reporter.dart';
-import '../theme/app_typography.dart';
 import '../theme/fleur_theme_extensions.dart';
-import '../ui/actions/subscription_actions.dart';
 import '../ui/layout_spec.dart';
 import '../ui/motion.dart';
 import '../ui/global_nav.dart';
-import '../utils/context_extensions.dart';
+import '../ui/sidebar/sidebar_management_actions.dart';
+import '../ui/sidebar/sidebar_selection_actions.dart';
+import '../ui/sidebar/sidebar_tree.dart';
 import '../utils/platform.dart';
-import '../utils/tag_colors.dart';
 import 'account_avatar.dart';
 import 'account_manager_dialog.dart';
-import 'favicon_circle.dart';
 import 'overflow_marquee.dart';
 
 class Sidebar extends ConsumerStatefulWidget {
@@ -83,6 +79,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
     return Navigator.of(context);
   }
 
+  SidebarSelectionActions get _selectionActions => SidebarSelectionActions(
+    ref: ref,
+    onSelectFeed: widget.onSelectFeed,
+    closeSidebar: _closeDrawerIfDesktopDrawer,
+  );
+
+  SidebarManagementActions get _managementActions => SidebarManagementActions(
+    context: context,
+    ref: ref,
+    selectionActions: _selectionActions,
+    navigator: _navigator,
+    showDialogRoute: _showDialog,
+    router: widget.router,
+  );
+
   Future<T?> _showDialog<T>({required WidgetBuilder builder}) {
     // Manually push a DialogRoute on the correct navigator.
     // We pass `context` (Sidebar's context) to DialogRoute so it inherits correct
@@ -116,7 +127,6 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final theme = Theme.of(context);
     final surfaces = theme.fleurSurface;
     // On desktop we sometimes show the sidebar inside a Scaffold drawer that is
@@ -134,6 +144,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final navMode = LayoutSpec.fromContext(context).globalNavMode;
     final showAccountFooter = navMode == GlobalNavMode.bottom;
     final syncStatus = ref.watch(syncStatusControllerProvider);
+    final selectionActions = _selectionActions;
+    final managementActions = _managementActions;
 
     final starredOnly = ref.watch(starredOnlyProvider);
     final readLaterOnly = ref.watch(readLaterOnlyProvider);
@@ -143,264 +155,39 @@ class _SidebarState extends ConsumerState<Sidebar> {
       color: surfaces.sidebar,
       child: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            child: Row(
-              children: [
-                if (showDrawerClose) ...[
-                  IconButton(
-                    tooltip: MaterialLocalizations.of(
-                      context,
-                    ).backButtonTooltip,
-                    onPressed: () {
-                      _closeDrawerIfDesktopDrawer();
-                    },
-                    icon: const Icon(Icons.arrow_back),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: l10n.search,
-                      prefixIcon: const Icon(Icons.search, size: 20),
-                    ),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
+          SidebarSearchField(
+            controller: _searchController,
+            showDrawerClose: showDrawerClose,
+            onCloseDrawer: _closeDrawerIfDesktopDrawer,
           ),
           Expanded(
-            child: feeds.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text(l10n.errorMessage(e.toString()))),
-              data: (feedItems) {
-                // Filter feeds by search text
-                final filteredFeeds = _searchText.isEmpty
-                    ? feedItems
-                    : feedItems.where((f) {
-                        final title = (f.userTitle ?? f.title ?? '')
-                            .toLowerCase();
-                        final url = f.url.toLowerCase();
-                        return title.contains(_searchText) ||
-                            url.contains(_searchText);
-                      }).toList();
-
-                return categories.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) =>
-                      Center(child: Text(l10n.errorMessage(e.toString()))),
-                  data: (cats) {
-                    final byCat = <int?, List<Feed>>{};
-                    for (final f in filteredFeeds) {
-                      byCat.putIfAbsent(f.categoryId, () => []).add(f);
-                    }
-
-                    final feedUnreadCounts = allUnreadCounts.value;
-                    final unreadByCategoryId = <int, int>{};
-                    if (feedUnreadCounts != null) {
-                      // Aggregate category unread counts from per-feed counts to avoid
-                      // spinning up one DB watcher per category.
-                      for (final f in feedItems) {
-                        final cid = f.categoryId;
-                        if (cid == null) continue;
-                        final c = feedUnreadCounts[f.id] ?? 0;
-                        if (c <= 0) continue;
-                        unreadByCategoryId[cid] =
-                            (unreadByCategoryId[cid] ?? 0) + c;
-                      }
-                    }
-
-                    final children = <Widget>[];
-
-                    // All Articles Tile
-                    Widget allTile = allUnreadCounts.when(
-                      loading: () => _SidebarItem(
-                        selected:
-                            !starredOnly &&
-                            !readLaterOnly &&
-                            selectedFeedId == null &&
-                            selectedCategoryId == null &&
-                            selectedTagId == null,
-                        icon: Icons.all_inbox,
-                        title: l10n.all,
-                        onTap: () => _selectAll(ref),
-                      ),
-                      error: (e, _) => _SidebarItem(
-                        key: const ValueKey('all_inbox'),
-                        selected:
-                            !starredOnly &&
-                            !readLaterOnly &&
-                            selectedFeedId == null &&
-                            selectedCategoryId == null &&
-                            selectedTagId == null,
-                        icon: Icons.all_inbox,
-                        title: l10n.all,
-                        onTap: () => _selectAll(ref),
-                      ),
-                      data: (counts) => _SidebarItem(
-                        selected:
-                            !starredOnly &&
-                            !readLaterOnly &&
-                            selectedFeedId == null &&
-                            selectedCategoryId == null &&
-                            selectedTagId == null,
-                        icon: Icons.all_inbox,
-                        title: l10n.all,
-                        count: counts[null] ?? 0,
-                        onTap: () => _selectAll(ref),
-                      ),
-                    );
-                    children.add(allTile);
-                    // Tags
-                    children.add(
-                      tags.when(
-                        data: (tagList) {
-                          if (tagList.isEmpty) return const SizedBox.shrink();
-                          return ExpansionTile(
-                            leading: const Icon(Icons.label_outline),
-                            title: Text(l10n.tags),
-                            initiallyExpanded: selectedTagId != null,
-                            children: tagList.map((tag) {
-                              return _SidebarItem(
-                                selected: selectedTagId == tag.id,
-                                icon: Icons.label,
-                                title: tag.name,
-                                iconColor: resolveTagColor(tag.name, tag.color),
-                                onTap: () => _selectTag(ref, tag.id),
-                                indent: 16,
-                              );
-                            }).toList(),
-                          );
-                        },
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, _) => const SizedBox.shrink(),
-                      ),
-                    );
-
-                    // Subscriptions Header with Actions
-                    children.add(
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                l10n.subscriptions,
-                                style: Theme.of(context).textTheme.titleSmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                      fontWeight: AppTypography.platformWeight(
-                                        FontWeight.w700,
-                                      ),
-                                    ),
-                              ),
-                            ),
-                            PopupMenuButton<_SidebarMenu>(
-                              icon: const Icon(Icons.more_horiz, size: 20),
-                              tooltip: l10n.more,
-                              padding: EdgeInsets.zero,
-                              onSelected: (v) => _onMenu(context, ref, v),
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  value: _SidebarMenu.settings,
-                                  child: Text(l10n.settings),
-                                ),
-                                PopupMenuItem(
-                                  value: _SidebarMenu.refreshAll,
-                                  child: Text(l10n.refreshAll),
-                                ),
-                                PopupMenuItem(
-                                  value: _SidebarMenu.importOpml,
-                                  child: Text(l10n.importOpml),
-                                ),
-                                PopupMenuItem(
-                                  value: _SidebarMenu.exportOpml,
-                                  child: Text(l10n.exportOpml),
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: l10n.addSubscription,
-                              onPressed: () => _showAddFeedDialog(context, ref),
-                              icon: const Icon(Icons.add),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              iconSize: 20,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              tooltip: l10n.newCategory,
-                              onPressed: () =>
-                                  _showAddCategoryDialog(context, ref),
-                              icon: const Icon(
-                                Icons.create_new_folder_outlined,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-
-                    for (final c in cats) {
-                      // Only show category if it has feeds matching search (or if no search)
-                      final catFeeds = byCat[c.id] ?? const <Feed>[];
-                      if (_searchText.isNotEmpty && catFeeds.isEmpty) continue;
-
-                      children.add(
-                        _categoryTile(
-                          context: context,
-                          ref: ref,
-                          category: c,
-                          feeds: catFeeds,
-                          selectedFeedId: selectedFeedId,
-                          selectedCategoryId: selectedCategoryId,
-                          unreadCount: unreadByCategoryId[c.id] ?? 0,
-                          unreadCounts: allUnreadCounts.value,
-                        ),
-                      );
-                    }
-
-                    // Uncategorized group.
-                    final uncategorizedFeeds = byCat[null] ?? const <Feed>[];
-                    if (_searchText.isEmpty || uncategorizedFeeds.isNotEmpty) {
-                      final counts = allUnreadCounts.value;
-                      for (final f in uncategorizedFeeds) {
-                        children.add(
-                          _feedTile(
-                            context,
-                            ref,
-                            f,
-                            selectedFeedId,
-                            counts?[f.id],
-                          ),
-                        );
-                      }
-                    }
-
-                    return Scrollbar(
-                      controller: _scrollController,
-                      thumbVisibility: isDesktop,
-                      interactive: true,
-                      child: ListView(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        children: children,
-                      ),
-                    );
-                  },
-                );
+            child: SidebarNavigationTree(
+              scrollController: _scrollController,
+              searchText: _searchText,
+              feeds: feeds,
+              categories: categories,
+              tags: tags,
+              allUnreadCounts: allUnreadCounts,
+              selectedFeedId: selectedFeedId,
+              selectedCategoryId: selectedCategoryId,
+              selectedTagId: selectedTagId,
+              starredOnly: starredOnly,
+              readLaterOnly: readLaterOnly,
+              expandedCategoryId: _expandedCategoryId,
+              onExpandedCategoryChanged: (categoryId) {
+                setState(() => _expandedCategoryId = categoryId);
               },
+              selectionActions: selectionActions,
+              managementActions: managementActions,
+              onAddFeed: managementActions.addFeed,
+              onAddCategory: () async {
+                final id = await managementActions.addCategory();
+                if (id == null) return;
+                setState(() => _expandedCategoryId = id);
+              },
+              onShowCategoryMenu: (category) =>
+                  _showCategoryMenu(category, managementActions),
+              onShowFeedMenu: (feed) => _showFeedMenu(feed, managementActions),
             ),
           ),
           if (showAccountFooter)
@@ -420,347 +207,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
     );
   }
 
-  Widget _categoryTile({
-    required BuildContext context,
-    required WidgetRef ref,
-    required Category category,
-    required List<Feed> feeds,
-    required int? selectedFeedId,
-    required int? selectedCategoryId,
-    required int unreadCount,
-    Map<int?, int>? unreadCounts,
-  }) {
-    final l10n = AppLocalizations.of(context)!;
-    final starredOnly = ref.watch(starredOnlyProvider);
-    final selected =
-        !starredOnly &&
-        selectedFeedId == null &&
-        selectedCategoryId == category.id;
-    final expanded = _expandedCategoryId == category.id;
-
-    return Column(
-      children: [
-        ListTile(
-          selected: selected,
-          leading: const Icon(Icons.folder_outlined),
-          title: Text(category.name),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _UnreadBadge(unreadCount),
-              if (isDesktop)
-                MenuAnchor(
-                  menuChildren: [
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.edit_outlined),
-                      onPressed: () => _renameCategory(context, ref, category),
-                      child: Text(l10n.rename),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.delete_outline),
-                      onPressed: () =>
-                          _confirmDeleteCategory(context, ref, category.id),
-                      child: Text(l10n.deleteCategory),
-                    ),
-                  ],
-                  builder: (context, controller, child) {
-                    return IconButton(
-                      tooltip: l10n.more,
-                      onPressed: () {
-                        controller.isOpen
-                            ? controller.close()
-                            : controller.open();
-                      },
-                      icon: const Icon(Icons.more_vert),
-                    );
-                  },
-                ),
-              IconButton(
-                tooltip: expanded ? l10n.collapse : l10n.expand,
-                onPressed: () {
-                  setState(() {
-                    _expandedCategoryId = expanded ? null : category.id;
-                  });
-                },
-                icon: Icon(expanded ? Icons.expand_less : Icons.expand_more),
-              ),
-            ],
-          ),
-          onTap: () => _selectCategory(ref, category.id),
-          onLongPress: isDesktop
-              ? null
-              : () => _showCategoryMenu(context, ref, category),
-        ),
-        if (expanded)
-          ...feeds.map((f) {
-            return _feedTile(
-              context,
-              ref,
-              f,
-              selectedFeedId,
-              unreadCounts?[f.id],
-              indent: 16,
-              key: ValueKey('feed_${f.id}'),
-            );
-          }),
-      ],
-    );
-  }
-
-  Widget _feedTile(
-    BuildContext context,
-    WidgetRef ref,
-    Feed f,
-    int? selectedFeedId,
-    int? unreadCount, {
-    double indent = 0,
-    Key? key,
-  }) {
-    final theme = Theme.of(context);
-    final l10n = AppLocalizations.of(context)!;
-    final displayTitle = f.userTitle?.trim().isNotEmpty == true
-        ? f.userTitle!
-        : (f.title?.trim().isNotEmpty == true ? f.title! : f.url);
-    final siteUri = Uri.tryParse(
-      (f.siteUrl?.trim().isNotEmpty == true) ? f.siteUrl!.trim() : f.url,
-    );
-    return ListTile(
-      key: key,
-      selected: selectedFeedId == f.id,
-      contentPadding: EdgeInsets.only(left: 16 + indent, right: 8),
-      leading: FaviconCircle(
-        siteUri: siteUri,
-        diameter: 28,
-        avatarSize: 18,
-        fallbackIcon: Icons.rss_feed,
-        fallbackColor: theme.colorScheme.onSurfaceVariant,
-      ),
-      title: Text(displayTitle),
-      subtitle:
-          (f.userTitle?.trim().isNotEmpty == true ||
-              f.title?.trim().isNotEmpty == true)
-          ? Text(f.url, maxLines: 1, overflow: TextOverflow.ellipsis)
-          : null,
-      trailing: isDesktop
-          ? Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (unreadCount != null) _UnreadBadge(unreadCount),
-                MenuAnchor(
-                  menuChildren: [
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.edit_outlined),
-                      onPressed: () => _editFeedTitle(context, ref, f),
-                      child: Text(l10n.edit),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.refresh),
-                      onPressed: () async {
-                        final r = await ref
-                            .read(syncServiceProvider)
-                            .refreshFeedSafe(f.id);
-                        if (!context.mounted) return;
-                        context.showSnack(
-                          r.ok
-                              ? l10n.refreshed
-                              : l10n.errorMessage(r.error.toString()),
-                        );
-                      },
-                      child: Text(l10n.refresh),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: const Icon(
-                        Icons.download_for_offline_outlined,
-                      ),
-                      onPressed: () async {
-                        final count = await ref
-                            .read(syncServiceProvider)
-                            .offlineCacheFeed(f.id);
-                        if (!context.mounted) return;
-                        context.showSnack(l10n.cachingArticles(count));
-                      },
-                      child: Text(l10n.makeAvailableOffline),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.drive_file_move_outline),
-                      onPressed: () => _moveFeedToCategory(context, ref, f),
-                      child: Text(l10n.moveToCategory),
-                    ),
-                    MenuItemButton(
-                      leadingIcon: const Icon(Icons.delete_outline),
-                      onPressed: () => _confirmDelete(context, ref, f.id),
-                      child: Text(l10n.deleteSubscription),
-                    ),
-                  ],
-                  builder: (context, controller, child) {
-                    return IconButton(
-                      tooltip: l10n.more,
-                      onPressed: () {
-                        controller.isOpen
-                            ? controller.close()
-                            : controller.open();
-                      },
-                      icon: const Icon(Icons.more_vert),
-                    );
-                  },
-                ),
-              ],
-            )
-          : (unreadCount == null ? null : _UnreadBadge(unreadCount)),
-      onTap: () => _select(ref, f.id),
-      onLongPress: isDesktop ? null : () => _showFeedMenu(context, ref, f),
-    );
-  }
-
-  void _select(WidgetRef ref, int? id) {
-    if (ref.read(selectedFeedIdProvider) == id) {
-      _selectAll(ref);
-      return;
-    }
-    ref.read(starredOnlyProvider.notifier).state = false;
-    ref.read(readLaterOnlyProvider.notifier).state = false;
-    ref.read(selectedFeedIdProvider.notifier).state = id;
-    ref.read(selectedCategoryIdProvider.notifier).state = null;
-    ref.read(selectedTagIdProvider.notifier).state = null;
-    ref.read(articleSearchQueryProvider.notifier).state = '';
-    widget.onSelectFeed(id);
-    _closeDrawerIfDesktopDrawer();
-  }
-
-  void _selectAll(WidgetRef ref) {
-    ref.read(starredOnlyProvider.notifier).state = false;
-    ref.read(readLaterOnlyProvider.notifier).state = false;
-    ref.read(selectedFeedIdProvider.notifier).state = null;
-    ref.read(selectedCategoryIdProvider.notifier).state = null;
-    ref.read(selectedTagIdProvider.notifier).state = null;
-    ref.read(articleSearchQueryProvider.notifier).state = '';
-    widget.onSelectFeed(null);
-    _closeDrawerIfDesktopDrawer();
-  }
-
-  void _selectCategory(WidgetRef ref, int categoryId) {
-    if (ref.read(selectedCategoryIdProvider) == categoryId) {
-      _selectAll(ref);
-      return;
-    }
-    ref.read(starredOnlyProvider.notifier).state = false;
-    ref.read(readLaterOnlyProvider.notifier).state = false;
-    ref.read(selectedFeedIdProvider.notifier).state = null;
-    ref.read(selectedCategoryIdProvider.notifier).state = categoryId;
-    ref.read(selectedTagIdProvider.notifier).state = null;
-    ref.read(articleSearchQueryProvider.notifier).state = '';
-    widget.onSelectFeed(null);
-    _closeDrawerIfDesktopDrawer();
-  }
-
-  void _selectTag(WidgetRef ref, int tagId) {
-    if (ref.read(selectedTagIdProvider) == tagId) {
-      _selectAll(ref);
-      return;
-    }
-    ref.read(starredOnlyProvider.notifier).state = false;
-    ref.read(readLaterOnlyProvider.notifier).state = false;
-    ref.read(selectedFeedIdProvider.notifier).state = null;
-    ref.read(selectedCategoryIdProvider.notifier).state = null;
-    ref.read(selectedTagIdProvider.notifier).state = tagId;
-    ref.read(articleSearchQueryProvider.notifier).state = '';
-    widget.onSelectFeed(null);
-    _closeDrawerIfDesktopDrawer();
-  }
-
-  Future<void> _confirmDelete(
-    BuildContext context,
-    WidgetRef ref,
-    int feedId,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await _showDialog<bool>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.deleteSubscriptionConfirmTitle),
-          content: Text(l10n.deleteSubscriptionConfirmContent),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.delete),
-            ),
-          ],
-        );
-      },
-    );
-    if (ok != true) return;
-    await ref.read(feedRepositoryProvider).delete(feedId);
-    if (!context.mounted) return;
-    if (ref.read(selectedFeedIdProvider) == feedId) {
-      _selectAll(ref);
-    }
-    context.showSnack(l10n.deleted);
-  }
-
-  Future<void> _confirmDeleteCategory(
-    BuildContext context,
-    WidgetRef ref,
-    int categoryId,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final ok = await _showDialog<bool>(
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.deleteCategoryConfirmTitle),
-          content: Text(l10n.deleteCategoryConfirmContent),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(l10n.cancel),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(l10n.delete),
-            ),
-          ],
-        );
-      },
-    );
-    if (ok != true) return;
-    await ref.read(categoryRepositoryProvider).delete(categoryId);
-    if (!context.mounted) return;
-    if (ref.read(selectedCategoryIdProvider) == categoryId) {
-      _selectAll(ref);
-    }
-    context.showSnack(l10n.categoryDeleted);
-  }
-
-  Future<void> _showAddFeedDialog(BuildContext context, WidgetRef ref) async {
-    final id = await SubscriptionActions.addFeed(
-      context,
-      ref,
-      navigator: _navigator,
-    );
-    if (id == null) return;
-
-    SubscriptionActions.selectFeed(ref, id);
-    widget.onSelectFeed(id);
-    if (!context.mounted) return;
-    _closeDrawerIfDesktopDrawer();
-  }
-
-  Future<void> _showAddCategoryDialog(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
-    final id = await SubscriptionActions.addCategory(context, ref);
-    if (id == null) return;
-    setState(() => _expandedCategoryId = id);
-  }
-
   Future<void> _showCategoryMenu(
-    BuildContext context,
-    WidgetRef ref,
     Category c,
+    SidebarManagementActions managementActions,
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final v = await _showModalBottomSheet<_CategoryAction>(
@@ -786,10 +235,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
     if (!context.mounted) return;
     switch (v) {
       case _CategoryAction.rename:
-        await _renameCategory(context, ref, c);
+        await managementActions.renameCategory(c);
         return;
       case _CategoryAction.delete:
-        await _confirmDeleteCategory(context, ref, c.id);
+        await managementActions.deleteCategory(c);
         return;
       case null:
         return;
@@ -797,9 +246,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
   }
 
   Future<void> _showFeedMenu(
-    BuildContext context,
-    WidgetRef ref,
     Feed f,
+    SidebarManagementActions managementActions,
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final action = await _showModalBottomSheet<_FeedAction>(
@@ -842,274 +290,29 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
     switch (action) {
       case _FeedAction.edit:
-        await _editFeedTitle(context, ref, f);
+        await managementActions.editFeedTitle(f);
         return;
       case _FeedAction.refresh:
-        final r = await ref.read(syncServiceProvider).refreshFeedSafe(f.id);
-        if (!context.mounted) return;
-        context.showSnack(
-          r.ok ? l10n.refreshed : l10n.errorMessage(r.error.toString()),
-        );
+        await managementActions.refreshFeed(f);
         return;
       case _FeedAction.offlineCache:
-        final count = await ref
-            .read(syncServiceProvider)
-            .offlineCacheFeed(f.id);
-        if (!context.mounted) return;
-        context.showSnack(l10n.cachingArticles(count));
+        await managementActions.cacheFeedOffline(f);
         return;
       case _FeedAction.move:
-        await _moveFeedToCategory(context, ref, f);
+        await managementActions.moveFeedToCategory(f);
         return;
       case _FeedAction.delete:
-        await _confirmDelete(context, ref, f.id);
+        await managementActions.deleteFeed(f);
         return;
       case null:
         return;
     }
   }
-
-  Future<void> _renameCategory(
-    BuildContext context,
-    WidgetRef ref,
-    Category c,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: c.name);
-    try {
-      final next = await _showDialog<String?>(
-        builder: (context) {
-          return AlertDialog(
-            title: Text(l10n.rename),
-            content: TextField(
-              controller: controller,
-              decoration: InputDecoration(labelText: l10n.name),
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(null),
-                child: Text(l10n.cancel),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(controller.text),
-                child: Text(l10n.done),
-              ),
-            ],
-          );
-        },
-      );
-      if (next == null) return;
-      try {
-        await ref.read(categoryRepositoryProvider).rename(c.id, next);
-      } catch (e) {
-        if (!context.mounted) return;
-        final msg = e.toString().contains('already exists')
-            ? l10n.nameAlreadyExists
-            : e.toString();
-        context.showErrorMessage(l10n.errorMessage(msg));
-      }
-    } finally {
-      controller.dispose();
-    }
-  }
-
-  Future<void> _editFeedTitle(
-    BuildContext context,
-    WidgetRef ref,
-    Feed f,
-  ) async {
-    final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: f.userTitle ?? '');
-    try {
-      final next = await _showDialog<String?>(
-        builder: (context) {
-          return AlertDialog(
-            title: Text(l10n.edit),
-            content: TextField(
-              controller: controller,
-              decoration: InputDecoration(labelText: l10n.name),
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(null),
-                child: Text(l10n.cancel),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(''),
-                child: Text(l10n.delete),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(controller.text),
-                child: Text(l10n.done),
-              ),
-            ],
-          );
-        },
-      );
-      if (next == null) return;
-      await ref
-          .read(feedRepositoryProvider)
-          .setUserTitle(feedId: f.id, userTitle: next);
-    } finally {
-      controller.dispose();
-    }
-  }
-
-  Future<void> _moveFeedToCategory(
-    BuildContext context,
-    WidgetRef ref,
-    Feed f,
-  ) async {
-    final cats = await ref.read(categoryRepositoryProvider).getAll();
-    if (!context.mounted) return;
-    final selected = await _showDialog<int?>(
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        final picked = f.categoryId;
-        return SimpleDialog(
-          title: Text(l10n.moveToCategory),
-          children: [
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(context).pop(null),
-              child: Row(
-                children: [
-                  Icon(picked == null ? Icons.check : Icons.clear),
-                  const SizedBox(width: 8),
-                  Text(l10n.uncategorized),
-                ],
-              ),
-            ),
-            for (final c in cats)
-              SimpleDialogOption(
-                onPressed: () => Navigator.of(context).pop(c.id),
-                child: Row(
-                  children: [
-                    Icon(picked == c.id ? Icons.check : Icons.clear),
-                    const SizedBox(width: 8),
-                    Text(c.name),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
-    );
-    if (selected == f.categoryId) return;
-    await ref
-        .read(feedRepositoryProvider)
-        .setCategory(feedId: f.id, categoryId: selected);
-  }
-
-  Future<void> _onMenu(
-    BuildContext context,
-    WidgetRef ref,
-    _SidebarMenu v,
-  ) async {
-    switch (v) {
-      case _SidebarMenu.settings:
-        final router = widget.router ?? GoRouter.maybeOf(context);
-        if (router != null) {
-          await router.push('/settings');
-        }
-        return;
-      case _SidebarMenu.refreshAll:
-        await SubscriptionActions.refreshAll(context, ref);
-        return;
-      case _SidebarMenu.importOpml:
-        await _importOpml(context, ref);
-        return;
-      case _SidebarMenu.exportOpml:
-        await _exportOpml(context, ref);
-        return;
-    }
-  }
-
-  Future<void> _importOpml(BuildContext context, WidgetRef ref) async {
-    await SubscriptionActions.importOpml(context, ref);
-  }
-
-  Future<void> _exportOpml(BuildContext context, WidgetRef ref) async {
-    await SubscriptionActions.exportOpml(context, ref);
-  }
 }
-
-enum _SidebarMenu { settings, refreshAll, importOpml, exportOpml }
 
 enum _FeedAction { edit, refresh, offlineCache, move, delete }
 
 enum _CategoryAction { rename, delete }
-
-class _UnreadBadge extends StatelessWidget {
-  const _UnreadBadge(this.count);
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    if (count <= 0) return const SizedBox.shrink();
-    final theme = Theme.of(context);
-    final states = theme.fleurState;
-    return Badge(
-      label: Text('$count'),
-      backgroundColor: states.unreadAccent,
-      textColor: theme.colorScheme.onPrimary,
-    );
-  }
-}
-
-class _SidebarItem extends StatelessWidget {
-  const _SidebarItem({
-    super.key,
-    required this.selected,
-    required this.icon,
-    required this.title,
-    required this.onTap,
-    this.count,
-    this.iconColor,
-    this.indent = 0,
-  });
-
-  final bool selected;
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  final int? count;
-  final Color? iconColor;
-  final double indent;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final states = theme.fleurState;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ListTile(
-        selected: selected,
-        leading: Icon(
-          icon,
-          size: 20,
-          color: selected ? theme.colorScheme.primary : iconColor,
-        ),
-        title: Text(
-          title,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: AppTypography.platformWeight(
-              selected ? FontWeight.w700 : FontWeight.w600,
-            ),
-          ),
-        ),
-        trailing: count != null && count! > 0 ? _UnreadBadge(count!) : null,
-        onTap: onTap,
-        dense: true,
-        visualDensity: VisualDensity.compact,
-        contentPadding: EdgeInsets.only(left: 12 + indent, right: 12),
-        hoverColor: states.hoverTint,
-      ),
-    );
-  }
-}
 
 class _AccountFooter extends StatelessWidget {
   const _AccountFooter({

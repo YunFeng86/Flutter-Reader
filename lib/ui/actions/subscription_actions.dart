@@ -282,6 +282,17 @@ class SubscriptionActions {
     );
   }
 
+  static Future<void> cacheFeedOffline(
+    BuildContext context,
+    WidgetRef ref,
+    int feedId,
+  ) async {
+    final l10n = AppLocalizations.of(context)!;
+    final count = await ref.read(syncServiceProvider).offlineCacheFeed(feedId);
+    if (!context.mounted) return;
+    context.showSnack(l10n.cachingArticles(count));
+  }
+
   static Future<void> refreshAll(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context)!;
     final feeds = await ref.read(feedRepositoryProvider).getAll();

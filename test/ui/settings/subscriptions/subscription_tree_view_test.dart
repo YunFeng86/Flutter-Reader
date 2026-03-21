@@ -9,6 +9,7 @@ import 'package:fleur/models/feed.dart';
 import 'package:fleur/providers/query_providers.dart';
 import 'package:fleur/providers/subscription_settings_provider.dart';
 import 'package:fleur/ui/settings/subscriptions/subscription_tree_view.dart';
+import 'package:fleur/ui/settings/widgets/section_header.dart';
 
 void main() {
   testWidgets('SubscriptionTreeView starts expanded when category is selected', (
@@ -97,4 +98,48 @@ void main() {
       expect(find.text('Tech News'), findsNothing);
     },
   );
+
+  testWidgets('SubscriptionTreeView feed rows use shared settings primitives', (
+    tester,
+  ) async {
+    final category = Category()
+      ..id = 1
+      ..name = 'Tech';
+
+    final feed = Feed()
+      ..id = 101
+      ..url = 'http://tech.com/rss'
+      ..title = 'Tech News'
+      ..categoryId = 1;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          categoriesProvider.overrideWith((ref) => Stream.value([category])),
+          feedsProvider.overrideWith((ref) => Stream.value([feed])),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Consumer(
+            builder: (context, ref, _) {
+              unawaited(
+                Future.microtask(() {
+                  ref
+                      .read(subscriptionSelectionProvider.notifier)
+                      .selectCategory(1);
+                }),
+              );
+              return const Scaffold(body: SubscriptionTreeView());
+            },
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsTile), findsWidgets);
+    expect(find.byType(SettingsLeadingAvatar), findsAtLeastNWidgets(1));
+  });
 }

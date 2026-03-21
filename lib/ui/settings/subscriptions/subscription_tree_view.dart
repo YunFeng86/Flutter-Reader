@@ -7,6 +7,7 @@ import '../../../../models/feed.dart';
 import '../../../../providers/query_providers.dart';
 import '../../../../providers/subscription_settings_provider.dart';
 import '../../../../widgets/favicon_avatar.dart';
+import '../widgets/section_header.dart';
 
 class SubscriptionTreeView extends ConsumerWidget {
   const SubscriptionTreeView({super.key, this.showDetailButtons = false});
@@ -41,111 +42,83 @@ class SubscriptionTreeView extends ConsumerWidget {
 
             final uncategorized = byCat[null] ?? [];
 
-            return ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                // Categories (Expansion Tiles)
-                for (final category in categories) ...[
-                  _CategoryExpansionTile(
-                    category: category,
-                    feeds: byCat[category.id] ?? [],
-                    isSelected: selection.activeCategoryId == category.id,
-                    selectedFeedId: selection.selectedFeedId,
-                    showDetailButton: showDetailButtons,
-                    onCategoryTap: () {
-                      notifier.selectCategory(category.id);
-                    },
-                    onOpenCategorySettings: () {
-                      notifier.openCategorySettings(category.id);
-                    },
-                    onFeedTap: (feedId) {
-                      notifier.selectFeed(
-                        feedId,
-                        categoryScope: SubscriptionCategoryId(category.id),
-                      );
-                    },
-                    onOpenFeedSettings: (feedId) {
-                      notifier.selectFeed(
-                        feedId,
-                        categoryScope: SubscriptionCategoryId(category.id),
-                      );
-                    },
-                  ),
-                ],
-
-                // Uncategorized Header (if needed) or just list feeds?
-                // Usually "Uncategorized" acts like a folder in tree view
-                if (uncategorized.isNotEmpty) ...[
-                  // We can use a simplified ExpansionTile for Uncategorized or just list them.
-                  // Let's use an ExpansionTile labeled "Uncategorized" for consistency
-                  ExpansionTile(
-                    initiallyExpanded: true,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    title: Text(
-                      l10n.uncategorized,
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+            return Scrollbar(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                children: [
+                  for (final category in categories) ...[
+                    _CategoryExpansionTile(
+                      category: category,
+                      feeds: byCat[category.id] ?? [],
+                      isSelected: selection.activeCategoryId == category.id,
+                      selectedFeedId: selection.selectedFeedId,
+                      showDetailButton: showDetailButtons,
+                      onCategoryTap: () {
+                        notifier.selectCategory(category.id);
+                      },
+                      onOpenCategorySettings: () {
+                        notifier.openCategorySettings(category.id);
+                      },
+                      onFeedTap: (feedId) {
+                        notifier.selectFeed(
+                          feedId,
+                          categoryScope: SubscriptionCategoryId(category.id),
+                        );
+                      },
+                      onOpenFeedSettings: (feedId) {
+                        notifier.selectFeed(
+                          feedId,
+                          categoryScope: SubscriptionCategoryId(category.id),
+                        );
+                      },
                     ),
-                    subtitle: Text(
-                      '${uncategorized.length} ${l10n.subscriptions}',
-                      style: Theme.of(context).textTheme.bodySmall,
+                  ],
+                  if (uncategorized.isNotEmpty) ...[
+                    ExpansionTile(
+                      initiallyExpanded: true,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(l10n.uncategorized),
+                      subtitle: Text(
+                        '${uncategorized.length} ${l10n.subscriptions}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      leading: null,
+                      shape: const Border(),
+                      collapsedShape: const Border(),
+                      children: [
+                        for (final feed in uncategorized)
+                          SettingsTile(
+                            leading: _FeedLeadingAvatar(feed: feed),
+                            title: Text(
+                              feed.userTitle ?? feed.title ?? feed.url,
+                            ),
+                            selected: selection.selectedFeedId == feed.id,
+                            contentPadding: const EdgeInsets.only(
+                              left: 56,
+                              right: 16,
+                            ),
+                            onTap: () => notifier.selectFeed(
+                              feed.id,
+                              categoryScope:
+                                  const SubscriptionCategoryUncategorized(),
+                            ),
+                            trailing: showDetailButtons
+                                ? IconButton(
+                                    tooltip: l10n.settings,
+                                    icon: const Icon(Icons.chevron_right),
+                                    onPressed: () => notifier.selectFeed(
+                                      feed.id,
+                                      categoryScope:
+                                          const SubscriptionCategoryUncategorized(),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                      ],
                     ),
-                    leading: null,
-                    shape: const Border(),
-                    collapsedShape: const Border(),
-                    children: [
-                      for (final feed in uncategorized)
-                        ListTile(
-                          leading: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHigh,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: FaviconAvatar(
-                              siteUri: Uri.tryParse(
-                                (feed.siteUrl?.trim().isNotEmpty == true)
-                                    ? feed.siteUrl!.trim()
-                                    : feed.url,
-                              ),
-                              size: 16,
-                              fallbackIcon: Icons.rss_feed,
-                              fallbackColor: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          title: Text(feed.userTitle ?? feed.title ?? feed.url),
-                          selected: selection.selectedFeedId == feed.id,
-                          contentPadding: const EdgeInsets.only(
-                            left: 56,
-                            right: 16,
-                          ),
-                          onTap: () => notifier.selectFeed(
-                            feed.id,
-                            categoryScope:
-                                const SubscriptionCategoryUncategorized(),
-                          ),
-                          trailing: showDetailButtons
-                              ? IconButton(
-                                  tooltip: l10n.settings,
-                                  icon: const Icon(Icons.chevron_right),
-                                  onPressed: () => notifier.selectFeed(
-                                    feed.id,
-                                    categoryScope:
-                                        const SubscriptionCategoryUncategorized(),
-                                  ),
-                                )
-                              : null,
-                          dense: true,
-                        ),
-                    ],
-                  ),
+                  ],
                 ],
-              ],
+              ),
             );
           },
         );
@@ -180,15 +153,11 @@ class _CategoryExpansionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     return ExpansionTile(
       key: PageStorageKey(category.id),
       initiallyExpanded: isSelected,
       controlAffinity: ListTileControlAffinity.leading,
-      title: Text(
-        category.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
+      title: Text(category.name),
       subtitle: Text(
         '${feeds.length} ${AppLocalizations.of(context)!.subscriptions}',
         style: Theme.of(context).textTheme.bodySmall,
@@ -210,26 +179,8 @@ class _CategoryExpansionTile extends StatelessWidget {
       },
       children: [
         for (final feed in feeds)
-          ListTile(
-            leading: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHigh,
-                shape: BoxShape.circle,
-              ),
-              alignment: Alignment.center,
-              child: FaviconAvatar(
-                siteUri: Uri.tryParse(
-                  (feed.siteUrl?.trim().isNotEmpty == true)
-                      ? feed.siteUrl!.trim()
-                      : feed.url,
-                ),
-                size: 16,
-                fallbackIcon: Icons.rss_feed,
-                fallbackColor: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+          SettingsTile(
+            leading: _FeedLeadingAvatar(feed: feed),
             title: Text(feed.userTitle ?? feed.title ?? feed.url),
             selected: selectedFeedId == feed.id,
             contentPadding: const EdgeInsets.only(left: 56, right: 16),
@@ -241,18 +192,40 @@ class _CategoryExpansionTile extends StatelessWidget {
                     onPressed: () => onOpenFeedSettings(feed.id),
                   )
                 : null,
-            dense: true,
           ),
         if (feeds.isEmpty)
-          ListTile(
+          SettingsTile(
             title: Text(
               AppLocalizations.of(context)!.notFound,
               style: TextStyle(color: Theme.of(context).disabledColor),
             ),
             contentPadding: const EdgeInsets.only(left: 56, right: 16),
-            dense: true,
           ),
       ],
+    );
+  }
+}
+
+class _FeedLeadingAvatar extends StatelessWidget {
+  const _FeedLeadingAvatar({required this.feed});
+
+  final Feed feed;
+
+  @override
+  Widget build(BuildContext context) {
+    final siteUri = Uri.tryParse(
+      (feed.siteUrl?.trim().isNotEmpty == true)
+          ? feed.siteUrl!.trim()
+          : feed.url,
+    );
+
+    return SettingsLeadingAvatar(
+      child: FaviconAvatar(
+        siteUri: siteUri,
+        size: 16,
+        fallbackIcon: Icons.rss_feed,
+        fallbackColor: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
     );
   }
 }

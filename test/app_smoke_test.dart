@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,11 +21,15 @@ import 'package:fleur/providers/service_providers.dart';
 import 'package:fleur/providers/sync_status_providers.dart';
 import 'package:fleur/providers/unread_providers.dart';
 import 'package:fleur/services/settings/app_settings.dart';
+import 'package:fleur/services/sync/sync_service.dart';
 import 'package:fleur/services/sync/sync_status_reporter.dart';
 import 'package:fleur/theme/app_theme.dart';
 import 'package:fleur/theme/app_typography.dart';
 import 'package:fleur/theme/fleur_theme_extensions.dart';
 import 'package:fleur/ui/app_shell.dart';
+import 'package:fleur/ui/home/home_scene_commands.dart';
+import 'package:fleur/ui/home/home_scene_shortcuts.dart';
+import 'package:fleur/ui/sidebar/sidebar_selection_actions.dart';
 import 'package:fleur/utils/platform.dart';
 import 'package:fleur/widgets/article_list.dart';
 import 'package:fleur/widgets/article_list_item.dart';
@@ -130,6 +135,62 @@ class _EmptyArticleListController extends ArticleListController {
   @override
   Future<ArticleListState> build() async {
     return const ArticleListState(items: [], hasMore: false, nextOffset: 0);
+  }
+}
+
+class _FixedArticleListController extends ArticleListController {
+  static List<Article> items = <Article>[];
+
+  @override
+  Future<ArticleListState> build() async {
+    return ArticleListState(
+      items: items,
+      hasMore: false,
+      nextOffset: items.length,
+    );
+  }
+}
+
+class _RecordingHomeSceneCommands extends HomeSceneCommands {
+  _RecordingHomeSceneCommands({required super.context, required super.ref})
+    : super(selectedArticleId: null);
+
+  final List<String> calls = <String>[];
+
+  @override
+  Future<BatchRefreshResult> refreshAll() async {
+    calls.add('refresh');
+    return const BatchRefreshResult(<FeedRefreshResult>[]);
+  }
+
+  @override
+  void toggleUnreadOnly() {
+    calls.add('toggleUnread');
+  }
+
+  @override
+  Future<void> toggleSelectedArticleRead() async {
+    calls.add('toggleRead');
+  }
+
+  @override
+  Future<void> toggleSelectedArticleStar() async {
+    calls.add('toggleStar');
+  }
+
+  @override
+  void goToSearch() {
+    calls.add('search');
+  }
+
+  @override
+  void goToNextArticle() {
+    calls.add('next');
+  }
+
+  @override
+  void goToPreviousArticle() {
+    calls.add('previous');
   }
 }
 
@@ -332,6 +393,141 @@ void main() {
     },
   );
 
+  testWidgets(
+    'Home scene commands centralize refresh, unread toggle, and article navigation',
+    (tester) async {
+      final syncService = FakeSyncService();
+      final actionService = RecordingArticleActionService();
+      late HomeSceneCommands homeCommands;
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) {
+              return Consumer(
+                builder: (context, ref, _) {
+                  homeCommands = HomeSceneCommands(
+                    context: context,
+                    ref: ref,
+                    selectedArticleId: 2,
+                  );
+                  return const SizedBox(key: ValueKey('home_commands_host'));
+                },
+              );
+            },
+          ),
+          GoRoute(
+            path: '/article/:id',
+            builder: (context, state) => Text(state.pathParameters['id'] ?? ''),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+
+      _FixedArticleListController.items = <Article>[
+        _buildArticle(id: 1, title: 'Article 1'),
+        _buildArticle(id: 2, title: 'Article 2'),
+        _buildArticle(id: 3, title: 'Article 3'),
+      ];
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            selectedFeedIdProvider.overrideWith((ref) => 10),
+            articleListControllerProvider.overrideWith(
+              _FixedArticleListController.new,
+            ),
+            articleActionServiceProvider.overrideWithValue(actionService),
+            syncServiceProvider.overrideWithValue(syncService),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('home_commands_host'))),
+      );
+      await container.read(articleListControllerProvider.future);
+
+      await homeCommands.refreshAll();
+      expect(syncService.refreshCalls, [
+        [10],
+      ]);
+
+      await homeCommands.markAllRead();
+      expect(actionService.markAllReadCalls, [(feedId: 10, categoryId: null)]);
+
+      expect(container.read(unreadOnlyProvider), isFalse);
+      homeCommands.toggleUnreadOnly();
+      expect(container.read(unreadOnlyProvider), isTrue);
+
+      homeCommands.goToPreviousArticle();
+      await tester.pumpAndSettle();
+      expect(find.text('1'), findsOneWidget);
+
+      router.go('/');
+      await tester.pumpAndSettle();
+      final refreshedContainer = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('home_commands_host'))),
+      );
+      await refreshedContainer.read(articleListControllerProvider.future);
+
+      homeCommands.goToNextArticle();
+      await tester.pumpAndSettle();
+      expect(find.text('3'), findsOneWidget);
+    },
+  );
+
+  testWidgets('Home scene shortcuts reuse the shared action wiring', (
+    tester,
+  ) async {
+    late _RecordingHomeSceneCommands commands;
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Consumer(
+            builder: (context, ref, _) {
+              commands = _RecordingHomeSceneCommands(
+                context: context,
+                ref: ref,
+              );
+              return Scaffold(
+                body: HomeSceneShortcuts(
+                  commands: commands,
+                  child: const SizedBox(key: ValueKey('home_shortcuts_host')),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyJ);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyU);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyM);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+
+    expect(commands.calls, [
+      'next',
+      'previous',
+      'refresh',
+      'toggleUnread',
+      'toggleRead',
+      'toggleStar',
+      'search',
+    ]);
+  });
+
   testWidgets('Sync status capsule honors reduced-motion preferences', (
     tester,
   ) async {
@@ -397,6 +593,88 @@ void main() {
   });
 
   testWidgets(
+    'Sidebar selection actions share feed, category, tag, and clear-selection flows',
+    (tester) async {
+      late SidebarSelectionActions actions;
+      int closeCount = 0;
+      int? selectedFeedCallback;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            selectedFeedIdProvider.overrideWith((ref) => null),
+            selectedCategoryIdProvider.overrideWith((ref) => null),
+            selectedTagIdProvider.overrideWith((ref) => null),
+            starredOnlyProvider.overrideWith((ref) => true),
+            readLaterOnlyProvider.overrideWith((ref) => true),
+            articleSearchQueryProvider.overrideWith((ref) => 'needle'),
+          ],
+          child: MaterialApp(
+            home: Consumer(
+              builder: (context, ref, _) {
+                actions = SidebarSelectionActions(
+                  ref: ref,
+                  onSelectFeed: (feedId) => selectedFeedCallback = feedId,
+                  closeSidebar: () => closeCount++,
+                );
+                return const SizedBox(key: ValueKey('sidebar_actions_host'));
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byKey(const ValueKey('sidebar_actions_host'))),
+      );
+
+      actions.selectFeed(12);
+      expect(container.read(selectedFeedIdProvider), 12);
+      expect(container.read(selectedCategoryIdProvider), isNull);
+      expect(container.read(selectedTagIdProvider), isNull);
+      expect(container.read(starredOnlyProvider), isFalse);
+      expect(container.read(readLaterOnlyProvider), isFalse);
+      expect(container.read(articleSearchQueryProvider), '');
+      expect(selectedFeedCallback, 12);
+      expect(closeCount, 1);
+
+      actions.selectFeed(12);
+      expect(container.read(selectedFeedIdProvider), isNull);
+      expect(container.read(selectedCategoryIdProvider), isNull);
+      expect(container.read(selectedTagIdProvider), isNull);
+      expect(selectedFeedCallback, isNull);
+      expect(closeCount, 2);
+
+      container.read(starredOnlyProvider.notifier).state = true;
+      container.read(readLaterOnlyProvider.notifier).state = true;
+      container.read(articleSearchQueryProvider.notifier).state = 'category';
+      actions.selectCategory(34);
+      expect(container.read(selectedFeedIdProvider), isNull);
+      expect(container.read(selectedCategoryIdProvider), 34);
+      expect(container.read(selectedTagIdProvider), isNull);
+      expect(container.read(starredOnlyProvider), isFalse);
+      expect(container.read(readLaterOnlyProvider), isFalse);
+      expect(container.read(articleSearchQueryProvider), '');
+      expect(selectedFeedCallback, isNull);
+      expect(closeCount, 3);
+
+      container.read(starredOnlyProvider.notifier).state = true;
+      container.read(readLaterOnlyProvider.notifier).state = true;
+      container.read(articleSearchQueryProvider.notifier).state = 'tag';
+      actions.selectTag(56);
+      expect(container.read(selectedFeedIdProvider), isNull);
+      expect(container.read(selectedCategoryIdProvider), isNull);
+      expect(container.read(selectedTagIdProvider), 56);
+      expect(container.read(starredOnlyProvider), isFalse);
+      expect(container.read(readLaterOnlyProvider), isFalse);
+      expect(container.read(articleSearchQueryProvider), '');
+      expect(selectedFeedCallback, isNull);
+      expect(closeCount, 4);
+    },
+  );
+
+  testWidgets(
     'Sidebar shows selected feed state and unread badges through shared tokens',
     (tester) async {
       final feed = _buildFeed();
@@ -439,6 +717,104 @@ void main() {
         matching: find.byType(ListTile),
       );
       expect(tester.widget<ListTile>(tileFinder).selected, isTrue);
+    },
+  );
+
+  testWidgets(
+    'Sidebar desktop feed menu reuses the shared refresh action path',
+    (tester) async {
+      debugFleurTargetPlatformOverride = TargetPlatform.windows;
+      addTearDown(() => debugFleurTargetPlatformOverride = null);
+
+      final feed = _buildFeed();
+      final syncService = FakeSyncService();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            activeAccountProvider.overrideWithValue(buildTestAccount()),
+            syncServiceProvider.overrideWithValue(syncService),
+            feedsProvider.overrideWith((ref) => Stream.value([feed])),
+            categoriesProvider.overrideWith(
+              (ref) => Stream.value(<Category>[]),
+            ),
+            tagsProvider.overrideWith((ref) => Stream.value(<Tag>[])),
+            allUnreadCountsProvider.overrideWith(
+              (ref) => Stream.value(<int?, int>{null: 0, feed.id: 0}),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(
+                width: 1200,
+                child: Sidebar(onSelectFeed: _noopSelectFeed),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refresh').last);
+      await tester.pumpAndSettle();
+
+      expect(syncService.refreshCalls, [
+        [feed.id],
+      ]);
+    },
+  );
+
+  testWidgets(
+    'Sidebar mobile long-press menu reuses the shared refresh action path',
+    (tester) async {
+      debugFleurTargetPlatformOverride = TargetPlatform.android;
+      addTearDown(() => debugFleurTargetPlatformOverride = null);
+
+      final feed = _buildFeed();
+      final syncService = FakeSyncService();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            activeAccountProvider.overrideWithValue(buildTestAccount()),
+            syncServiceProvider.overrideWithValue(syncService),
+            feedsProvider.overrideWith((ref) => Stream.value([feed])),
+            categoriesProvider.overrideWith(
+              (ref) => Stream.value(<Category>[]),
+            ),
+            tagsProvider.overrideWith((ref) => Stream.value(<Tag>[])),
+            allUnreadCountsProvider.overrideWith(
+              (ref) => Stream.value(<int?, int>{null: 0, feed.id: 0}),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(
+              body: SizedBox(
+                width: 400,
+                child: Sidebar(onSelectFeed: _noopSelectFeed),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.longPress(find.text('Fleur Feed'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Refresh').last);
+      await tester.pumpAndSettle();
+
+      expect(syncService.refreshCalls, [
+        [feed.id],
+      ]);
     },
   );
 

@@ -9,7 +9,9 @@ import '../ui/settings/tabs/app_preferences_tab.dart';
 import '../ui/settings/tabs/grouping_sorting_tab.dart';
 import '../ui/settings/tabs/services_tab.dart';
 import '../ui/settings/tabs/translation_ai_services_tab.dart';
+import '../ui/settings/widgets/section_header.dart';
 import '../providers/subscription_settings_provider.dart';
+import '../theme/fleur_theme_extensions.dart';
 import '../utils/platform.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -37,7 +39,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         icon: Icons.settings_outlined,
         selectedIcon: Icons.settings,
         label: l10n.appPreferences,
-        content: const AppPreferencesTab(),
+        content: AppPreferencesTab(showPageTitle: showPageTitle),
       ),
       _SettingsPageItem(
         icon: Icons.rss_feed_outlined,
@@ -81,7 +83,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final useCompactTopBar = !isDesktop;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isStacked = constraints.maxWidth < _kTwoColumnWidth;
@@ -167,37 +169,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       title: Text(l10n.settings),
                     )
                   : null,
-              body: ListView.builder(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+              body: SettingsPageBody(
+                maxWidth: 720,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                children: [
+                  SettingsCard(
+                    padding: EdgeInsets.zero,
+                    child: SettingsTileGroup(
+                      children: [
+                        for (var index = 0; index < items.length; index++)
+                          SettingsTile(
+                            leading: Icon(items[index].icon, size: 20),
+                            title: Text(items[index].label),
+                            trailing: const Icon(Icons.chevron_right, size: 20),
+                            onTap: () {
+                              setState(() => _selectedIndex = index);
+                            },
+                          ),
+                      ],
                     ),
-                    child: ListTile(
-                      dense: true,
-                      visualDensity: VisualDensity.compact,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      leading: Icon(item.icon, size: 20),
-                      title: Text(item.label),
-                      trailing: const Icon(Icons.chevron_right, size: 20),
-                      onTap: () {
-                        setState(() => _selectedIndex = index);
-                      },
-                    ),
-                  );
-                },
+                  ),
+                ],
               ),
             );
           }
@@ -220,49 +212,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     // Left Sidebar
                     Material(
-                      color: theme.colorScheme.surfaceContainerLow,
+                      color: theme.fleurSurface.sidebar,
                       child: SizedBox(
-                        width: 260,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                        width: 280,
+                        child: Scrollbar(
+                          child: ListView(
+                            padding: const EdgeInsets.all(12),
+                            children: [
+                              SettingsCard(
+                                padding: EdgeInsets.zero,
+                                child: SettingsTileGroup(
+                                  children: [
+                                    for (
+                                      var index = 0;
+                                      index < items.length;
+                                      index++
+                                    )
+                                      SettingsTile(
+                                        selected: index == currentIndex,
+                                        leading: Icon(
+                                          index == currentIndex
+                                              ? items[index].selectedIcon
+                                              : items[index].icon,
+                                          size: 20,
+                                        ),
+                                        title: Text(items[index].label),
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedIndex = index;
+                                          });
+                                        },
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          itemCount: items.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 4),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            final isSelected = index == currentIndex;
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              child: ListTile(
-                                dense: true,
-                                visualDensity: VisualDensity.compact,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                selected: isSelected,
-                                leading: Icon(
-                                  isSelected ? item.selectedIcon : item.icon,
-                                  size: 20,
-                                ),
-                                title: Text(item.label),
-                                onTap: () {
-                                  setState(() {
-                                    _selectedIndex = index;
-                                  });
-                                },
-                              ),
-                            );
-                          },
                         ),
                       ),
                     ),

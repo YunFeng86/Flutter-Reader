@@ -4,6 +4,8 @@ import '../../../../models/feed.dart';
 import '../../../../providers/subscription_settings_provider.dart';
 import '../../../../providers/query_providers.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../../widgets/favicon_avatar.dart';
+import '../widgets/section_header.dart';
 
 class FeedListComponent extends ConsumerWidget {
   const FeedListComponent({super.key});
@@ -45,34 +47,49 @@ class FeedListComponent extends ConsumerWidget {
           return Center(child: Text(l10n.notFound));
         }
 
-        return ListView.builder(
-          itemCount: visibleFeeds.length,
-          itemBuilder: (context, index) {
-            final feed = visibleFeeds[index];
-            final isSelected = selection.selectedFeedId == feed.id;
+        return Scrollbar(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            itemCount: visibleFeeds.length,
+            itemBuilder: (context, index) {
+              final feed = visibleFeeds[index];
+              final isSelected = selection.selectedFeedId == feed.id;
+              final siteUri = Uri.tryParse(
+                (feed.siteUrl?.trim().isNotEmpty == true)
+                    ? feed.siteUrl!.trim()
+                    : feed.url,
+              );
 
-            return ListTile(
-              title: Text(
-                feed.userTitle ?? feed.title ?? feed.url,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(
-                feed.url,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              selected: isSelected,
-              onTap: () {
-                ref
-                    .read(subscriptionSelectionProvider.notifier)
-                    .selectFeed(feed.id);
-              },
-              selectedTileColor: Theme.of(
-                context,
-              ).colorScheme.secondaryContainer,
-            );
-          },
+              return SettingsTile(
+                leading: SettingsLeadingAvatar(
+                  child: FaviconAvatar(
+                    siteUri: siteUri,
+                    size: 16,
+                    fallbackIcon: Icons.rss_feed,
+                    fallbackColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                title: Text(
+                  feed.userTitle ?? feed.title ?? feed.url,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  feed.url,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                selected: isSelected,
+                onTap: () {
+                  ref
+                      .read(subscriptionSelectionProvider.notifier)
+                      .selectFeed(feed.id);
+                },
+              );
+            },
+          ),
         );
       },
     );

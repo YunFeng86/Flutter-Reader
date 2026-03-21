@@ -9,6 +9,7 @@ class SliderTile extends StatelessWidget {
     required this.max,
     required this.onChanged,
     required this.format,
+    this.padding = const EdgeInsets.fromLTRB(16, 12, 16, 12),
   });
 
   final String title;
@@ -17,23 +18,38 @@ class SliderTile extends StatelessWidget {
   final double max;
   final ValueChanged<double> onChanged;
   final String Function(double v) format;
+  final EdgeInsetsGeometry padding;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(title), Text(format(value))],
-        ),
-        Slider(
-          value: value.clamp(min, max),
-          min: min,
-          max: max,
-          onChanged: onChanged,
-        ),
-      ],
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(child: Text(title, style: theme.textTheme.titleSmall)),
+              const SizedBox(width: 12),
+              Text(
+                format(value),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Slider(
+            value: value.clamp(min, max),
+            min: min,
+            max: max,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,0 +1,580 @@
+part of '../../widgets/reader_view.dart';
+
+final class _ReaderInteractionController {
+  _ReaderInteractionController({
+    required _ReaderViewState owner,
+    required ImageMetaStore imageMetaStore,
+  }) : _owner = owner,
+       _imageMetaStore = imageMetaStore;
+
+  final _ReaderViewState _owner;
+  final ImageMetaStore _imageMetaStore;
+
+  final GlobalKey<SelectionAreaState> selectionAreaKey =
+      GlobalKey<SelectionAreaState>();
+  final ContextMenuController _contextMenuController = ContextMenuController();
+  final ContextMenuController _quickMenuController = ContextMenuController();
+
+  _ReaderViewportCoordinator? _viewport;
+  Timer? _quickMenuTimer;
+  String _pendingQuickMenuText = '';
+  OverlayEntry? _autoScrollOverlay;
+  Timer? _autoScrollTimer;
+  Offset? _autoScrollAnchor;
+  Offset? _autoScrollPointer;
+  bool _suppressNextContextMenu = false;
+
+  BuildContext get context => _owner.context;
+  WidgetRef get ref => _owner.ref;
+  ReaderView get widget => _owner.widget;
+  bool get mounted => _owner.mounted;
+  ScrollController get _scrollController => _viewport!.scrollController;
+  GlobalKey<SelectionAreaState> get _selectionAreaKey => selectionAreaKey;
+
+  void attachViewport(_ReaderViewportCoordinator viewport) {
+    _viewport = viewport;
+  }
+
+  void prime() {
+    unawaited(_imageMetaStore.getMany(const []));
+  }
+
+  void dispose() {
+    _quickMenuTimer?.cancel();
+    ContextMenuController.removeAny();
+    _autoScrollTimer?.cancel();
+    _autoScrollOverlay?.remove();
+    _autoScrollOverlay = null;
+  }
+
+  String? _resolveImageUrl(String? raw) {
+    return _viewport?._resolveImageUrl(raw);
+  }
+
+  void _handlePointerDown(PointerDownEvent event) {
+    if (!isDesktop || event.kind != PointerDeviceKind.mouse) return;
+    if ((event.buttons & kSecondaryMouseButton) != 0) {
+      _suppressContextMenuOnce();
+      _showFullContextMenu(event.position);
+      return;
+    }
+    if ((event.buttons & kMiddleMouseButton) != 0) {
+      if (_autoScrollTimer == null) {
+        _startAutoScroll(event.position);
+      } else {
+        _stopAutoScroll();
+      }
+      return;
+    }
+    if (_autoScrollTimer != null) {
+      _stopAutoScroll();
+    }
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event.kind != PointerDeviceKind.mouse) return;
+    _autoScrollPointer = event.position;
+  }
+
+  void _handlePointerHover(PointerHoverEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event.kind != PointerDeviceKind.mouse) return;
+    _autoScrollPointer = event.position;
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_autoScrollTimer == null) return;
+    _stopAutoScroll();
+  }
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (_autoScrollTimer == null) return;
+    if (event is PointerScrollEvent) {
+      _stopAutoScroll();
+    }
+  }
+
+  void _startAutoScroll(Offset position) {
+    if (!_scrollController.hasClients) return;
+    _autoScrollAnchor = position;
+    _autoScrollPointer = position;
+    _autoScrollTimer?.cancel();
+    _showAutoScrollIndicator(position);
+    _autoScrollTimer = Timer.periodic(
+      const Duration(milliseconds: 16),
+      (_) => _autoScrollTick(),
+    );
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+    _autoScrollAnchor = null;
+    _autoScrollPointer = null;
+    _autoScrollOverlay?.remove();
+    _autoScrollOverlay = null;
+  }
+
+  void _autoScrollTick() {
+    if (!_scrollController.hasClients) return;
+    final anchor = _autoScrollAnchor;
+    final pointer = _autoScrollPointer;
+    if (anchor == null || pointer == null) return;
+    final delta = pointer.dy - anchor.dy;
+    if (delta.abs() < _ReaderViewState._autoScrollDeadZone) return;
+    final position = _scrollController.position;
+    final next =
+        (position.pixels + delta * _ReaderViewState._autoScrollSpeedFactor)
+            .clamp(position.minScrollExtent, position.maxScrollExtent);
+    if (next != position.pixels) {
+      _scrollController.jumpTo(next);
+    }
+  }
+
+  void _showAutoScrollIndicator(Offset position) {
+    _autoScrollOverlay?.remove();
+    _autoScrollOverlay = null;
+    if (!mounted) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final overlayBox = overlay.context.findRenderObject();
+    if (overlayBox is! RenderBox) return;
+    final local = overlayBox.globalToLocal(position);
+    final theme = AppTheme.readerScene(Theme.of(context));
+    final surfaces = theme.fleurSurface;
+    _autoScrollOverlay = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          left: local.dx - 14,
+          top: local.dy - 14,
+          child: IgnorePointer(
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: surfaces.floating,
+                  border: Border.all(color: surfaces.subtleDivider, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.shadowColor.withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.unfold_more,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    overlay.insert(_autoScrollOverlay!);
+  }
+
+  // ignore: deprecated_member_use
+  String? _getSelectedText(SelectableRegionState selectableRegionState) {
+    // ignore: deprecated_member_use
+    final value = selectableRegionState.textEditingValue;
+    final selection = value.selection;
+    if (!selection.isValid || selection.isCollapsed) return null;
+    if (selection.start < 0 || selection.end < 0) return null;
+    if (selection.start >= selection.end) return null;
+    if (selection.end > value.text.length) return null;
+    final selected = value.text
+        .substring(selection.start, selection.end)
+        .trim();
+    return selected.isEmpty ? null : selected;
+  }
+
+  void _searchSelectedText(String text) {
+    final query = Uri.encodeQueryComponent(text);
+    final uri = Uri.parse('https://duckduckgo.com/?q=$query');
+    unawaited(launchUrl(uri, mode: LaunchMode.externalApplication));
+  }
+
+  void _handleSelectionChanged(SelectedContent? selection) {
+    if (!isDesktop) return;
+    _quickMenuTimer?.cancel();
+    final text = selection?.plainText.trim() ?? '';
+    _pendingQuickMenuText = text;
+    if (text.isEmpty) {
+      ContextMenuController.removeAny();
+      return;
+    }
+    _quickMenuTimer = Timer(const Duration(milliseconds: 180), () {
+      if (!mounted) return;
+      if (_pendingQuickMenuText != text) return;
+      _showQuickMenu(text);
+    });
+  }
+
+  void _suppressContextMenuOnce() {
+    _suppressNextContextMenu = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _suppressNextContextMenu = false;
+    });
+  }
+
+  List<ContextMenuButtonItem> _buildContextMenuItems(
+    SelectableRegionState selectableRegionState,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final buttonItems = List<ContextMenuButtonItem>.of(
+      selectableRegionState.contextMenuButtonItems,
+    );
+    final selectedText = _getSelectedText(selectableRegionState);
+    if (selectedText != null) {
+      buttonItems.insert(
+        0,
+        ContextMenuButtonItem(
+          label: l10n.search,
+          onPressed: () {
+            selectableRegionState.hideToolbar();
+            _searchSelectedText(selectedText);
+          },
+          type: ContextMenuButtonType.custom,
+        ),
+      );
+    }
+    final hasSelectAll = buttonItems.any(
+      (item) => item.type == ContextMenuButtonType.selectAll,
+    );
+    if (!hasSelectAll) {
+      buttonItems.add(
+        ContextMenuButtonItem(
+          onPressed: () =>
+              selectableRegionState.selectAll(SelectionChangedCause.toolbar),
+          type: ContextMenuButtonType.selectAll,
+        ),
+      );
+    }
+    return buttonItems;
+  }
+
+  void _showFullContextMenu(Offset globalPosition) {
+    final selectionArea = _selectionAreaKey.currentState;
+    final selectableRegion = selectionArea?.selectableRegion;
+    if (selectableRegion == null) return;
+    _showFullContextMenuWithAnchors(
+      selectableRegion,
+      TextSelectionToolbarAnchors(primaryAnchor: globalPosition),
+    );
+  }
+
+  void _showFullContextMenuWithAnchors(
+    SelectableRegionState selectableRegionState,
+    TextSelectionToolbarAnchors anchors,
+  ) {
+    final items = _buildContextMenuItems(selectableRegionState);
+    if (items.isEmpty) return;
+    _quickMenuController.remove();
+    _contextMenuController.remove();
+    _contextMenuController.show(
+      context: context,
+      contextMenuBuilder: (overlayContext) {
+        return AdaptiveTextSelectionToolbar.buttonItems(
+          anchors: anchors,
+          buttonItems: items,
+        );
+      },
+      debugRequiredFor: widget,
+    );
+  }
+
+  void _showQuickMenu(String text) {
+    final selectionArea = _selectionAreaKey.currentState;
+    final selectableRegion = selectionArea?.selectableRegion;
+    if (selectableRegion == null) return;
+    final anchors = selectableRegion.contextMenuAnchors;
+    final items = selectableRegion.contextMenuButtonItems;
+    final l10n = AppLocalizations.of(context)!;
+    final copyItem = items.cast<ContextMenuButtonItem?>().firstWhere(
+      (item) => item?.type == ContextMenuButtonType.copy,
+      orElse: () => null,
+    );
+    final actions = <_QuickAction>[];
+    if (copyItem != null) {
+      actions.add(
+        _QuickAction(
+          icon: Icons.content_copy,
+          label: AdaptiveTextSelectionToolbar.getButtonLabel(context, copyItem),
+          onPressed: () {
+            copyItem.onPressed?.call();
+            ContextMenuController.removeAny();
+          },
+        ),
+      );
+    }
+    actions.add(
+      _QuickAction(
+        icon: Icons.search,
+        label: l10n.search,
+        onPressed: () {
+          _searchSelectedText(text);
+          ContextMenuController.removeAny();
+        },
+      ),
+    );
+    actions.add(
+      _QuickAction(
+        icon: Icons.keyboard_arrow_up,
+        label: l10n.more,
+        onPressed: () {
+          _suppressContextMenuOnce();
+          _showFullContextMenuWithAnchors(selectableRegion, anchors);
+        },
+      ),
+    );
+    if (actions.isEmpty) return;
+    _quickMenuController.show(
+      context: context,
+      contextMenuBuilder: (overlayContext) {
+        return _buildQuickActionMenu(overlayContext, anchors, actions);
+      },
+      debugRequiredFor: widget,
+    );
+  }
+
+  Widget _buildContextMenu(
+    BuildContext context,
+    SelectableRegionState selectableRegionState,
+  ) {
+    if (isDesktop && _suppressNextContextMenu) {
+      return const SizedBox.shrink();
+    }
+    _quickMenuController.remove();
+    _contextMenuController.remove();
+    final buttonItems = _buildContextMenuItems(selectableRegionState);
+    return AdaptiveTextSelectionToolbar.buttonItems(
+      anchors: selectableRegionState.contextMenuAnchors,
+      buttonItems: buttonItems,
+    );
+  }
+
+  Widget _buildQuickActionMenu(
+    BuildContext context,
+    TextSelectionToolbarAnchors anchors,
+    List<_QuickAction> actions,
+  ) {
+    final children = actions
+        .map(
+          (action) => IconButton(
+            onPressed: action.onPressed,
+            icon: Icon(action.icon, size: 18),
+            tooltip: action.label,
+          ),
+        )
+        .toList();
+    return Listener(
+      onPointerDown: (event) {
+        if (!isDesktop || event.kind != PointerDeviceKind.mouse) return;
+        if ((event.buttons & kSecondaryMouseButton) == 0) return;
+        _suppressContextMenuOnce();
+        _showFullContextMenu(event.position);
+      },
+      child: TextSelectionToolbar(
+        anchorAbove: anchors.primaryAnchor,
+        anchorBelow: anchors.secondaryAnchor ?? anchors.primaryAnchor,
+        toolbarBuilder: (context, child) {
+          final theme = Theme.of(context);
+          final surfaces = theme.fleurSurface;
+          return Material(
+            elevation: 4,
+            borderRadius: BorderRadius.circular(999),
+            color: surfaces.floating,
+            shadowColor: theme.shadowColor.withValues(alpha: 0.2),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: child,
+            ),
+          );
+        },
+        children: children,
+      ),
+    );
+  }
+
+  Widget? _buildImageLoadingPlaceholder(
+    BuildContext context,
+    dom.Element element,
+    double? loadingProgress,
+  ) {
+    if (element.localName != 'img') {
+      return null;
+    }
+    final resolvedUrl = _resolveImageUrl(element.attributes['src']);
+    final meta = resolvedUrl == null ? null : _imageMetaStore.peek(resolvedUrl);
+    final aspectRatio = meta == null ? null : meta.width / meta.height;
+    return _ImagePlaceholder.fromElement(
+      element: element,
+      loadingProgress: loadingProgress,
+      aspectRatio: aspectRatio,
+    );
+  }
+
+  Future<bool> _onTapUrl(String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return false;
+    return launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  void _onTapImage(ImageMetadata meta) {
+    final src = meta.sources.isNotEmpty ? meta.sources.first.url : null;
+    if (src == null || src.trim().isEmpty) return;
+    unawaited(
+      showDialog<void>(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            insetPadding: EdgeInsets.zero,
+            child: Stack(
+              children: [
+                InteractiveViewer(
+                  child: Image.network(src, fit: BoxFit.contain),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ).then((_) {}),
+    );
+  }
+
+  Future<void> showReaderSettings(ReaderSettings settings) async {
+    final l10n = AppLocalizations.of(context)!;
+    final isNarrow = MediaQuery.sizeOf(context).width < kCompactWidth;
+
+    Future<void> saveAndPop(ReaderSettings current) async {
+      await ref.read(readerSettingsProvider.notifier).save(current);
+      if (!context.mounted) return;
+      Navigator.of(context).pop();
+    }
+
+    Widget buildContent(
+      BuildContext context,
+      ReaderSettings initial,
+      EdgeInsets padding,
+    ) {
+      var current = initial;
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return SafeArea(
+            child: Padding(
+              padding: padding,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.readerSettings,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => saveAndPop(current),
+                        child: Text(l10n.done),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  _slider(
+                    label: l10n.fontSize,
+                    value: current.fontSize,
+                    min: 12,
+                    max: 28,
+                    onChanged: (value) => setState(
+                      () => current = current.copyWith(fontSize: value),
+                    ),
+                  ),
+                  _slider(
+                    label: l10n.lineHeight,
+                    value: current.lineHeight,
+                    min: 1.1,
+                    max: 2.2,
+                    onChanged: (value) => setState(
+                      () => current = current.copyWith(lineHeight: value),
+                    ),
+                  ),
+                  _slider(
+                    label: l10n.horizontalPadding,
+                    value: current.horizontalPadding,
+                    min: 8,
+                    max: 32,
+                    onChanged: (value) => setState(
+                      () =>
+                          current = current.copyWith(horizontalPadding: value),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    if (isNarrow) {
+      await showModalBottomSheet<void>(
+        context: context,
+        builder: (context) {
+          return buildContent(context, settings, const EdgeInsets.all(16));
+        },
+      );
+    } else {
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return Dialog(
+            child: buildContent(context, settings, const EdgeInsets.all(16)),
+          );
+        },
+      );
+    }
+  }
+
+  Widget _slider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(child: Text(label)),
+            Text(value.toStringAsFixed(1)),
+          ],
+        ),
+        Slider(
+          value: value.clamp(min, max),
+          min: min,
+          max: max,
+          onChanged: onChanged,
+        ),
+      ],
+    );
+  }
+}

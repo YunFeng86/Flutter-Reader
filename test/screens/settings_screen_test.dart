@@ -58,6 +58,30 @@ void main() {
     expect(find.text('App Preferences'), findsOneWidget);
   });
 
+  testWidgets('App Preferences detail shows a single title in narrow mode', (
+    tester,
+  ) async {
+    await pumpSettingsScreen(tester, 400);
+
+    await tester.tap(find.text('App Preferences'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('App Preferences'), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
+  });
+
+  testWidgets('Subscriptions detail shows a single title in narrow mode', (
+    tester,
+  ) async {
+    await pumpSettingsScreen(tester, 400);
+
+    await tester.tap(find.text('Subscriptions'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Subscriptions'), findsOneWidget);
+    expect(find.byType(BackButton), findsOneWidget);
+  });
+
   testWidgets('Settings Screen restores state when resizing Narrow -> Wide', (
     tester,
   ) async {
@@ -93,6 +117,7 @@ void main() {
 
     // Uses default selection (index 0 -> App Preferences)
     expect(find.text('System language'), findsOneWidget);
+    expect(find.text('App Preferences'), findsAtLeastNWidgets(2));
   });
 
   testWidgets('AppLocalizations uses strict pathNotFound message in English', (

@@ -10,7 +10,6 @@ import '../../../providers/app_settings_providers.dart';
 import '../../../providers/translation_ai_settings_providers.dart';
 import '../../../services/settings/app_settings.dart';
 import '../../../services/settings/translation_ai_settings.dart';
-import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../../../utils/language_utils.dart';
 import '../../../utils/prompt_template.dart';
@@ -30,7 +29,6 @@ class TranslationAiServicesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final appSettings =
         ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
     final settingsAsync = ref.watch(translationAiSettingsProvider);
@@ -855,274 +853,382 @@ class TranslationAiServicesTab extends ConsumerWidget {
           context.showSuccess(l10n.done);
         }
 
-        return SingleChildScrollView(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+        return SettingsPageBody(
+          children: [
+            if (showPageTitle) ...[
+              SectionHeader(title: l10n.translationAndAiServices),
+              const SizedBox(height: 8),
+            ],
+            SettingsSection(
+              title: l10n.translation,
+              child: SettingsCard(
+                padding: EdgeInsets.zero,
+                child: SettingsTileGroup(
                   children: [
-                    if (showPageTitle)
-                      SectionHeader(title: l10n.translationAndAiServices),
-
-                    SectionHeader(title: l10n.translation),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.translate),
-                            title: Text(l10n.translationProvider),
-                            subtitle: Text(translationLabel),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: pickTranslationProvider,
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.language),
-                            title: Text(l10n.targetLanguage),
-                            subtitle: Text(targetLanguageSubtitle),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: pickTargetLanguage,
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.edit_note),
-                            title: Text(l10n.aiTranslationPrompt),
-                            subtitle: Text(
-                              effectiveAiTranslationPrompt,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: editAiTranslationPrompt,
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('百度翻译（API）'),
-                            subtitle: const Text('配置 App ID / App Key'),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: configureBaidu,
-                          ),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('DeepL（API）'),
-                            subtitle: Text(
-                              'Endpoint: ${settings.deepL.endpoint.name.toUpperCase()} · ${l10n.apiKey}',
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: configureDeepL,
-                          ),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: const Text('DeepLX'),
-                            subtitle: Text(
-                              settings.deepLX.baseUrl.trim().isEmpty
-                                  ? l10n.baseUrl
-                                  : settings.deepLX.baseUrl.trim(),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: setDeepLXBaseUrl,
-                          ),
-                        ],
-                      ),
+                    SettingsTile(
+                      leading: const Icon(Icons.translate),
+                      title: Text(l10n.translationProvider),
+                      subtitle: Text(translationLabel),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: pickTranslationProvider,
                     ),
-                    const SizedBox(height: 24),
-
-                    SectionHeader(title: l10n.aiSummary),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.summarize),
-                            title: Text(l10n.aiSummaryService),
-                            subtitle: Text(aiSummaryServiceSubtitle),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: pickAiSummaryService,
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.edit_note),
-                            title: Text(l10n.aiSummaryPrompt),
-                            subtitle: Text(
-                              effectiveAiSummaryPrompt,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: editAiSummaryPrompt,
-                          ),
-                          const Divider(height: 1),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.speed),
-                            title: Text(l10n.tpmLimit),
-                            subtitle: Text(
-                              '${settings.tpmLimit} · ${l10n.tpmLimitSubtitle}',
-                            ),
-                            trailing: const Icon(Icons.chevron_right),
-                            onTap: editTpmLimit,
-                          ),
-                        ],
-                      ),
+                    SettingsTile(
+                      leading: const Icon(Icons.language),
+                      title: Text(l10n.targetLanguage),
+                      subtitle: Text(targetLanguageSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: pickTargetLanguage,
                     ),
-                    const SizedBox(height: 24),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.aiServices,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        FilledButton.icon(
-                          onPressed: addAiService,
-                          icon: const Icon(Icons.add),
-                          label: Text(l10n.addAiService),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
+                    SettingsTile(
+                      leading: const Icon(Icons.edit_note),
+                      title: Text(l10n.aiTranslationPrompt),
+                      subtitle: Text(
+                        effectiveAiTranslationPrompt,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: settings.aiServices.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                '还没有添加任何 AI 服务。',
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: settings.aiServices.length,
-                              separatorBuilder: (_, _) =>
-                                  const Divider(height: 1),
-                              itemBuilder: (context, index) {
-                                final s = settings.aiServices[index];
-                                final isDefault =
-                                    s.id == settings.defaultAiServiceId;
-
-                                return ListTile(
-                                  leading: Icon(apiTypeIcon(s.apiType)),
-                                  title: Row(
-                                    children: [
-                                      Expanded(child: Text(s.name)),
-                                      if (isDefault)
-                                        const Padding(
-                                          padding: EdgeInsets.only(left: 8),
-                                          child: Icon(Icons.star, size: 18),
-                                        ),
-                                    ],
-                                  ),
-                                  subtitle: Text(
-                                    [
-                                      apiTypeLabel(s.apiType),
-                                      if (s.baseUrl.trim().isNotEmpty)
-                                        s.baseUrl.trim(),
-                                      if (s.defaultModel.trim().isNotEmpty)
-                                        'Model: ${s.defaultModel.trim()}',
-                                    ].join(' · '),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Switch(
-                                        value: s.enabled,
-                                        onChanged: (v) => ref
-                                            .read(
-                                              translationAiSettingsProvider
-                                                  .notifier,
-                                            )
-                                            .setAiServiceEnabled(s.id, v),
-                                      ),
-                                      PopupMenuButton<_AiServiceAction>(
-                                        tooltip: l10n.more,
-                                        onSelected: (action) async {
-                                          switch (action) {
-                                            case _AiServiceAction.setDefault:
-                                              await ref
-                                                  .read(
-                                                    translationAiSettingsProvider
-                                                        .notifier,
-                                                  )
-                                                  .setDefaultAiService(s.id);
-                                              if (!context.mounted) return;
-                                              context.showSuccess(l10n.done);
-                                              return;
-                                            case _AiServiceAction.edit:
-                                              await editAiService(s);
-                                              return;
-                                            case _AiServiceAction.delete:
-                                              await confirmDeleteAiService(s);
-                                              return;
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                          PopupMenuItem(
-                                            value: _AiServiceAction.setDefault,
-                                            child: Text(
-                                              isDefault ? '默认（已设置）' : '设为默认',
-                                            ),
-                                          ),
-                                          PopupMenuItem(
-                                            value: _AiServiceAction.edit,
-                                            child: Text(l10n.edit),
-                                          ),
-                                          PopupMenuItem(
-                                            value: _AiServiceAction.delete,
-                                            child: Text(l10n.delete),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  onTap: () => unawaited(editAiService(s)),
-                                );
-                              },
-                            ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: editAiTranslationPrompt,
+                    ),
+                    SettingsTile(
+                      title: const Text('百度翻译（API）'),
+                      subtitle: const Text('配置 App ID / App Key'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: configureBaidu,
+                    ),
+                    SettingsTile(
+                      title: const Text('DeepL（API）'),
+                      subtitle: Text(
+                        'Endpoint: ${settings.deepL.endpoint.name.toUpperCase()} · ${l10n.apiKey}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: configureDeepL,
+                    ),
+                    SettingsTile(
+                      title: const Text('DeepLX'),
+                      subtitle: Text(
+                        settings.deepLX.baseUrl.trim().isEmpty
+                            ? l10n.baseUrl
+                            : settings.deepLX.baseUrl.trim(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: setDeepLXBaseUrl,
                     ),
                   ],
                 ),
               ),
             ),
-          ),
+            SettingsSection(
+              title: l10n.aiSummary,
+              child: SettingsCard(
+                padding: EdgeInsets.zero,
+                child: SettingsTileGroup(
+                  children: [
+                    SettingsTile(
+                      leading: const Icon(Icons.summarize),
+                      title: Text(l10n.aiSummaryService),
+                      subtitle: Text(aiSummaryServiceSubtitle),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: pickAiSummaryService,
+                    ),
+                    SettingsTile(
+                      leading: const Icon(Icons.edit_note),
+                      title: Text(l10n.aiSummaryPrompt),
+                      subtitle: Text(
+                        effectiveAiSummaryPrompt,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: editAiSummaryPrompt,
+                    ),
+                    SettingsTile(
+                      leading: const Icon(Icons.speed),
+                      title: Text(l10n.tpmLimit),
+                      subtitle: Text(
+                        '${settings.tpmLimit} · ${l10n.tpmLimitSubtitle}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: editTpmLimit,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SettingsSection(
+              title: l10n.aiServices,
+              bottomSpacing: 0,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: addAiService,
+                      icon: const Icon(Icons.add),
+                      label: Text(l10n.addAiService),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SettingsCard(
+                    padding: settings.aiServices.isEmpty
+                        ? const EdgeInsets.all(16)
+                        : EdgeInsets.zero,
+                    child: settings.aiServices.isEmpty
+                        ? Text(
+                            '还没有添加任何 AI 服务。',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: settings.aiServices.length,
+                            separatorBuilder: (_, _) =>
+                                const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final s = settings.aiServices[index];
+                              final isDefault =
+                                  s.id == settings.defaultAiServiceId;
+                              final theme = Theme.of(context);
+                              final subtitleText = [
+                                apiTypeLabel(s.apiType),
+                                if (s.baseUrl.trim().isNotEmpty)
+                                  s.baseUrl.trim(),
+                                if (s.defaultModel.trim().isNotEmpty)
+                                  'Model: ${s.defaultModel.trim()}',
+                              ].join(' · ');
+
+                              Future<void> handleAction(
+                                _AiServiceAction action,
+                              ) async {
+                                switch (action) {
+                                  case _AiServiceAction.setDefault:
+                                    await ref
+                                        .read(
+                                          translationAiSettingsProvider
+                                              .notifier,
+                                        )
+                                        .setDefaultAiService(s.id);
+                                    if (!context.mounted) return;
+                                    context.showSuccess(l10n.done);
+                                    return;
+                                  case _AiServiceAction.edit:
+                                    await editAiService(s);
+                                    return;
+                                  case _AiServiceAction.delete:
+                                    await confirmDeleteAiService(s);
+                                    return;
+                                }
+                              }
+
+                              Widget buildMenuButton() {
+                                return PopupMenuButton<_AiServiceAction>(
+                                  tooltip: l10n.more,
+                                  onSelected: (action) {
+                                    unawaited(handleAction(action));
+                                  },
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      value: _AiServiceAction.setDefault,
+                                      child: Text(
+                                        isDefault ? '默认（已设置）' : '设为默认',
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: _AiServiceAction.edit,
+                                      child: Text(l10n.edit),
+                                    ),
+                                    PopupMenuItem(
+                                      value: _AiServiceAction.delete,
+                                      child: Text(l10n.delete),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              Widget buildToggle({bool showLabel = false}) {
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (showLabel) ...[
+                                      Text(
+                                        s.enabled ? l10n.enabled : l10n.off,
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                    ],
+                                    Switch.adaptive(
+                                      value: s.enabled,
+                                      onChanged: (v) => ref
+                                          .read(
+                                            translationAiSettingsProvider
+                                                .notifier,
+                                          )
+                                          .setAiServiceEnabled(s.id, v),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              return LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final useCompactActions =
+                                      constraints.maxWidth < 560;
+
+                                  if (useCompactActions) {
+                                    return InkWell(
+                                      onTap: () => unawaited(editAiService(s)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16,
+                                          12,
+                                          8,
+                                          12,
+                                        ),
+                                        child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 4,
+                                              ),
+                                              child: Icon(
+                                                apiTypeIcon(s.apiType),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: Text(
+                                                          s.name,
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      if (isDefault)
+                                                        const Padding(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                left: 8,
+                                                              ),
+                                                          child: Icon(
+                                                            Icons.star,
+                                                            size: 18,
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    subtitleText,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: theme
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.copyWith(
+                                                          color: theme
+                                                              .colorScheme
+                                                              .onSurfaceVariant,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Wrap(
+                                                    spacing: 12,
+                                                    runSpacing: 8,
+                                                    crossAxisAlignment:
+                                                        WrapCrossAlignment
+                                                            .center,
+                                                    children: [
+                                                      Text(
+                                                        s.enabled
+                                                            ? l10n.enabled
+                                                            : l10n.off,
+                                                        style: theme
+                                                            .textTheme
+                                                            .labelMedium
+                                                            ?.copyWith(
+                                                              color: theme
+                                                                  .colorScheme
+                                                                  .onSurfaceVariant,
+                                                            ),
+                                                      ),
+                                                      Switch.adaptive(
+                                                        value: s.enabled,
+                                                        onChanged: (v) => ref
+                                                            .read(
+                                                              translationAiSettingsProvider
+                                                                  .notifier,
+                                                            )
+                                                            .setAiServiceEnabled(
+                                                              s.id,
+                                                              v,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            buildMenuButton(),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  return SettingsTile(
+                                    leading: Icon(apiTypeIcon(s.apiType)),
+                                    title: Row(
+                                      children: [
+                                        Expanded(child: Text(s.name)),
+                                        if (isDefault)
+                                          const Padding(
+                                            padding: EdgeInsets.only(left: 8),
+                                            child: Icon(Icons.star, size: 18),
+                                          ),
+                                      ],
+                                    ),
+                                    subtitle: Text(
+                                      subtitleText,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        buildToggle(),
+                                        buildMenuButton(),
+                                      ],
+                                    ),
+                                    onTap: () => unawaited(editAiService(s)),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         );
       },
     );

@@ -227,4 +227,41 @@ void main() {
       );
     },
   );
+
+  testWidgets('renders feed detail header and destructive action', (
+    tester,
+  ) async {
+    final category = buildCategory();
+    final feed = buildFeed();
+    final feedController = StreamController<Feed?>.broadcast();
+    addTearDown(feedController.close);
+    final fakeRepo = _FakeFeedRepository(feedController, feed);
+    final appStore = FakeAppSettingsStore(AppSettings.defaults());
+
+    await pumpPanel(
+      tester,
+      appStore: appStore,
+      feed: feed,
+      category: category,
+      feedRepository: fakeRepo,
+      feedStream: feedController.stream,
+    );
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SettingsDetailPanel)),
+    );
+    container
+        .read(subscriptionSelectionProvider.notifier)
+        .selectFeed(
+          feed.id,
+          categoryScope: SubscriptionCategoryId(category.id),
+        );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('Example Feed'), findsOneWidget);
+    expect(find.text('https://example.com/feed.xml'), findsOneWidget);
+    expect(find.text('Delete'), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+  });
 }

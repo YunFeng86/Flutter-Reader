@@ -8,30 +8,28 @@ import 'package:fleur/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'router.dart';
-import '../theme/app_theme.dart';
-import '../theme/seed_color_presets.dart';
 import '../providers/app_settings_providers.dart';
-import '../utils/macos_locale_bridge.dart';
-import '../utils/platform.dart';
-import '../widgets/desktop_title_bar.dart';
-import '../widgets/db_recovery_notice.dart';
-import '../widgets/outbox_status_action.dart';
-import '../widgets/sidebar.dart';
-import '../providers/query_providers.dart';
-import '../providers/core_providers.dart';
-import '../providers/repository_providers.dart';
-import '../providers/service_providers.dart';
 import '../providers/auto_refresh_providers.dart';
+import '../providers/background_sync_providers.dart';
+import '../providers/core_providers.dart';
 import '../providers/outbox_flush_providers.dart';
 import '../providers/outbox_status_providers.dart';
-import '../providers/background_sync_providers.dart';
+import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
 import '../services/logging/app_logger.dart';
 import '../services/notifications/notification_service.dart';
 import '../services/settings/app_settings.dart';
-import '../services/sync/sync_service.dart';
-import '../ui/layout.dart';
 import '../ui/global_nav.dart';
+import '../ui/home/home_scene_commands.dart';
+import '../ui/layout.dart';
+import '../theme/app_theme.dart';
+import '../theme/seed_color_presets.dart';
+import '../utils/macos_locale_bridge.dart';
+import '../utils/platform.dart';
+import '../widgets/db_recovery_notice.dart';
+import '../widgets/desktop_title_bar.dart';
+import '../widgets/outbox_status_action.dart';
+import '../widgets/sidebar.dart';
 
 typedef PreferredLanguageApplier = Future<void> Function(String? localeTag);
 
@@ -373,36 +371,11 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
         final outboxPending =
             ref.watch(outboxPendingCountProvider).valueOrNull ?? 0;
         final showOutboxAction = outboxPending > 0;
-
-        Future<BatchRefreshResult> refreshAll() async {
-          final feedId = ref.read(selectedFeedIdProvider);
-          final categoryId = ref.read(selectedCategoryIdProvider);
-          if (feedId != null) {
-            final r = await ref
-                .read(syncServiceProvider)
-                .refreshFeedSafe(feedId);
-            return BatchRefreshResult([r]);
-          }
-
-          final feeds = await ref.read(feedRepositoryProvider).getAll();
-          final filtered = (categoryId == null)
-              ? feeds
-              : feeds.where((f) => f.categoryId == categoryId);
-          return ref
-              .read(syncServiceProvider)
-              .refreshFeedsSafe(filtered.map((f) => f.id));
-        }
-
-        Future<void> markAllRead() async {
-          final selectedFeedId = ref.read(selectedFeedIdProvider);
-          final selectedCategoryId = ref.read(selectedCategoryIdProvider);
-          await ref
-              .read(articleActionServiceProvider)
-              .markAllRead(
-                feedId: selectedFeedId,
-                categoryId: selectedFeedId == null ? selectedCategoryId : null,
-              );
-        }
+        final commands = HomeSceneCommands(
+          context: context,
+          ref: ref,
+          selectedArticleId: null,
+        );
 
         final leading = canPop
             ? IconButton(
@@ -452,7 +425,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
                     IconButton(
                       tooltip: l10n.refreshAll,
                       onPressed: () async {
-                        final batch = await refreshAll();
+                        final batch = await commands.refreshAll();
                         if (!context.mounted) return;
                         final err = batch.firstError?.error;
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -472,9 +445,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
                         final unreadOnly = ref.watch(unreadOnlyProvider);
                         return IconButton(
                           tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                          onPressed: () =>
-                              ref.read(unreadOnlyProvider.notifier).state =
-                                  !unreadOnly,
+                          onPressed: commands.toggleUnreadOnly,
                           icon: Icon(
                             unreadOnly
                                 ? Icons.filter_alt
@@ -486,7 +457,7 @@ class _DesktopChromeState extends ConsumerState<_DesktopChrome> {
                     IconButton(
                       tooltip: l10n.markAllRead,
                       onPressed: () async {
-                        await markAllRead();
+                        await commands.markAllRead();
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(
                           context,

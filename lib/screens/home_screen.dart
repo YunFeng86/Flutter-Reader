@@ -1,27 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fleur/l10n/app_localizations.dart';
-import 'package:go_router/go_router.dart';
 
-import '../providers/article_list_controller.dart';
 import '../providers/core_providers.dart';
-import '../providers/query_providers.dart';
-import '../providers/repository_providers.dart';
-import '../providers/service_providers.dart';
 import '../providers/unread_providers.dart';
-import '../theme/fleur_theme_extensions.dart';
-import '../widgets/article_list.dart';
-import '../widgets/reader_view.dart';
-import '../widgets/outbox_status_action.dart';
-import '../widgets/sidebar.dart';
-import '../widgets/sidebar_pane_hero.dart';
-import '../widgets/sync_status_capsule.dart';
-import '../utils/platform.dart';
+import '../ui/global_nav.dart';
+import '../ui/hero_tags.dart';
+import '../ui/home/home_scene_commands.dart';
+import '../ui/home/home_scene_panes.dart';
+import '../ui/home/home_scene_shortcuts.dart';
 import '../ui/layout.dart';
 import '../ui/layout_spec.dart';
-import '../ui/hero_tags.dart';
-import '../ui/global_nav.dart';
+import '../utils/platform.dart';
+import '../widgets/outbox_status_action.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key, required this.selectedArticleId});
@@ -31,29 +22,19 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final surfaces = Theme.of(context).fleurSurface;
     // Desktop has a top title bar provided by App chrome; avoid in-page AppBar.
     final useCompactTopBar = !isDesktop;
     final showSyncCapsule =
         LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
+    final commands = HomeSceneCommands(
+      context: context,
+      ref: ref,
+      selectedArticleId: selectedArticleId,
+    );
 
     Future<void> refreshAll() async {
-      Object? err;
-      final feedId = ref.read(selectedFeedIdProvider);
-      final categoryId = ref.read(selectedCategoryIdProvider);
-      if (feedId != null) {
-        final r = await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
-        err = r.error;
-      } else {
-        final feeds = await ref.read(feedRepositoryProvider).getAll();
-        final filtered = (categoryId == null)
-            ? feeds
-            : feeds.where((f) => f.categoryId == categoryId);
-        final batch = await ref
-            .read(syncServiceProvider)
-            .refreshFeedsSafe(filtered.map((f) => f.id));
-        err = batch.firstError?.error;
-      }
+      final batch = await commands.refreshAll();
+      final err = batch.firstError?.error;
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -65,14 +46,7 @@ class HomeScreen extends ConsumerWidget {
     }
 
     Future<void> markAllRead() async {
-      final selectedFeedId = ref.read(selectedFeedIdProvider);
-      final selectedCategoryId = ref.read(selectedCategoryIdProvider);
-      await ref
-          .read(articleActionServiceProvider)
-          .markAllRead(
-            feedId: selectedFeedId,
-            categoryId: selectedFeedId == null ? selectedCategoryId : null,
-          );
+      await commands.markAllRead();
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -100,6 +74,7 @@ class HomeScreen extends ConsumerWidget {
             l10n,
             mode,
             useCompactTopBar,
+            commands,
             refreshAll,
             markAllRead,
           );
@@ -123,8 +98,7 @@ class HomeScreen extends ConsumerWidget {
                 // actions.
                 IconButton(
                   tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                  onPressed: () =>
-                      ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
+                  onPressed: commands.toggleUnreadOnly,
                   icon: Icon(
                     unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
                   ),
@@ -132,238 +106,73 @@ class HomeScreen extends ConsumerWidget {
                 const OutboxStatusAction(),
               ],
             ),
-            drawer: Drawer(
-              child: SafeArea(
-                child: Sidebar(
-                  onSelectFeed: (_) async {
-                    await Navigator.of(context).maybePop(); // close drawer
-                  },
-                ),
-              ),
-            ),
+            drawer: const HomeSidebarDrawer(),
             floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
-            body: SyncStatusCapsuleHost(
-              enabled: showSyncCapsule,
-              child: ArticleList(selectedArticleId: selectedArticleId),
+            body: HomeArticleListPane(
+              selectedArticleId: selectedArticleId,
+              showSyncCapsule: showSyncCapsule,
             ),
           );
         }
 
-        // 2/3-column: desktop / tablet style with keyboard shortcuts.
-        final shortcuts = <ShortcutActivator, Intent>{
-          const SingleActivator(LogicalKeyboardKey.keyJ):
-              const _NextArticleIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyK):
-              const _PrevArticleIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyR):
-              const _RefreshIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyU):
-              const _ToggleUnreadIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyM):
-              const _ToggleReadIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyS):
-              const _ToggleStarIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-              const _SearchIntent(),
-          const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
-              const _SearchIntent(),
-        };
-
-        return Shortcuts(
-          shortcuts: shortcuts,
-          child: Actions(
-            actions: {
-              _NextArticleIntent: CallbackAction<_NextArticleIntent>(
-                onInvoke: (intent) {
-                  final list =
-                      ref
-                          .read(articleListControllerProvider)
-                          .valueOrNull
-                          ?.items ??
-                      const [];
-                  if (list.isEmpty) return null;
-                  final idx = selectedArticleId == null
-                      ? -1
-                      : list.indexWhere((a) => a.id == selectedArticleId);
-                  final next = list[(idx + 1).clamp(0, list.length - 1)];
-                  context.go('/article/${next.id}');
-                  return null;
-                },
-              ),
-              _PrevArticleIntent: CallbackAction<_PrevArticleIntent>(
-                onInvoke: (intent) {
-                  final list =
-                      ref
-                          .read(articleListControllerProvider)
-                          .valueOrNull
-                          ?.items ??
-                      const [];
-                  if (list.isEmpty) return null;
-                  final idx = selectedArticleId == null
-                      ? 0
-                      : list.indexWhere((a) => a.id == selectedArticleId);
-                  final prev = list[(idx - 1).clamp(0, list.length - 1)];
-                  context.go('/article/${prev.id}');
-                  return null;
-                },
-              ),
-              _RefreshIntent: CallbackAction<_RefreshIntent>(
-                onInvoke: (intent) async {
-                  final feedId = ref.read(selectedFeedIdProvider);
-                  final categoryId = ref.read(selectedCategoryIdProvider);
-                  if (feedId != null) {
-                    await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
-                  } else if (categoryId != null) {
-                    final feeds = await ref
-                        .read(feedRepositoryProvider)
-                        .getAll();
-                    final filtered = feeds.where(
-                      (f) => f.categoryId == categoryId,
-                    );
-                    await ref
-                        .read(syncServiceProvider)
-                        .refreshFeedsSafe(filtered.map((f) => f.id));
-                  } else {
-                    final feeds = await ref
-                        .read(feedRepositoryProvider)
-                        .getAll();
-                    await ref
-                        .read(syncServiceProvider)
-                        .refreshFeedsSafe(feeds.map((f) => f.id));
-                  }
-                  return null;
-                },
-              ),
-              _ToggleUnreadIntent: CallbackAction<_ToggleUnreadIntent>(
-                onInvoke: (intent) {
-                  final cur = ref.read(unreadOnlyProvider);
-                  ref.read(unreadOnlyProvider.notifier).state = !cur;
-                  return null;
-                },
-              ),
-              _ToggleReadIntent: CallbackAction<_ToggleReadIntent>(
-                onInvoke: (intent) async {
-                  if (selectedArticleId == null) return null;
-                  final a = await ref
-                      .read(articleRepositoryProvider)
-                      .getById(selectedArticleId!);
-                  if (a == null) return null;
-                  await ref
-                      .read(articleActionServiceProvider)
-                      .markRead(selectedArticleId!, !a.isRead);
-                  return null;
-                },
-              ),
-              _ToggleStarIntent: CallbackAction<_ToggleStarIntent>(
-                onInvoke: (intent) async {
-                  if (selectedArticleId == null) return null;
-                  await ref
-                      .read(articleActionServiceProvider)
-                      .toggleStar(selectedArticleId!);
-                  return null;
-                },
-              ),
-              _SearchIntent: CallbackAction<_SearchIntent>(
-                onInvoke: (intent) {
-                  context.go('/search');
-                  return null;
-                },
-              ),
-            },
-            child: Focus(
-              autofocus: true,
-              child: Scaffold(
-                appBar: useCompactTopBar
-                    ? AppBar(
-                        title: Text(l10n.feeds),
-                        actions: [
-                          IconButton(
-                            tooltip: l10n.refreshAll,
-                            onPressed: refreshAll,
-                            icon: const Icon(Icons.refresh),
-                          ),
-                          Consumer(
-                            builder: (context, ref, _) {
-                              final unreadOnly = ref.watch(unreadOnlyProvider);
-                              return IconButton(
-                                tooltip: unreadOnly
-                                    ? l10n.showAll
-                                    : l10n.unreadOnly,
-                                onPressed: () =>
-                                    ref
-                                            .read(unreadOnlyProvider.notifier)
-                                            .state =
-                                        !unreadOnly,
-                                icon: Icon(
-                                  unreadOnly
-                                      ? Icons.filter_alt
-                                      : Icons.filter_alt_outlined,
-                                ),
-                              );
-                            },
-                          ),
-                          const OutboxStatusAction(),
-                        ],
-                      )
-                    : null,
-                floatingActionButton: useCompactTopBar
-                    ? markAllReadFab()
-                    : null,
-                drawer: columns == 2
-                    ? Drawer(
-                        child: SafeArea(
-                          child: Sidebar(
-                            onSelectFeed: (_) async {
-                              await Navigator.of(
-                                context,
-                              ).maybePop(); // close drawer
-                            },
-                          ),
-                        ),
-                      )
-                    : null,
-                body: Row(
-                  children: [
-                    if (columns == 3) ...[
-                      SizedBox(
-                        width: kHomeSidebarWidth,
-                        child: SyncStatusCapsuleHost(
-                          enabled: showSyncCapsule,
-                          child: Sidebar(
-                            onSelectFeed: (_) {
-                              if (selectedArticleId != null) context.go('/');
-                            },
-                          ),
-                        ),
+        // 2/3-column: tablet style with shared keyboard shortcuts.
+        return HomeSceneShortcuts(
+          commands: commands,
+          child: Scaffold(
+            appBar: useCompactTopBar
+                ? AppBar(
+                    title: Text(l10n.feeds),
+                    actions: [
+                      IconButton(
+                        tooltip: l10n.refreshAll,
+                        onPressed: refreshAll,
+                        icon: const Icon(Icons.refresh),
                       ),
-                      const SizedBox(width: kPaneGap),
-                    ],
-                    SizedBox(
-                      width: kHomeListWidth,
-                      child: SyncStatusCapsuleHost(
-                        enabled: showSyncCapsule && columns != 3,
-                        child: ArticleList(
-                          selectedArticleId: selectedArticleId,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: kPaneGap),
-                    Expanded(
-                      child: selectedArticleId == null
-                          ? Container(
-                              color: surfaces.reader,
-                              alignment: Alignment.center,
-                              child: Text(l10n.selectAnArticle),
-                            )
-                          : ReaderView(
-                              key: ValueKey('home-reader-$selectedArticleId'),
-                              articleId: selectedArticleId!,
-                              embedded: true,
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final unreadOnly = ref.watch(unreadOnlyProvider);
+                          return IconButton(
+                            tooltip: unreadOnly
+                                ? l10n.showAll
+                                : l10n.unreadOnly,
+                            onPressed: commands.toggleUnreadOnly,
+                            icon: Icon(
+                              unreadOnly
+                                  ? Icons.filter_alt
+                                  : Icons.filter_alt_outlined,
                             ),
-                    ),
-                  ],
+                          );
+                        },
+                      ),
+                      const OutboxStatusAction(),
+                    ],
+                  )
+                : null,
+            floatingActionButton: useCompactTopBar ? markAllReadFab() : null,
+            drawer: columns == 2 ? const HomeSidebarDrawer() : null,
+            body: Row(
+              children: [
+                if (columns == 3) ...[
+                  HomeSidebarRouteAwarePane(
+                    width: kHomeSidebarWidth,
+                    showSyncCapsule: showSyncCapsule,
+                    selectedArticleId: selectedArticleId,
+                  ),
+                  const SizedBox(width: kPaneGap),
+                ],
+                HomeArticleListPane(
+                  width: kHomeListWidth,
+                  selectedArticleId: selectedArticleId,
+                  showSyncCapsule: showSyncCapsule && columns != 3,
                 ),
-              ),
+                const SizedBox(width: kPaneGap),
+                Expanded(
+                  child: HomeReaderPane(
+                    selectedArticleId: selectedArticleId,
+                    placeholderText: l10n.selectAnArticle,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -377,202 +186,67 @@ class HomeScreen extends ConsumerWidget {
     AppLocalizations l10n,
     DesktopPaneMode mode,
     bool useCompactTopBar,
+    HomeSceneCommands commands,
     Future<void> Function() refreshAll,
     Future<void> Function() markAllRead,
   ) {
-    final surfaces = Theme.of(context).fleurSurface;
     final showSyncCapsule =
         LayoutSpec.fromContext(context).globalNavMode == GlobalNavMode.rail;
-    // Desktop keyboard shortcuts stay enabled across all layouts.
-    final shortcuts = <ShortcutActivator, Intent>{
-      const SingleActivator(LogicalKeyboardKey.keyJ):
-          const _NextArticleIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyK):
-          const _PrevArticleIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyR): const _RefreshIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyU):
-          const _ToggleUnreadIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyM): const _ToggleReadIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyS): const _ToggleStarIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-          const _SearchIntent(),
-      const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
-          const _SearchIntent(),
-    };
-
     final sidebarVisible = ref.watch(sidebarVisibleProvider);
-
-    Widget listPane({double? width}) {
-      final pane = ArticleList(selectedArticleId: selectedArticleId);
-
-      if (width == null) return pane;
-      return Hero(
-        tag: kHeroArticleListPane,
-        child: RepaintBoundary(
-          child: SizedBox(width: width, child: pane),
-        ),
-      );
-    }
-
-    Widget readerPane({required bool embedded}) {
-      if (selectedArticleId == null) {
-        return Container(
-          color: surfaces.reader,
-          alignment: Alignment.center,
-          child: Text(l10n.selectAnArticle),
-        );
-      }
-      return Container(
-        color: surfaces.reader,
-        child: ReaderView(
-          key: ValueKey('home-reader-$selectedArticleId'),
-          articleId: selectedArticleId!,
-          embedded: embedded,
-        ),
-      );
-    }
 
     final body = switch (mode) {
       DesktopPaneMode.threePane => Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (sidebarVisible) ...[
-            SizedBox(
+            HomeSidebarRouteAwarePane(
               width: kDesktopSidebarWidth,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  const SidebarPaneHero(),
-                  SyncStatusCapsuleHost(
-                    enabled: showSyncCapsule,
-                    child: Sidebar(
-                      onSelectFeed: (_) {
-                        if (selectedArticleId != null) context.go('/');
-                      },
-                    ),
-                  ),
-                ],
-              ),
+              showSyncCapsule: showSyncCapsule,
+              selectedArticleId: selectedArticleId,
+              hero: true,
             ),
             const SizedBox(width: kPaneGap),
           ],
-          SyncStatusCapsuleHost(
-            enabled: showSyncCapsule && !sidebarVisible,
-            child: listPane(width: kDesktopListWidth),
+          HomeArticleListPane(
+            width: kDesktopListWidth,
+            heroTag: kHeroArticleListPane,
+            selectedArticleId: selectedArticleId,
+            showSyncCapsule: showSyncCapsule && !sidebarVisible,
           ),
           const SizedBox(width: kPaneGap),
-          Expanded(child: readerPane(embedded: true)),
+          Expanded(
+            child: HomeReaderPane(
+              selectedArticleId: selectedArticleId,
+              placeholderText: l10n.selectAnArticle,
+            ),
+          ),
         ],
       ),
       DesktopPaneMode.splitListReader => Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SyncStatusCapsuleHost(
-            enabled: showSyncCapsule,
-            child: listPane(width: kDesktopListWidth),
+          HomeArticleListPane(
+            width: kDesktopListWidth,
+            heroTag: kHeroArticleListPane,
+            selectedArticleId: selectedArticleId,
+            showSyncCapsule: showSyncCapsule,
           ),
           const SizedBox(width: kPaneGap),
-          Expanded(child: readerPane(embedded: true)),
+          Expanded(
+            child: HomeReaderPane(
+              selectedArticleId: selectedArticleId,
+              placeholderText: l10n.selectAnArticle,
+            ),
+          ),
         ],
       ),
-      DesktopPaneMode.listOnly => SyncStatusCapsuleHost(
-        enabled: showSyncCapsule,
-        child: listPane(),
+      DesktopPaneMode.listOnly => HomeArticleListPane(
+        selectedArticleId: selectedArticleId,
+        showSyncCapsule: showSyncCapsule,
       ),
     };
 
-    final content = Shortcuts(
-      shortcuts: shortcuts,
-      child: Actions(
-        actions: {
-          _NextArticleIntent: CallbackAction<_NextArticleIntent>(
-            onInvoke: (intent) {
-              final list =
-                  ref.read(articleListControllerProvider).valueOrNull?.items ??
-                  const [];
-              if (list.isEmpty) return null;
-              final idx = selectedArticleId == null
-                  ? -1
-                  : list.indexWhere((a) => a.id == selectedArticleId);
-              final next = list[(idx + 1).clamp(0, list.length - 1)];
-              context.go('/article/${next.id}');
-              return null;
-            },
-          ),
-          _PrevArticleIntent: CallbackAction<_PrevArticleIntent>(
-            onInvoke: (intent) {
-              final list =
-                  ref.read(articleListControllerProvider).valueOrNull?.items ??
-                  const [];
-              if (list.isEmpty) return null;
-              final idx = selectedArticleId == null
-                  ? 0
-                  : list.indexWhere((a) => a.id == selectedArticleId);
-              final prev = list[(idx - 1).clamp(0, list.length - 1)];
-              context.go('/article/${prev.id}');
-              return null;
-            },
-          ),
-          _RefreshIntent: CallbackAction<_RefreshIntent>(
-            onInvoke: (intent) async {
-              final feedId = ref.read(selectedFeedIdProvider);
-              final categoryId = ref.read(selectedCategoryIdProvider);
-              if (feedId != null) {
-                await ref.read(syncServiceProvider).refreshFeedSafe(feedId);
-              } else if (categoryId != null) {
-                final feeds = await ref.read(feedRepositoryProvider).getAll();
-                final filtered = feeds.where((f) => f.categoryId == categoryId);
-                await ref
-                    .read(syncServiceProvider)
-                    .refreshFeedsSafe(filtered.map((f) => f.id));
-              } else {
-                final feeds = await ref.read(feedRepositoryProvider).getAll();
-                await ref
-                    .read(syncServiceProvider)
-                    .refreshFeedsSafe(feeds.map((f) => f.id));
-              }
-              return null;
-            },
-          ),
-          _ToggleUnreadIntent: CallbackAction<_ToggleUnreadIntent>(
-            onInvoke: (intent) {
-              final cur = ref.read(unreadOnlyProvider);
-              ref.read(unreadOnlyProvider.notifier).state = !cur;
-              return null;
-            },
-          ),
-          _ToggleReadIntent: CallbackAction<_ToggleReadIntent>(
-            onInvoke: (intent) async {
-              if (selectedArticleId == null) return null;
-              final a = await ref
-                  .read(articleRepositoryProvider)
-                  .getById(selectedArticleId!);
-              if (a == null) return null;
-              await ref
-                  .read(articleActionServiceProvider)
-                  .markRead(selectedArticleId!, !a.isRead);
-              return null;
-            },
-          ),
-          _ToggleStarIntent: CallbackAction<_ToggleStarIntent>(
-            onInvoke: (intent) async {
-              if (selectedArticleId == null) return null;
-              await ref
-                  .read(articleActionServiceProvider)
-                  .toggleStar(selectedArticleId!);
-              return null;
-            },
-          ),
-          _SearchIntent: CallbackAction<_SearchIntent>(
-            onInvoke: (intent) {
-              context.go('/search');
-              return null;
-            },
-          ),
-        },
-        child: Focus(autofocus: true, child: body),
-      ),
-    );
+    final content = HomeSceneShortcuts(commands: commands, child: body);
 
     if (!useCompactTopBar) return content;
 
@@ -592,8 +266,7 @@ class HomeScreen extends ConsumerWidget {
               final unreadOnly = ref.watch(unreadOnlyProvider);
               return IconButton(
                 tooltip: unreadOnly ? l10n.showAll : l10n.unreadOnly,
-                onPressed: () =>
-                    ref.read(unreadOnlyProvider.notifier).state = !unreadOnly,
+                onPressed: commands.toggleUnreadOnly,
                 icon: Icon(
                   unreadOnly ? Icons.filter_alt : Icons.filter_alt_outlined,
                 ),
@@ -608,46 +281,8 @@ class HomeScreen extends ConsumerWidget {
         tooltip: l10n.markAllRead,
         child: const Icon(Icons.done_all),
       ),
-      drawer: drawerEnabled
-          ? Drawer(
-              child: SafeArea(
-                child: Sidebar(
-                  onSelectFeed: (_) async {
-                    await Navigator.of(context).maybePop();
-                  },
-                ),
-              ),
-            )
-          : null,
+      drawer: drawerEnabled ? const HomeSidebarDrawer() : null,
       body: content,
     );
   }
-}
-
-class _NextArticleIntent extends Intent {
-  const _NextArticleIntent();
-}
-
-class _PrevArticleIntent extends Intent {
-  const _PrevArticleIntent();
-}
-
-class _RefreshIntent extends Intent {
-  const _RefreshIntent();
-}
-
-class _ToggleUnreadIntent extends Intent {
-  const _ToggleUnreadIntent();
-}
-
-class _ToggleReadIntent extends Intent {
-  const _ToggleReadIntent();
-}
-
-class _ToggleStarIntent extends Intent {
-  const _ToggleStarIntent();
-}
-
-class _SearchIntent extends Intent {
-  const _SearchIntent();
 }

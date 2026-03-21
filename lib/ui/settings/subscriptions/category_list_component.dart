@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../providers/query_providers.dart';
 import '../../../../providers/subscription_settings_provider.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../widgets/section_header.dart';
 
 class CategoryListComponent extends ConsumerWidget {
   const CategoryListComponent({super.key});
@@ -26,40 +27,35 @@ class CategoryListComponent extends ConsumerWidget {
           // Let's assume we always show "Uncategorized" item if we are in this view.
         }
 
-        return ListView(
-          primary: false,
-          children: [
-            // List actual categories
-            for (final category in categories)
-              ListTile(
-                title: Text(category.name),
-                selected: selection.activeCategoryId == category.id,
+        return Scrollbar(
+          child: ListView(
+            primary: false,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            children: [
+              for (final category in categories)
+                SettingsTile(
+                  leading: const Icon(Icons.folder_outlined),
+                  title: Text(category.name),
+                  selected: selection.activeCategoryId == category.id,
+                  onTap: () {
+                    ref
+                        .read(subscriptionSelectionProvider.notifier)
+                        .selectCategory(category.id);
+                  },
+                ),
+              const SizedBox(height: 8),
+              SettingsTile(
+                title: Text(l10n.uncategorized),
+                leading: const Icon(Icons.rss_feed),
+                selected: selection.isUncategorized,
                 onTap: () {
                   ref
                       .read(subscriptionSelectionProvider.notifier)
-                      .selectCategory(category.id);
+                      .selectUncategorized();
                 },
-                leading: const Icon(Icons.folder_outlined),
-                selectedTileColor: Theme.of(
-                  context,
-                ).colorScheme.primaryContainer,
               ),
-
-            const SizedBox(height: 8),
-
-            // Uncategorized
-            ListTile(
-              title: Text(l10n.uncategorized),
-              leading: const Icon(Icons.rss_feed),
-              selected: selection.isUncategorized,
-              onTap: () {
-                ref
-                    .read(subscriptionSelectionProvider.notifier)
-                    .selectUncategorized();
-              },
-              selectedTileColor: Theme.of(context).colorScheme.primaryContainer,
-            ),
-          ],
+            ],
+          ),
         );
       },
     );

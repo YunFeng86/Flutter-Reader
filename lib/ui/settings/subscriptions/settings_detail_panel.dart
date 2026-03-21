@@ -11,6 +11,7 @@ import '../../../../models/category.dart';
 import '../../../../services/settings/app_settings.dart';
 import '../../../../services/network/user_agents.dart';
 import '../../../../utils/timeago_locale.dart';
+import '../widgets/section_header.dart';
 import 'subscription_actions.dart';
 import 'settings_inheritance_helper.dart';
 import 'package:timeago/timeago.dart' as timeago;
@@ -88,42 +89,47 @@ class _GlobalSettings extends ConsumerWidget {
         final lastText = last == null
             ? l10n.never
             : timeago.format(last.toLocal(), locale: timeagoLocale(context));
-        return ListView(
-          padding: const EdgeInsets.all(24),
+        return SettingsPageBody(
+          maxWidth: 920,
           children: [
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: Text(l10n.addSubscription),
-              onTap: () => SubscriptionActions.showAddFeedDialog(context, ref),
+            SettingsCard(
+              padding: EdgeInsets.zero,
+              child: SettingsTileGroup(
+                children: [
+                  SettingsTile(
+                    leading: const Icon(Icons.add),
+                    title: Text(l10n.addSubscription),
+                    onTap: () =>
+                        SubscriptionActions.showAddFeedDialog(context, ref),
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.create_new_folder_outlined),
+                    title: Text(l10n.newCategory),
+                    onTap: () =>
+                        SubscriptionActions.showAddCategoryDialog(context, ref),
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.refresh),
+                    title: Text(l10n.refreshAll),
+                    subtitle: Text('${l10n.lastSynced}: $lastText'),
+                    onTap: () => SubscriptionActions.refreshAll(context, ref),
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.file_upload_outlined),
+                    title: Text(l10n.importOpml),
+                    onTap: () => SubscriptionActions.importOpml(context, ref),
+                  ),
+                  SettingsTile(
+                    leading: const Icon(Icons.file_download_outlined),
+                    title: Text(l10n.exportOpml),
+                    onTap: () => SubscriptionActions.exportOpml(context, ref),
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.create_new_folder_outlined),
-              title: Text(l10n.newCategory),
-              onTap: () =>
-                  SubscriptionActions.showAddCategoryDialog(context, ref),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.refresh),
-              title: Text(l10n.refreshAll),
-              subtitle: Text('${l10n.lastSynced}: $lastText'),
-              onTap: () => SubscriptionActions.refreshAll(context, ref),
-            ),
-            ListTile(
-              leading: const Icon(Icons.file_upload_outlined),
-              title: Text(l10n.importOpml),
-              onTap: () => SubscriptionActions.importOpml(context, ref),
-            ),
-            ListTile(
-              leading: const Icon(Icons.file_download_outlined),
-              title: Text(l10n.exportOpml),
-              onTap: () => SubscriptionActions.exportOpml(context, ref),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             _FilterSection(appSettings: appSettings),
-            const SizedBox(height: 16),
             _SyncSection(appSettings: appSettings),
-            const SizedBox(height: 16),
             _UserAgentSection(appSettings: appSettings),
           ],
         );
@@ -146,41 +152,46 @@ class _CategorySettings extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return SettingsPageBody(
+      maxWidth: 920,
       children: [
-        Text(category.name, style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 24),
-        ListTile(
-          leading: const Icon(Icons.edit),
-          title: Text(l10n.rename),
-          onTap: () => SubscriptionActions.renameCategory(
-            context,
-            ref,
-            categoryId: category.id,
-            currentName: category.name,
+        SettingsDetailHeader(title: category.name),
+        SettingsCard(
+          padding: EdgeInsets.zero,
+          child: SettingsTileGroup(
+            children: [
+              SettingsTile(
+                leading: const Icon(Icons.edit),
+                title: Text(l10n.rename),
+                onTap: () => SubscriptionActions.renameCategory(
+                  context,
+                  ref,
+                  categoryId: category.id,
+                  currentName: category.name,
+                ),
+              ),
+              SettingsTile(
+                destructive: true,
+                leading: const Icon(Icons.delete_outline),
+                title: Text(l10n.delete),
+                onTap: () async {
+                  final deleted = await SubscriptionActions.deleteCategory(
+                    context,
+                    ref,
+                    category.id,
+                  );
+                  if (!deleted || !context.mounted) return;
+                  ref
+                      .read(subscriptionSelectionProvider.notifier)
+                      .selectCategory(null);
+                },
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _FilterSection(category: category, appSettings: appSettings),
-        const SizedBox(height: 16),
         _SyncSection(category: category, appSettings: appSettings),
-        const SizedBox(height: 16),
-        ListTile(
-          leading: const Icon(Icons.delete_outline, color: Colors.red),
-          title: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
-          onTap: () async {
-            final deleted = await SubscriptionActions.deleteCategory(
-              context,
-              ref,
-              category.id,
-            );
-            if (!deleted || !context.mounted) return;
-            ref
-                .read(subscriptionSelectionProvider.notifier)
-                .selectCategory(null);
-          },
-        ),
       ],
     );
   }
@@ -204,61 +215,69 @@ class _FeedSettings extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return SettingsPageBody(
+      maxWidth: 920,
       children: [
-        Text(
-          feed.userTitle ?? feed.title ?? 'Feed',
-          style: Theme.of(context).textTheme.headlineMedium,
+        SettingsDetailHeader(
+          title: feed.userTitle ?? feed.title ?? 'Feed',
+          subtitle: feed.url,
         ),
-        SelectableText(feed.url),
-        const SizedBox(height: 24),
-        ListTile(
-          leading: const Icon(Icons.edit),
-          title: Text(l10n.rename),
-          onTap: () => SubscriptionActions.editFeedTitle(
-            context,
-            ref,
-            feedId: feed.id,
-            currentTitle: feed.userTitle ?? feed.title,
+        SettingsCard(
+          padding: EdgeInsets.zero,
+          child: SettingsTileGroup(
+            children: [
+              SettingsTile(
+                leading: const Icon(Icons.edit),
+                title: Text(l10n.rename),
+                onTap: () => SubscriptionActions.editFeedTitle(
+                  context,
+                  ref,
+                  feedId: feed.id,
+                  currentTitle: feed.userTitle ?? feed.title,
+                ),
+              ),
+              SettingsTile(
+                leading: const Icon(Icons.folder_open),
+                title: Text(l10n.moveToCategory),
+                subtitle: Text(category?.name ?? l10n.uncategorized),
+                onTap: () => SubscriptionActions.moveFeedToCategory(
+                  context,
+                  ref,
+                  feed.id,
+                ),
+              ),
+              SettingsTile(
+                leading: const Icon(Icons.refresh),
+                title: Text(l10n.refresh),
+                onTap: () =>
+                    SubscriptionActions.refreshFeed(context, ref, feed.id),
+              ),
+              SettingsTile(
+                destructive: true,
+                leading: const Icon(Icons.delete_outline),
+                title: Text(l10n.delete),
+                onTap: () async {
+                  final deleted = await SubscriptionActions.deleteFeed(
+                    context,
+                    ref,
+                    feed.id,
+                  );
+                  if (!deleted || !context.mounted) return;
+                  ref
+                      .read(subscriptionSelectionProvider.notifier)
+                      .clearFeedSelection();
+                },
+              ),
+            ],
           ),
         ),
-        ListTile(
-          leading: const Icon(Icons.folder_open),
-          title: Text(l10n.moveToCategory),
-          subtitle: Text(category?.name ?? l10n.uncategorized),
-          onTap: () =>
-              SubscriptionActions.moveFeedToCategory(context, ref, feed.id),
-        ),
-        ListTile(
-          leading: const Icon(Icons.refresh),
-          title: Text(l10n.refresh),
-          onTap: () => SubscriptionActions.refreshFeed(context, ref, feed.id),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _FilterSection(
           feed: feed,
           category: category,
           appSettings: appSettings,
         ),
-        const SizedBox(height: 16),
         _SyncSection(feed: feed, category: category, appSettings: appSettings),
-        const SizedBox(height: 16),
-        ListTile(
-          leading: const Icon(Icons.delete_outline, color: Colors.red),
-          title: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
-          onTap: () async {
-            final deleted = await SubscriptionActions.deleteFeed(
-              context,
-              ref,
-              feed.id,
-            );
-            if (!deleted || !context.mounted) return;
-            ref
-                .read(subscriptionSelectionProvider.notifier)
-                .clearFeedSelection();
-          },
-        ),
       ],
     );
   }
@@ -274,7 +293,6 @@ class _FilterSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
     final effectiveEnabled = SettingsInheritanceHelper.resolveFilterEnabled(
       feed,
@@ -282,69 +300,64 @@ class _FilterSection extends ConsumerWidget {
       appSettings,
     );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            l10n.filter,
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
+    return SettingsSection(
+      title: l10n.filter,
+      child: SettingsCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _TriStateSwitch(
+              title: l10n.enableFilter,
+              currentValue: feed != null
+                  ? feed!.filterEnabled
+                  : category?.filterEnabled,
+              effectiveValue: effectiveEnabled,
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      filterEnabled: val,
+                      updateFilterEnabled: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      filterEnabled: val,
+                      updateFilterEnabled: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setFilterEnabled(val ?? false),
+                  );
+                }
+              },
             ),
-          ),
-        ),
-        _TriStateSwitch(
-          title: l10n.enableFilter,
-          // IMPORTANT: keep `currentValue` as the explicit value at this level.
-          // Do not fall back to parent (category/global), otherwise selecting
-          // "Auto" will appear to do nothing.
-          currentValue: feed != null
-              ? feed!.filterEnabled
-              : category?.filterEnabled,
-          effectiveValue: effectiveEnabled,
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  filterEnabled: val,
-                  updateFilterEnabled: true,
+            if (effectiveEnabled) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                child: _FilterKeywordsInput(
+                  feed: feed,
+                  category: category,
+                  appSettings: appSettings,
                 ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  filterEnabled: val,
-                  updateFilterEnabled: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setFilterEnabled(val ?? false),
-              );
-            }
-          },
+              ),
+            ],
+          ],
         ),
-        if (effectiveEnabled)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: _FilterKeywordsInput(
-              feed: feed,
-              category: category,
-              appSettings: appSettings,
-            ),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -359,225 +372,221 @@ class _SyncSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            l10n.sync,
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
+    return SettingsSection(
+      title: l10n.sync,
+      child: SettingsCard(
+        padding: EdgeInsets.zero,
+        child: SettingsTileGroup(
+          children: [
+            _TriStateSwitch(
+              title: l10n.enableSync,
+              currentValue: feed != null
+                  ? feed!.syncEnabled
+                  : category?.syncEnabled,
+              effectiveValue: SettingsInheritanceHelper.resolveSyncEnabled(
+                feed,
+                category,
+                appSettings,
+              ),
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      syncEnabled: val,
+                      updateSyncEnabled: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      syncEnabled: val,
+                      updateSyncEnabled: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setSyncEnabled(val ?? true),
+                  );
+                }
+              },
             ),
-          ),
+            _TriStateSwitch(
+              title: l10n.syncImages,
+              currentValue: feed != null
+                  ? feed!.syncImages
+                  : category?.syncImages,
+              effectiveValue: SettingsInheritanceHelper.resolveSyncImages(
+                feed,
+                category,
+                appSettings,
+              ),
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      syncImages: val,
+                      updateSyncImages: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      syncImages: val,
+                      updateSyncImages: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setSyncImages(val ?? true),
+                  );
+                }
+              },
+            ),
+            _TriStateSwitch(
+              title: l10n.syncWebPages,
+              currentValue: feed != null
+                  ? feed!.syncWebPages
+                  : category?.syncWebPages,
+              effectiveValue: SettingsInheritanceHelper.resolveSyncWebPages(
+                feed,
+                category,
+                appSettings,
+              ),
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      syncWebPages: val,
+                      updateSyncWebPages: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      syncWebPages: val,
+                      updateSyncWebPages: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setSyncWebPages(val ?? false),
+                  );
+                }
+              },
+            ),
+            _TriStateSwitch(
+              title: l10n.autoAiSummary,
+              currentValue: feed != null
+                  ? feed!.showAiSummary
+                  : category?.showAiSummary,
+              effectiveValue: SettingsInheritanceHelper.resolveShowAiSummary(
+                feed,
+                category,
+                appSettings,
+              ),
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      showAiSummary: val,
+                      updateShowAiSummary: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      showAiSummary: val,
+                      updateShowAiSummary: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setShowAiSummary(val ?? false),
+                  );
+                }
+              },
+            ),
+            _TriStateSwitch(
+              title: l10n.autoTranslate,
+              currentValue: feed != null
+                  ? feed!.autoTranslate
+                  : category?.autoTranslate,
+              effectiveValue: SettingsInheritanceHelper.resolveAutoTranslate(
+                feed,
+                category,
+                appSettings,
+              ),
+              isGlobal: feed == null && category == null,
+              onChanged: (val) {
+                if (feed != null) {
+                  unawaited(
+                    SubscriptionActions.updateFeedSettings(
+                      context,
+                      ref,
+                      feedId: feed!.id,
+                      autoTranslate: val,
+                      updateAutoTranslate: true,
+                    ),
+                  );
+                } else if (category != null) {
+                  unawaited(
+                    SubscriptionActions.updateCategorySettings(
+                      context,
+                      ref,
+                      categoryId: category!.id,
+                      autoTranslate: val,
+                      updateAutoTranslate: true,
+                    ),
+                  );
+                } else {
+                  unawaited(
+                    ref
+                        .read(appSettingsProvider.notifier)
+                        .setAutoTranslate(val ?? false),
+                  );
+                }
+              },
+            ),
+          ],
         ),
-        _TriStateSwitch(
-          title: l10n.enableSync,
-          currentValue: feed != null
-              ? feed!.syncEnabled
-              : category?.syncEnabled,
-          effectiveValue: SettingsInheritanceHelper.resolveSyncEnabled(
-            feed,
-            category,
-            appSettings,
-          ),
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  syncEnabled: val,
-                  updateSyncEnabled: true,
-                ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  syncEnabled: val,
-                  updateSyncEnabled: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setSyncEnabled(val ?? true),
-              );
-            }
-          },
-        ),
-        _TriStateSwitch(
-          title: l10n.syncImages,
-          currentValue: feed != null ? feed!.syncImages : category?.syncImages,
-          effectiveValue: SettingsInheritanceHelper.resolveSyncImages(
-            feed,
-            category,
-            appSettings,
-          ),
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  syncImages: val,
-                  updateSyncImages: true,
-                ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  syncImages: val,
-                  updateSyncImages: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setSyncImages(val ?? true),
-              );
-            }
-          },
-        ),
-        _TriStateSwitch(
-          title: l10n.syncWebPages,
-          currentValue: feed != null
-              ? feed!.syncWebPages
-              : category?.syncWebPages,
-          effectiveValue: SettingsInheritanceHelper.resolveSyncWebPages(
-            feed,
-            category,
-            appSettings,
-          ),
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  syncWebPages: val,
-                  updateSyncWebPages: true,
-                ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  syncWebPages: val,
-                  updateSyncWebPages: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setSyncWebPages(val ?? false),
-              );
-            }
-          },
-        ),
-        _TriStateSwitch(
-          title: l10n.autoAiSummary,
-          currentValue: feed != null
-              ? feed!.showAiSummary
-              : category?.showAiSummary,
-          effectiveValue: SettingsInheritanceHelper.resolveShowAiSummary(
-            feed,
-            category,
-            appSettings,
-          ),
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  showAiSummary: val,
-                  updateShowAiSummary: true,
-                ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  showAiSummary: val,
-                  updateShowAiSummary: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setShowAiSummary(val ?? false),
-              );
-            }
-          },
-        ),
-        _TriStateSwitch(
-          title: l10n.autoTranslate,
-          currentValue: feed != null
-              ? feed!.autoTranslate
-              : category?.autoTranslate,
-          effectiveValue: SettingsInheritanceHelper.resolveAutoTranslate(
-            feed,
-            category,
-            appSettings,
-          ),
-          isGlobal: feed == null && category == null,
-          onChanged: (val) {
-            if (feed != null) {
-              unawaited(
-                SubscriptionActions.updateFeedSettings(
-                  context,
-                  ref,
-                  feedId: feed!.id,
-                  autoTranslate: val,
-                  updateAutoTranslate: true,
-                ),
-              );
-            } else if (category != null) {
-              unawaited(
-                SubscriptionActions.updateCategorySettings(
-                  context,
-                  ref,
-                  categoryId: category!.id,
-                  autoTranslate: val,
-                  updateAutoTranslate: true,
-                ),
-              );
-            } else {
-              unawaited(
-                ref
-                    .read(appSettingsProvider.notifier)
-                    .setAutoTranslate(val ?? false),
-              );
-            }
-          },
-        ),
-      ],
+      ),
     );
   }
 }
@@ -651,7 +660,7 @@ class _TriStateSwitchState extends State<_TriStateSwitch> {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (widget.isGlobal) {
-      return SwitchListTile(
+      return SettingsSwitchTile(
         title: Text(widget.title),
         value: widget.currentValue ?? widget.effectiveValue,
         onChanged: widget.onChanged,
@@ -668,7 +677,7 @@ class _TriStateSwitchState extends State<_TriStateSwitch> {
     // Suffix text: (Default Value) or empty if specific
     final suffixText = isSpecific ? '' : '  ${l10n.defaultValue}';
 
-    return ListTile(
+    return SettingsTile(
       title: Text(widget.title),
       subtitle: RichText(
         text: TextSpan(
@@ -691,8 +700,7 @@ class _TriStateSwitchState extends State<_TriStateSwitch> {
           if (isSpecific)
             IconButton(
               icon: const Icon(Icons.refresh),
-              tooltip:
-                  l10n.inherit, // "Inherit" effectively means reset to default
+              tooltip: l10n.inherit,
               onPressed: () => widget.onChanged(null),
             ),
           IconButton(
@@ -798,13 +806,9 @@ class _FilterKeywordsInputState extends ConsumerState<_FilterKeywordsInput> {
           focusNode: _focusNode,
           readOnly: _isInherit,
           decoration: InputDecoration(
-            // When inheriting, don't show "inherit:" text; show effective value
-            // directly (read-only) to match global/category-global behavior.
             hintText: _isInherit && _effectiveValue.trim().isEmpty
                 ? l10n.defaultValue
                 : null,
-            border: const OutlineInputBorder(),
-            filled: true,
             helperText: l10n.filterKeywordsHint,
             helperMaxLines: 2,
             suffixIcon: _isGlobal
@@ -923,82 +927,67 @@ class _UserAgentSectionState extends ConsumerState<_UserAgentSection> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            l10n.userAgent,
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: TextField(
-            controller: _rssController,
-            decoration: InputDecoration(
-              labelText: l10n.rssUserAgent,
-              border: const OutlineInputBorder(),
-              filled: true,
-              helperText: l10n.userAgentRssHint,
-              helperMaxLines: 2,
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: l10n.resetToDefault,
-                onPressed: () {
-                  _rssController.text = UserAgents.rss;
-                  unawaited(
-                    ref
-                        .read(appSettingsProvider.notifier)
-                        .setRssUserAgent(UserAgents.rss),
-                  );
-                },
+    return SettingsSection(
+      title: l10n.userAgent,
+      bottomSpacing: 0,
+      child: SettingsCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _rssController,
+              decoration: InputDecoration(
+                labelText: l10n.rssUserAgent,
+                helperText: l10n.userAgentRssHint,
+                helperMaxLines: 2,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: l10n.resetToDefault,
+                  onPressed: () {
+                    _rssController.text = UserAgents.rss;
+                    unawaited(
+                      ref
+                          .read(appSettingsProvider.notifier)
+                          .setRssUserAgent(UserAgents.rss),
+                    );
+                  },
+                ),
+              ),
+              minLines: 1,
+              maxLines: 3,
+              onChanged: (value) => unawaited(
+                ref.read(appSettingsProvider.notifier).setRssUserAgent(value),
               ),
             ),
-            minLines: 1,
-            maxLines: 3,
-            onChanged: (value) => unawaited(
-              ref.read(appSettingsProvider.notifier).setRssUserAgent(value),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: TextField(
-            controller: _webController,
-            decoration: InputDecoration(
-              labelText: l10n.webUserAgent,
-              border: const OutlineInputBorder(),
-              filled: true,
-              helperText: l10n.userAgentWebHint,
-              helperMaxLines: 2,
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.refresh),
-                tooltip: l10n.resetToDefault,
-                onPressed: () {
-                  _webController.text = UserAgents.webForCurrentPlatform();
-                  unawaited(
-                    ref
-                        .read(appSettingsProvider.notifier)
-                        .setWebUserAgent(UserAgents.webForCurrentPlatform()),
-                  );
-                },
+            const SizedBox(height: 16),
+            TextField(
+              controller: _webController,
+              decoration: InputDecoration(
+                labelText: l10n.webUserAgent,
+                helperText: l10n.userAgentWebHint,
+                helperMaxLines: 2,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.refresh),
+                  tooltip: l10n.resetToDefault,
+                  onPressed: () {
+                    _webController.text = UserAgents.webForCurrentPlatform();
+                    unawaited(
+                      ref
+                          .read(appSettingsProvider.notifier)
+                          .setWebUserAgent(UserAgents.webForCurrentPlatform()),
+                    );
+                  },
+                ),
+              ),
+              minLines: 1,
+              maxLines: 3,
+              onChanged: (value) => unawaited(
+                ref.read(appSettingsProvider.notifier).setWebUserAgent(value),
               ),
             ),
-            minLines: 1,
-            maxLines: 3,
-            onChanged: (value) => unawaited(
-              ref.read(appSettingsProvider.notifier).setWebUserAgent(value),
-            ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

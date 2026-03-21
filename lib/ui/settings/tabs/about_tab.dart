@@ -10,7 +10,6 @@ import 'package:path/path.dart' as p;
 import '../../../l10n/app_localizations.dart';
 import '../../../services/logging/app_logger.dart';
 import '../../../services/platform/shell_service.dart';
-import '../../../theme/app_theme.dart';
 import '../../../utils/context_extensions.dart';
 import '../../../utils/path_manager.dart';
 import '../../../utils/platform.dart';
@@ -177,287 +176,243 @@ class _AboutTabState extends State<AboutTab> {
       builder: (context, packageSnapshot) {
         final packageInfo = packageSnapshot.data;
 
-        return SingleChildScrollView(
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 800),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+        return SettingsPageBody(
+          children: [
+            if (widget.showPageTitle) ...[
+              SectionHeader(title: l10n.about),
+              const SizedBox(height: 8),
+            ],
+            SettingsSection(
+              title: l10n.about,
+              child: SettingsCard(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (widget.showPageTitle) SectionHeader(title: l10n.about),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    Text(l10n.appTitle, style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 12),
+                    if (packageInfo != null) ...[
+                      Row(
                         children: [
-                          Text(
-                            l10n.appTitle,
-                            style: theme.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          // Version and build number
-                          if (packageInfo != null) ...[
-                            Row(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.version,
-                                        style: theme.textTheme.labelLarge,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SelectableText(packageInfo.version),
-                                    ],
-                                  ),
+                                Text(
+                                  l10n.version,
+                                  style: theme.textTheme.labelLarge,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        l10n.buildNumber,
-                                        style: theme.textTheme.labelLarge,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      SelectableText(packageInfo.buildNumber),
-                                    ],
-                                  ),
-                                ),
+                                const SizedBox(height: 4),
+                                SelectableText(packageInfo.version),
                               ],
                             ),
-                            const SizedBox(height: 16),
-                          ],
-                          if (isDesktopPlatform) ...[
-                            FutureBuilder<String>(
-                              future: _appDataPathFuture,
-                              builder: (context, snapshot) {
-                                final path = snapshot.data;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.dataDirectory,
-                                      style: theme.textTheme.labelLarge,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    SelectableText(path ?? '...'),
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 12,
-                                      runSpacing: 12,
-                                      children: [
-                                        OutlinedButton(
-                                          onPressed: path == null
-                                              ? null
-                                              : () async {
-                                                  await Clipboard.setData(
-                                                    ClipboardData(text: path),
-                                                  );
-                                                  if (!context.mounted) return;
-                                                  context.showSnack(l10n.done);
-                                                },
-                                          child: Text(l10n.copyPath),
-                                        ),
-                                        OutlinedButton(
-                                          onPressed: path == null
-                                              ? null
-                                              : () {
-                                                  unawaited(_openFolder(path));
-                                                },
-                                          child: Text(l10n.openFolder),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l10n.buildNumber,
+                                  style: theme.textTheme.labelLarge,
+                                ),
+                                const SizedBox(height: 4),
+                                SelectableText(packageInfo.buildNumber),
+                              ],
                             ),
-                            const SizedBox(height: 16),
-                            FutureBuilder<String>(
-                              future: _logsPathFuture,
-                              builder: (context, snapshot) {
-                                final path = snapshot.data;
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      l10n.logDirectory,
-                                      style: theme.textTheme.labelLarge,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    SelectableText(path ?? '...'),
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 12,
-                                      runSpacing: 12,
-                                      children: [
-                                        OutlinedButton(
-                                          onPressed: path == null
-                                              ? null
-                                              : () async {
-                                                  await Clipboard.setData(
-                                                    ClipboardData(text: path),
-                                                  );
-                                                  if (!context.mounted) return;
-                                                  context.showSnack(l10n.done);
-                                                },
-                                          child: Text(l10n.copyPath),
-                                        ),
-                                        OutlinedButton(
-                                          onPressed: path == null
-                                              ? null
-                                              : () {
-                                                  unawaited(_openFolder(path));
-                                                },
-                                          child: Text(l10n.openLogFolder),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ],
-                          if (!isDesktopPlatform) ...[
-                            const SizedBox(height: 8),
-                            FilledButton(
-                              onPressed: () {
-                                unawaited(_exportLogs());
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (isDesktopPlatform) ...[
+                      FutureBuilder<String>(
+                        future: _appDataPathFuture,
+                        builder: (context, snapshot) {
+                          final path = snapshot.data;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.dataDirectory,
+                                style: theme.textTheme.labelLarge,
+                              ),
+                              const SizedBox(height: 4),
+                              SelectableText(path ?? '...'),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
                                 children: [
-                                  const Icon(Icons.download_outlined, size: 18),
-                                  const SizedBox(width: 8),
-                                  Flexible(child: Text(l10n.exportLogs)),
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () async {
+                                            await Clipboard.setData(
+                                              ClipboardData(text: path),
+                                            );
+                                            if (!context.mounted) return;
+                                            context.showSnack(l10n.done);
+                                          },
+                                    child: Text(l10n.copyPath),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () {
+                                            unawaited(_openFolder(path));
+                                          },
+                                    child: Text(l10n.openFolder),
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ],
+                            ],
+                          );
+                        },
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    SectionHeader(title: l10n.openSourceLicense),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
+                      const SizedBox(height: 16),
+                      FutureBuilder<String>(
+                        future: _logsPathFuture,
+                        builder: (context, snapshot) {
+                          final path = snapshot.data;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                l10n.logDirectory,
+                                style: theme.textTheme.labelLarge,
+                              ),
+                              const SizedBox(height: 4),
+                              SelectableText(path ?? '...'),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () async {
+                                            await Clipboard.setData(
+                                              ClipboardData(text: path),
+                                            );
+                                            if (!context.mounted) return;
+                                            context.showSnack(l10n.done);
+                                          },
+                                    child: Text(l10n.copyPath),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: path == null
+                                        ? null
+                                        : () {
+                                            unawaited(_openFolder(path));
+                                          },
+                                    child: Text(l10n.openLogFolder),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'MIT License',
-                            style: theme.textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton(
-                            onPressed: _showLicenseDialog,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.description_outlined,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(child: Text(l10n.viewLicense)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SectionHeader(title: l10n.thirdPartyLicenses),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.viewThirdPartyLicenses,
-                            style: theme.textTheme.bodyMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          OutlinedButton(
-                            onPressed: () {
-                              showLicensePage(
-                                context: context,
-                                applicationName: l10n.appTitle,
-                                applicationVersion: packageInfo?.version,
-                              );
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.article_outlined, size: 18),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(l10n.viewThirdPartyLicenses),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SectionHeader(title: l10n.keyboardShortcuts),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusCard,
-                        ),
-                      ),
-                      child: DefaultTextStyle(
-                        style: theme.textTheme.bodyMedium!,
-                        child: const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ],
+                    if (!isDesktopPlatform) ...[
+                      const SizedBox(height: 8),
+                      FilledButton(
+                        onPressed: () {
+                          unawaited(_exportLogs());
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('J / K: Next / previous article'),
-                            Text('R: Refresh (current selection)'),
-                            Text('U: Toggle unread-only'),
-                            Text('M: Toggle read/unread for selected article'),
-                            Text('S: Toggle star for selected article'),
-                            Text(
-                              'Ctrl/Cmd+F: Search articles (list); focus Find in page (reader)',
-                            ),
+                            const Icon(Icons.download_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Flexible(child: Text(l10n.exportLogs)),
                           ],
                         ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            SettingsSection(
+              title: l10n.openSourceLicense,
+              child: SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('MIT License', style: theme.textTheme.titleSmall),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: _showLicenseDialog,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.description_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(l10n.viewLicense)),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
+            SettingsSection(
+              title: l10n.thirdPartyLicenses,
+              child: SettingsCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.viewThirdPartyLicenses,
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: () {
+                        showLicensePage(
+                          context: context,
+                          applicationName: l10n.appTitle,
+                          applicationVersion: packageInfo?.version,
+                        );
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.article_outlined, size: 18),
+                          const SizedBox(width: 8),
+                          Flexible(child: Text(l10n.viewThirdPartyLicenses)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SettingsSection(
+              title: l10n.keyboardShortcuts,
+              bottomSpacing: 0,
+              child: SettingsCard(
+                child: DefaultTextStyle(
+                  style: theme.textTheme.bodyMedium!,
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('J / K: Next / previous article'),
+                      Text('R: Refresh (current selection)'),
+                      Text('U: Toggle unread-only'),
+                      Text('M: Toggle read/unread for selected article'),
+                      Text('S: Toggle star for selected article'),
+                      Text(
+                        'Ctrl/Cmd+F: Search articles (list); focus Find in page (reader)',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

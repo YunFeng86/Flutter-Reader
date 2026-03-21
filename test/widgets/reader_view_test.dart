@@ -177,6 +177,42 @@ void main() {
     expect(_FakeFullTextController.fetchCalls, 1);
   });
 
+  testWidgets('reader settings open as a dialog on wide layouts', (
+    tester,
+  ) async {
+    await pumpReader(
+      tester,
+      article: buildArticle(),
+      appSettings: AppSettings.defaults().copyWith(autoMarkRead: false),
+      size: const Size(800, 1200),
+    );
+
+    await tester.tap(find.byTooltip('Reader settings'));
+    await tester.pump();
+    await settleReader(tester, rounds: 4);
+
+    expect(find.text('Reader settings'), findsOneWidget);
+    expect(find.byType(Dialog), findsOneWidget);
+  });
+
+  testWidgets('reader settings open as a bottom sheet on narrow layouts', (
+    tester,
+  ) async {
+    await pumpReader(
+      tester,
+      article: buildArticle(),
+      appSettings: AppSettings.defaults().copyWith(autoMarkRead: false),
+      size: const Size(360, 800),
+    );
+
+    await tester.tap(find.byTooltip('Reader settings'));
+    await tester.pump();
+    await settleReader(tester, rounds: 4);
+
+    expect(find.text('Reader settings'), findsOneWidget);
+    expect(find.byType(BottomSheet), findsOneWidget);
+  });
+
   testWidgets('translate button drives translation and find-in-page search', (
     tester,
   ) async {
