@@ -1,7 +1,7 @@
 # motion-feedback-system Specification
 
 ## Purpose
-TBD - created by archiving change revamp-adaptive-ui-system. Update Purpose after archive.
+Define the shared motion feedback baseline that keeps UI transitions coherent, brief, and interruptible across shell, list, reader, and transient surfaces while honoring platform animation-reduction preferences.
 ## Requirements
 ### Requirement: UI motion MUST use a bounded shared motion baseline
 The application MUST define and reuse a small shared set of motion durations, curves, and transition styles for common UI feedback so that animations remain coherent across shell, list, reader, and floating surfaces.
@@ -35,4 +35,3 @@ The application MUST reduce or disable non-essential motion when the platform in
 #### Scenario: Essential state feedback remains necessary
 - **WHEN** the UI must still communicate loading, success, or failure under reduced-motion conditions
 - **THEN** the feedback SHALL use minimal visual change that preserves clarity without reintroducing full decorative animation
-

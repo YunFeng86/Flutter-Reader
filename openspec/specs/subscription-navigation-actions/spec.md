@@ -1,7 +1,7 @@
 # subscription-navigation-actions Specification
 
 ## Purpose
-TBD - created by archiving change decompose-large-scene-roots. Update Purpose after archive.
+Define the shared subscription navigation and action boundaries that separate sidebar rendering from selection and management workflows so desktop and touch presenters invoke the same feed and category operations consistently.
 ## Requirements
 ### Requirement: Sidebar navigation rendering MUST be separated from selection and management workflows
 The application MUST keep sidebar tree rendering distinct from navigation selection commands and subscription-management workflows so contributors can change the tree UI without re-embedding repo/service mutations into rendering code.
@@ -24,4 +24,3 @@ The application MUST let desktop menus, mobile bottom sheets, and dialog present
 #### Scenario: A new sidebar action is added in the future
 - **WHEN** a contributor adds a new management action to the sidebar
 - **THEN** the implementation SHALL add that behavior to the shared sidebar action layer and let platform-specific presenters call it, instead of duplicating the workflow separately for desktop and mobile UI branches
-

@@ -1,7 +1,7 @@
 # adaptive-ui-foundation Specification
 
 ## Purpose
-TBD - created by archiving change revamp-adaptive-ui-system. Update Purpose after archive.
+Define the shared adaptive UI foundation that centralizes semantic theme tokens, normalized component themes, and form-factor-aware shell structure so Fleur preserves one coherent product identity across platforms and layout modes.
 ## Requirements
 ### Requirement: Fleur UI MUST be composed from shared semantic theme tokens and normalized component themes
 The application MUST derive navigation, sidebar, list, floating surfaces, and common interaction states from one shared theme assembly so that cross-platform UI changes remain consistent and centrally controlled.
@@ -35,4 +35,3 @@ The application MUST provide hover, tooltip, persistent scrollbar, and context-o
 #### Scenario: A touch-first platform renders the same workflow
 - **WHEN** the same workflow is shown on Android or iOS
 - **THEN** the UI SHALL remain fully operable without hover-only or right-click-only affordances and SHALL preserve appropriate touch target sizing
-

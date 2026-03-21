@@ -1,7 +1,7 @@
 # language-identity-normalization Specification
 
 ## Purpose
-TBD - created by archiving change normalize-language-identity-handling. Update Purpose after archive.
+Define the canonical language identity model that normalizes runtime and persisted language tags, stabilizes Reader language comparison and display behavior, and maps translation targets consistently across providers.
 ## Requirements
 ### Requirement: Equivalent language tags SHALL normalize to one business identity
 The system SHALL convert user-configured target language tags, follow-system locale tags, persisted reminder suppression tags, and runtime language inputs into a canonical business identity before they are compared or displayed.
@@ -77,4 +77,3 @@ The translation subsystem SHALL derive provider-specific target language codes f
 #### Scenario: Historical settings remain compatible
 - **WHEN** a persisted settings file contains an older but semantically equivalent language tag such as `zh-CN`, `zh-Hans-CN`, or `en-GB`
 - **THEN** the system SHALL preserve compatible behavior by resolving that input to the canonical target identity before Reader or translation logic consumes it
-

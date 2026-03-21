@@ -1,7 +1,7 @@
 # reader-subsystem-orchestration Specification
 
 ## Purpose
-TBD - created by archiving change decompose-large-scene-roots. Update Purpose after archive.
+Define the reader subsystem boundaries that separate major stateful reading behaviors into dedicated collaborators so the Reader can be decomposed without changing its established workflow semantics, overlays, or advanced interactions.
 ## Requirements
 ### Requirement: Reader MUST isolate major stateful behaviors into dedicated subsystems
 The application MUST decompose reader-scene behaviors such as article session coordination, progress persistence and restoration, long-article chunking, search navigation, selection/context interactions, and media/dialog presentation into dedicated reader subsystems rather than mixing them inside one monolithic render class.
@@ -24,4 +24,3 @@ The application MUST preserve the current reader workflow semantics while refact
 #### Scenario: Advanced reader interactions are exercised after refactor
 - **WHEN** a user opens a long article, triggers chunked rendering behavior, performs desktop text selection, uses the context menu, or opens image/settings dialogs
 - **THEN** the reader SHALL continue to support those advanced interactions without regressing because of the internal decomposition
-

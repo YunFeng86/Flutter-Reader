@@ -1,7 +1,7 @@
 # settings-scene-presentation Specification
 
 ## Purpose
-TBD - created by archiving change normalize-settings-scene-styling. Update Purpose after archive.
+Define the shared settings-scene presentation contract that unifies section hierarchy, grouped surfaces, fields, action emphasis, and responsive detail layouts across all settings tabs and subscription settings flows.
 ## Requirements
 ### Requirement: Settings pages MUST present a shared visual hierarchy across tabs
 The application MUST render settings content through a shared settings-scene presentation contract so that section headings, grouped surfaces, action rows, value rows, form fields, and destructive actions read as one coherent product scene instead of page-local widget styling.
@@ -35,4 +35,3 @@ The application MUST keep settings navigation and detail presentation visually c
 #### Scenario: Horizontal space becomes constrained
 - **WHEN** a settings row or toolbar contains actions that no longer fit on one line
 - **THEN** the UI SHALL wrap, collapse, or otherwise responsively restack those actions while keeping all actions reachable and avoiding layout overflow
-

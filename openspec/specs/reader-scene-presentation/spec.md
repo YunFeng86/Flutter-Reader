@@ -1,7 +1,7 @@
 # reader-scene-presentation Specification
 
 ## Purpose
-TBD - created by archiving change revamp-adaptive-ui-system. Update Purpose after archive.
+Define the reader-scene presentation contract that gives article reading a distinct visual identity, stable readable measure, and unobtrusive supporting controls across embedded, split-pane, and dedicated-page layouts.
 ## Requirements
 ### Requirement: Reader MUST render as a distinct themed scene
 The application MUST present article reading through a dedicated reader scene with its own surface, typography, header, summary, search, and tool surface semantics rather than treating the reader as a generic detail container.
@@ -35,4 +35,3 @@ The application MUST position search, summary, action, and status controls so th
 #### Scenario: Reader actions are shown while scrolling
 - **WHEN** the bottom action bar, summary card, or auxiliary reader controls are visible
 - **THEN** they SHALL remain compatible with safe areas, scrolling, and text selection without blocking sustained reading interactions
-

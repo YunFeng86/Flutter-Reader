@@ -1,7 +1,7 @@
 # scene-root-composition Specification
 
 ## Purpose
-TBD - created by archiving change decompose-large-scene-roots. Update Purpose after archive.
+Define how high-level scene roots act as composition boundaries that wire dependencies, branch layouts, and delegate workflows to reusable collaborators and shared scene commands instead of accumulating monolithic ownership.
 ## Requirements
 ### Requirement: High-level scene roots MUST act as composition boundaries instead of monolithic workflow owners
 The application MUST keep top-level scene roots such as `HomeScreen`, `Sidebar`, and `ReaderView` focused on dependency wiring, lifecycle hookup, layout branching, and child-scene assembly rather than accumulating unrelated workflow implementations in one widget class.
@@ -24,4 +24,3 @@ The application MUST define shared scene commands for workflows that are availab
 #### Scenario: Layout structure changes in the future
 - **WHEN** a contributor adds or modifies a pane layout variant for the same destination
 - **THEN** the change SHALL be able to reuse existing scene commands and shortcut bindings without re-implementing the workflow logic inside the new layout branch
-
