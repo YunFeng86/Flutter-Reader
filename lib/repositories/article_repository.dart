@@ -228,8 +228,8 @@ class ArticleRepository {
       final a = await _isar.articles.get(id);
       if (a == null) return;
       a.preferredContentView = view;
-      // Preference-only change: keep updatedAt untouched to avoid treating it as
-      // an article content update.
+      // Client-only article preference: keep updatedAt untouched so remote-backed
+      // sync does not treat this as a remote article-content mutation.
       await _isar.articles.put(a);
     });
   }
@@ -437,7 +437,8 @@ class ArticleRepository {
             // stale hashes being used as a progress key.
             a.contentHash = null;
           }
-          // Read-later is currently local-only; always preserve.
+          // Read-later and preferred reading mode remain client-only for
+          // remote-backed accounts, so sync always preserves local values.
           a.isReadLater = existing.isReadLater;
           a.contentSource = existing.contentSource;
           a.extractedContentHtml = existing.extractedContentHtml;

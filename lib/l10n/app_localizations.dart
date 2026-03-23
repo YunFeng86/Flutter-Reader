@@ -405,6 +405,48 @@ abstract class AppLocalizations {
   /// **'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.'**
   String get feverAddSubscriptionNotSupported;
 
+  /// Shown when a remote-backed structure command needs online access.
+  ///
+  /// In en, this message translates to:
+  /// **'This action requires connectivity to the remote service.'**
+  String get remoteCommandRequiresConnectivity;
+
+  /// Shown when a remote-backed structure command fails because the current credentials are invalid or missing.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote service rejected the current account credentials. Check the account settings and try again.'**
+  String get remoteCommandRequiresAuthentication;
+
+  /// Shown when a remote-backed structure command cannot resolve the current remote target.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote service could not match the current feed or category. Sync and try again.'**
+  String get remoteCommandNeedsRefresh;
+
+  /// Shown when a remote-backed structure command is rejected by the remote service for request-specific reasons.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote service rejected this action. Review the request and try again.'**
+  String get remoteCommandRejected;
+
+  /// Shown when a remote-backed structure command fails because the remote service is temporarily unavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The remote service could not complete this action right now. Try again later.'**
+  String get remoteCommandUnavailable;
+
+  /// Shown when the active remote provider cannot perform a structure-management command.
+  ///
+  /// In en, this message translates to:
+  /// **'This remote account does not support this action.'**
+  String get remoteCommandNotSupported;
+
+  /// Shown when a remote-backed feed cannot be moved to an uncategorized state.
+  ///
+  /// In en, this message translates to:
+  /// **'This remote account requires a server-side category for the subscription.'**
+  String get remoteCommandRequiresCategory;
+
   /// newCategory
   ///
   /// In en, this message translates to:
@@ -632,6 +674,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Feeds in this category will be moved to Uncategorized.'**
   String get deleteCategoryConfirmContent;
+
+  /// Confirmation text for deleting a remote-backed category.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this category on the remote service and then reconcile the local mirror.'**
+  String get remoteDeleteCategoryConfirmContent;
 
   /// deleteTagConfirmTitle
   ///

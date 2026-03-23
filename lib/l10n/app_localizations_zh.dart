@@ -164,6 +164,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feverAddSubscriptionNotSupported => 'Fever 账号不支持添加订阅，请在服务端管理订阅。';
 
   @override
+  String get remoteCommandRequiresConnectivity => '此操作需要连接远程服务后才能完成。';
+
+  @override
+  String get remoteCommandRequiresAuthentication => '远程服务拒绝了当前账号凭据，请检查账号设置后重试。';
+
+  @override
+  String get remoteCommandNeedsRefresh => '远程服务无法匹配当前订阅或分类，请先同步后重试。';
+
+  @override
+  String get remoteCommandRejected => '远程服务拒绝了这次操作，请检查请求内容后重试。';
+
+  @override
+  String get remoteCommandUnavailable => '远程服务暂时无法完成此操作，请稍后再试。';
+
+  @override
+  String get remoteCommandNotSupported => '当前远程账号不支持这个操作。';
+
+  @override
+  String get remoteCommandRequiresCategory => '当前远程账号要求订阅必须归属服务端分类。';
+
+  @override
   String get newCategory => '新建分类';
 
   @override
@@ -282,6 +303,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get deleteCategoryConfirmContent => '该分类下的订阅源将移动到未分类。';
+
+  @override
+  String get remoteDeleteCategoryConfirmContent => '将先在远程服务上删除该分类，然后回刷本地镜像。';
 
   @override
   String get deleteTagConfirmTitle => '删除标签？';
@@ -1070,6 +1094,27 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get feverAddSubscriptionNotSupported => 'Fever 帳號不支援新增訂閱，請在伺服器端管理訂閱。';
 
   @override
+  String get remoteCommandRequiresConnectivity => '此操作需要連線到遠端服務後才能完成。';
+
+  @override
+  String get remoteCommandRequiresAuthentication => '遠端服務拒絕了目前帳號憑證，請檢查帳號設定後再試。';
+
+  @override
+  String get remoteCommandNeedsRefresh => '遠端服務無法匹配目前的訂閱或分類，請先同步後再試。';
+
+  @override
+  String get remoteCommandRejected => '遠端服務拒絕了這次操作，請檢查請求內容後再試。';
+
+  @override
+  String get remoteCommandUnavailable => '遠端服務暫時無法完成此操作，請稍後再試。';
+
+  @override
+  String get remoteCommandNotSupported => '目前的遠端帳號不支援這個操作。';
+
+  @override
+  String get remoteCommandRequiresCategory => '目前的遠端帳號要求訂閱必須歸屬伺服器分類。';
+
+  @override
   String get newCategory => '新增分類';
 
   @override
@@ -1188,6 +1233,9 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get deleteCategoryConfirmContent => '此分類下的訂閱源將移至未分類。';
+
+  @override
+  String get remoteDeleteCategoryConfirmContent => '將先在遠端服務上刪除這個分類，然後回刷本機鏡像。';
 
   @override
   String get deleteTagConfirmTitle => '刪除標籤？';

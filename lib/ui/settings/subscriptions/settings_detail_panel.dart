@@ -178,7 +178,7 @@ class _CategorySettings extends ConsumerWidget {
                   final deleted = await SubscriptionActions.deleteCategory(
                     context,
                     ref,
-                    category.id,
+                    categoryId: category.id,
                   );
                   if (!deleted || !context.mounted) return;
                   ref
@@ -243,7 +243,7 @@ class _FeedSettings extends ConsumerWidget {
                 onTap: () => SubscriptionActions.moveFeedToCategory(
                   context,
                   ref,
-                  feed.id,
+                  feedId: feed.id,
                 ),
               ),
               SettingsTile(
@@ -260,7 +260,7 @@ class _FeedSettings extends ConsumerWidget {
                   final deleted = await SubscriptionActions.deleteFeed(
                     context,
                     ref,
-                    feed.id,
+                    feedId: feed.id,
                   );
                   if (!deleted || !context.mounted) return;
                   ref

@@ -1,18 +1,99 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:isar/isar.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 import 'package:fleur/app/app.dart';
 import 'package:fleur/app/router.dart';
+import 'package:fleur/l10n/app_localizations_en.dart';
+import 'package:fleur/models/article.dart';
+import 'package:fleur/models/category.dart';
+import 'package:fleur/models/feed.dart';
+import 'package:fleur/models/tag.dart';
+import 'package:fleur/providers/core_providers.dart';
 import 'package:fleur/ui/dialogs/add_subscription_dialog.dart';
+import 'package:fleur/utils/path_manager.dart';
+
+import '../../test_utils/isar_test_utils.dart';
+
+class _FakePathProviderPlatform extends PathProviderPlatform {
+  _FakePathProviderPlatform({
+    required String documentsPath,
+    required String supportPath,
+    required String cachePath,
+  }) : _documentsPath = documentsPath,
+       _supportPath = supportPath,
+       _cachePath = cachePath;
+
+  final String _documentsPath;
+  final String _supportPath;
+  final String _cachePath;
+
+  @override
+  Future<String?> getApplicationDocumentsPath() async => _documentsPath;
+
+  @override
+  Future<String?> getApplicationSupportPath() async => _supportPath;
+
+  @override
+  Future<String?> getApplicationCachePath() async => _cachePath;
+}
 
 void main() {
+  Isar? isar;
+  Directory? tempDir;
+  late PathProviderPlatform originalPlatform;
+
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    await ensureIsarCoreInitialized();
+    originalPlatform = PathProviderPlatform.instance;
+  });
+
+  setUp(() async {
+    tempDir = await Directory.systemTemp.createTemp('fleur_add_sub_dialog_');
+    final docs = await Directory(
+      '${tempDir!.path}/documents',
+    ).create(recursive: true);
+    final support = await Directory(
+      '${tempDir!.path}/support',
+    ).create(recursive: true);
+    final cache = await Directory(
+      '${tempDir!.path}/cache',
+    ).create(recursive: true);
+    PathProviderPlatform.instance = _FakePathProviderPlatform(
+      documentsPath: docs.path,
+      supportPath: support.path,
+      cachePath: cache.path,
+    );
+    PathManager.resetForTests();
+    isar = await Isar.open(
+      [FeedSchema, ArticleSchema, CategorySchema, TagSchema],
+      directory: tempDir!.path,
+      name: 'add_subscription_dialog_test',
+    );
+  });
+
+  tearDown(() async {
+    await isar?.close();
+    PathProviderPlatform.instance = originalPlatform;
+    PathManager.resetForTests();
+    final dir = tempDir;
+    tempDir = null;
+    isar = null;
+    if (dir != null && await dir.exists()) {
+      await dir.delete(recursive: true);
+    }
+  });
+
   testWidgets('AddSubscriptionDialog barrier dismiss should not throw', (
     tester,
   ) async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-
     final errors = <FlutterErrorDetails>[];
     final oldOnError = FlutterError.onError;
     FlutterError.onError = (details) {
@@ -48,7 +129,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [routerProvider.overrideWithValue(router)],
+        overrides: [
+          routerProvider.overrideWithValue(router),
+          isarProvider.overrideWithValue(isar!),
+        ],
         child: const App(),
       ),
     );
@@ -71,5 +155,57 @@ void main() {
     expect(find.byType(AlertDialog), findsNothing);
     expect(tester.takeException(), isNull);
     expect(errors, isEmpty);
+  });
+
+  test(
+    'Miniflux add-subscription failure feedback maps connectivity errors clearly',
+    () {
+      final message = addSubscriptionRemoteStructureFailureMessageForTest(
+        AppLocalizationsEn(),
+        DioException(
+          requestOptions: RequestOptions(path: '/v1/categories'),
+          type: DioExceptionType.connectionError,
+          error: const SocketException('offline'),
+        ),
+      );
+
+      expect(
+        message,
+        'This action requires connectivity to the remote service.',
+      );
+    },
+  );
+
+  test('Miniflux add-subscription HTTP errors do not use connectivity copy', () {
+    final request = RequestOptions(path: '/v1/categories');
+    final message = addSubscriptionRemoteStructureFailureMessageForTest(
+      AppLocalizationsEn(),
+      DioException(
+        requestOptions: request,
+        type: DioExceptionType.badResponse,
+        response: Response<Map<String, Object?>>(
+          requestOptions: request,
+          statusCode: 401,
+          data: const {'error_message': 'Unauthorized'},
+        ),
+      ),
+    );
+
+    expect(
+      message,
+      'The remote service rejected the current account credentials. Check the account settings and try again.',
+    );
+  });
+
+  test('Miniflux add-subscription target drift still uses sync copy', () {
+    final message = addSubscriptionRemoteStructureFailureMessageForTest(
+      AppLocalizationsEn(),
+      StateError('Remote category not found for title: News'),
+    );
+
+    expect(
+      message,
+      'The remote service could not match the current feed or category. Sync and try again.',
+    );
   });
 }

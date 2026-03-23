@@ -207,6 +207,34 @@
   "@feverAddSubscriptionNotSupported": {
     "description": "feverAddSubscriptionNotSupported"
   },
+  "remoteCommandRequiresConnectivity": "此操作需要連線到遠端服務後才能完成。",
+  "@remoteCommandRequiresConnectivity": {
+    "description": "Shown when a remote-backed structure command needs online access."
+  },
+  "remoteCommandRequiresAuthentication": "遠端服務拒絕了目前帳號憑證，請檢查帳號設定後再試。",
+  "@remoteCommandRequiresAuthentication": {
+    "description": "Shown when a remote-backed structure command fails because the current credentials are invalid or missing."
+  },
+  "remoteCommandNeedsRefresh": "遠端服務無法匹配目前的訂閱或分類，請先同步後再試。",
+  "@remoteCommandNeedsRefresh": {
+    "description": "Shown when a remote-backed structure command cannot resolve the current remote target."
+  },
+  "remoteCommandRejected": "遠端服務拒絕了這次操作，請檢查請求內容後再試。",
+  "@remoteCommandRejected": {
+    "description": "Shown when a remote-backed structure command is rejected by the remote service for request-specific reasons."
+  },
+  "remoteCommandUnavailable": "遠端服務暫時無法完成此操作，請稍後再試。",
+  "@remoteCommandUnavailable": {
+    "description": "Shown when a remote-backed structure command fails because the remote service is temporarily unavailable."
+  },
+  "remoteCommandNotSupported": "目前的遠端帳號不支援這個操作。",
+  "@remoteCommandNotSupported": {
+    "description": "Shown when the active remote provider cannot perform a structure-management command."
+  },
+  "remoteCommandRequiresCategory": "目前的遠端帳號要求訂閱必須歸屬伺服器分類。",
+  "@remoteCommandRequiresCategory": {
+    "description": "Shown when a remote-backed feed cannot be moved to an uncategorized state."
+  },
   "newCategory": "新增分類",
   "@newCategory": {
     "description": "newCategory"
@@ -404,6 +432,10 @@
   "deleteCategoryConfirmContent": "此分類下的訂閱源將移至未分類。",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "remoteDeleteCategoryConfirmContent": "將先在遠端服務上刪除這個分類，然後回刷本機鏡像。",
+  "@remoteDeleteCategoryConfirmContent": {
+    "description": "Confirmation text for deleting a remote-backed category."
   },
   "deleteTagConfirmTitle": "刪除標籤？",
   "@deleteTagConfirmTitle": {

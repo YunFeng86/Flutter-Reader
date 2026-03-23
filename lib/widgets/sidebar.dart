@@ -95,10 +95,6 @@ class _SidebarState extends ConsumerState<Sidebar> {
   );
 
   Future<T?> _showDialog<T>({required WidgetBuilder builder}) {
-    // Manually push a DialogRoute on the correct navigator.
-    // We pass `context` (Sidebar's context) to DialogRoute so it inherits correct
-    // Theme and Localizations, but we push it to `_navigator` (which might be
-    // the root navigator from GoRouter) to ensure it has an Overlay.
     return _navigator.push<T>(
       DialogRoute<T>(
         context: context,

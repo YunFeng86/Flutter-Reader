@@ -207,6 +207,34 @@
   "@feverAddSubscriptionNotSupported": {
     "description": "feverAddSubscriptionNotSupported"
   },
+  "remoteCommandRequiresConnectivity": "此操作需要连接远程服务后才能完成。",
+  "@remoteCommandRequiresConnectivity": {
+    "description": "Shown when a remote-backed structure command needs online access."
+  },
+  "remoteCommandRequiresAuthentication": "远程服务拒绝了当前账号凭据，请检查账号设置后重试。",
+  "@remoteCommandRequiresAuthentication": {
+    "description": "Shown when a remote-backed structure command fails because the current credentials are invalid or missing."
+  },
+  "remoteCommandNeedsRefresh": "远程服务无法匹配当前订阅或分类，请先同步后重试。",
+  "@remoteCommandNeedsRefresh": {
+    "description": "Shown when a remote-backed structure command cannot resolve the current remote target."
+  },
+  "remoteCommandRejected": "远程服务拒绝了这次操作，请检查请求内容后重试。",
+  "@remoteCommandRejected": {
+    "description": "Shown when a remote-backed structure command is rejected by the remote service for request-specific reasons."
+  },
+  "remoteCommandUnavailable": "远程服务暂时无法完成此操作，请稍后再试。",
+  "@remoteCommandUnavailable": {
+    "description": "Shown when a remote-backed structure command fails because the remote service is temporarily unavailable."
+  },
+  "remoteCommandNotSupported": "当前远程账号不支持这个操作。",
+  "@remoteCommandNotSupported": {
+    "description": "Shown when the active remote provider cannot perform a structure-management command."
+  },
+  "remoteCommandRequiresCategory": "当前远程账号要求订阅必须归属服务端分类。",
+  "@remoteCommandRequiresCategory": {
+    "description": "Shown when a remote-backed feed cannot be moved to an uncategorized state."
+  },
   "newCategory": "新建分类",
   "@newCategory": {
     "description": "newCategory"
@@ -404,6 +432,10 @@
   "deleteCategoryConfirmContent": "该分类下的订阅源将移动到未分类。",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "remoteDeleteCategoryConfirmContent": "将先在远程服务上删除该分类，然后回刷本地镜像。",
+  "@remoteDeleteCategoryConfirmContent": {
+    "description": "Confirmation text for deleting a remote-backed category."
   },
   "deleteTagConfirmTitle": "删除标签？",
   "@deleteTagConfirmTitle": {

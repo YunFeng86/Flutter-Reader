@@ -45,12 +45,12 @@ class Feed {
   String? lastError;
   DateTime? lastErrorAt;
 
-  // Filter Settings
-  // Filter Settings
+  /// Client-only feed preferences. Remote-backed accounts keep these local
+  /// instead of projecting them as remote subscription-structure changes.
   bool? filterEnabled;
   String? filterKeywords;
 
-  // Sync Settings
+  /// Client-only sync/caching preferences.
   bool? syncEnabled;
 
   /// Whether to download images during sync

@@ -12,8 +12,17 @@ import '../../services/accounts/account.dart';
 import '../../services/sync/miniflux/miniflux_client.dart';
 import '../../services/sync/sync_service.dart';
 import '../../services/sync/sync_mutex.dart';
+import '../actions/remote_structure_feedback.dart' as remote_feedback;
 import '../../utils/context_extensions.dart';
 import 'text_input_dialog.dart';
+
+@visibleForTesting
+String addSubscriptionRemoteStructureFailureMessageForTest(
+  AppLocalizations l10n,
+  Object error,
+) {
+  return remote_feedback.remoteStructureFailureMessage(l10n, error);
+}
 
 sealed class _CategoryPick {
   const _CategoryPick();
@@ -115,6 +124,15 @@ Future<int?> showAddSubscriptionDialog(
   if (!context.mounted) return null;
 
   final rootNav = Navigator.of(context, rootNavigator: true);
+
+  String remoteStructureFailureMessage(Object error) {
+    return remote_feedback.remoteStructureFailureMessage(l10n, error);
+  }
+
+  void showRemoteStructureFailure(Object error) {
+    if (!context.mounted) return;
+    context.showSnack(l10n.errorMessage(remoteStructureFailureMessage(error)));
+  }
 
   Future<T> showBlockingProgress<T>(
     String message,
@@ -298,7 +316,7 @@ Future<int?> showAddSubscriptionDialog(
             if (!context.mounted) {
               return (canceled: true, categoryId: null);
             }
-            context.showSnack(l10n.errorMessage(e.toString()));
+            showRemoteStructureFailure(e);
           }
       }
     }
@@ -350,7 +368,7 @@ Future<int?> showAddSubscriptionDialog(
         );
       } catch (e) {
         if (context.mounted) {
-          context.showSnack(l10n.errorMessage(e.toString()));
+          showRemoteStructureFailure(e);
         }
         return (canceled: true, categoryId: null);
       }
@@ -421,7 +439,7 @@ Future<int?> showAddSubscriptionDialog(
             if (!context.mounted) {
               return (canceled: true, categoryId: null);
             }
-            context.showSnack(l10n.errorMessage(e.toString()));
+            showRemoteStructureFailure(e);
           }
         case _CategoryPickUncategorized():
           // Not reachable for Miniflux: we don't show this option.
@@ -482,9 +500,7 @@ Future<int?> showAddSubscriptionDialog(
       try {
         client = await buildMinifluxClient();
       } catch (e) {
-        if (context.mounted) {
-          context.showSnack(l10n.errorMessage(e.toString()));
-        }
+        showRemoteStructureFailure(e);
         return null;
       }
 
@@ -505,9 +521,7 @@ Future<int?> showAddSubscriptionDialog(
           });
         });
       } catch (e) {
-        if (context.mounted) {
-          context.showSnack(l10n.errorMessage(e.toString()));
-        }
+        showRemoteStructureFailure(e);
         return null;
       }
 

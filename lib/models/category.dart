@@ -9,11 +9,12 @@ class Category {
   @Index(unique: true, replace: true)
   late String name;
 
-  // Filter Settings
+  /// Client-only category preferences. Remote-backed accounts keep these local
+  /// instead of projecting them as remote category-structure changes.
   bool? filterEnabled;
   String? filterKeywords;
 
-  // Sync Settings
+  /// Client-only sync/caching preferences.
   bool? syncEnabled;
 
   /// Whether to download images during sync

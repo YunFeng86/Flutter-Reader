@@ -41,14 +41,20 @@ class MinifluxClient {
   Options get _options =>
       Options(headers: _authHeaders, responseType: ResponseType.json);
 
+  Map<String, Object?> _readResponseMap(
+    Object? data, {
+    required String context,
+  }) {
+    if (data is Map) return data.cast<String, Object?>();
+    throw StateError('Unexpected Miniflux response for $context');
+  }
+
   Future<Map<String, Object?>> getEntry(int entryId) async {
     final resp = await _dio.get(
       '$_baseUrl/v1/entries/$entryId',
       options: _options,
     );
-    final data = resp.data;
-    if (data is Map) return data.cast<String, Object?>();
-    throw StateError('Unexpected Miniflux response for entry $entryId');
+    return _readResponseMap(resp.data, context: 'entry $entryId');
   }
 
   Future<List<Map<String, Object?>>> getCategories() async {
@@ -173,9 +179,7 @@ class MinifluxClient {
       options: _options,
       data: <String, Object?>{'title': trimmed},
     );
-    final data = resp.data;
-    if (data is Map) return data.cast<String, Object?>();
-    throw StateError('Unexpected Miniflux response for create category');
+    return _readResponseMap(resp.data, context: 'create category');
   }
 
   Future<Map<String, Object?>> createFeed({
@@ -198,8 +202,86 @@ class MinifluxClient {
         'category_id': categoryId,
       },
     );
-    final data = resp.data;
-    if (data is Map) return data.cast<String, Object?>();
-    throw StateError('Unexpected Miniflux response for create feed');
+    return _readResponseMap(resp.data, context: 'create feed');
+  }
+
+  Future<Map<String, Object?>> updateFeed({
+    required int feedId,
+    int? categoryId,
+    String? title,
+  }) async {
+    if (feedId <= 0) {
+      throw ArgumentError('Feed id is invalid');
+    }
+
+    final data = <String, Object?>{};
+    if (categoryId != null) {
+      if (categoryId <= 0) {
+        throw ArgumentError('Category id is invalid');
+      }
+      data['category_id'] = categoryId;
+    }
+    if (title != null) {
+      final trimmedTitle = title.trim();
+      if (trimmedTitle.isEmpty) {
+        throw ArgumentError('Feed title is empty');
+      }
+      data['title'] = trimmedTitle;
+    }
+    if (data.isEmpty) {
+      throw ArgumentError('No feed fields to update');
+    }
+
+    final resp = await _dio.put(
+      '$_baseUrl/v1/feeds/$feedId',
+      options: _options,
+      data: data,
+    );
+    return _readResponseMap(resp.data, context: 'update feed $feedId');
+  }
+
+  Future<void> deleteFeed(int feedId) async {
+    if (feedId <= 0) {
+      throw ArgumentError('Feed id is invalid');
+    }
+    await _dio.delete('$_baseUrl/v1/feeds/$feedId', options: _options);
+  }
+
+  Future<void> refreshFeed(int feedId) async {
+    if (feedId <= 0) {
+      throw ArgumentError('Feed id is invalid');
+    }
+    await _dio.put('$_baseUrl/v1/feeds/$feedId/refresh', options: _options);
+  }
+
+  Future<void> refreshAllFeeds() async {
+    await _dio.put('$_baseUrl/v1/feeds/refresh', options: _options);
+  }
+
+  Future<Map<String, Object?>> updateCategory({
+    required int categoryId,
+    required String title,
+  }) async {
+    final trimmed = title.trim();
+    if (categoryId <= 0) {
+      throw ArgumentError('Category id is invalid');
+    }
+    if (trimmed.isEmpty) {
+      throw ArgumentError('Category title is empty');
+    }
+
+    final resp = await _dio.put(
+      '$_baseUrl/v1/categories/$categoryId',
+      options: _options,
+      data: <String, Object?>{'title': trimmed},
+    );
+    return _readResponseMap(resp.data, context: 'update category $categoryId');
+  }
+
+  Future<void> deleteCategory(int categoryId) async {
+    if (categoryId <= 0) {
+      throw ArgumentError('Category id is invalid');
+    }
+    await _dio.delete('$_baseUrl/v1/categories/$categoryId', options: _options);
   }
 }

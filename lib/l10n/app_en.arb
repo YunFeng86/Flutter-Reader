@@ -207,6 +207,34 @@
   "@feverAddSubscriptionNotSupported": {
     "description": "feverAddSubscriptionNotSupported"
   },
+  "remoteCommandRequiresConnectivity": "This action requires connectivity to the remote service.",
+  "@remoteCommandRequiresConnectivity": {
+    "description": "Shown when a remote-backed structure command needs online access."
+  },
+  "remoteCommandRequiresAuthentication": "The remote service rejected the current account credentials. Check the account settings and try again.",
+  "@remoteCommandRequiresAuthentication": {
+    "description": "Shown when a remote-backed structure command fails because the current credentials are invalid or missing."
+  },
+  "remoteCommandNeedsRefresh": "The remote service could not match the current feed or category. Sync and try again.",
+  "@remoteCommandNeedsRefresh": {
+    "description": "Shown when a remote-backed structure command cannot resolve the current remote target."
+  },
+  "remoteCommandRejected": "The remote service rejected this action. Review the request and try again.",
+  "@remoteCommandRejected": {
+    "description": "Shown when a remote-backed structure command is rejected by the remote service for request-specific reasons."
+  },
+  "remoteCommandUnavailable": "The remote service could not complete this action right now. Try again later.",
+  "@remoteCommandUnavailable": {
+    "description": "Shown when a remote-backed structure command fails because the remote service is temporarily unavailable."
+  },
+  "remoteCommandNotSupported": "This remote account does not support this action.",
+  "@remoteCommandNotSupported": {
+    "description": "Shown when the active remote provider cannot perform a structure-management command."
+  },
+  "remoteCommandRequiresCategory": "This remote account requires a server-side category for the subscription.",
+  "@remoteCommandRequiresCategory": {
+    "description": "Shown when a remote-backed feed cannot be moved to an uncategorized state."
+  },
   "newCategory": "New category",
   "@newCategory": {
     "description": "newCategory"
@@ -375,6 +403,10 @@
   "deleteCategoryConfirmContent": "Feeds in this category will be moved to Uncategorized.",
   "@deleteCategoryConfirmContent": {
     "description": "deleteCategoryConfirmContent"
+  },
+  "remoteDeleteCategoryConfirmContent": "Delete this category on the remote service and then reconcile the local mirror.",
+  "@remoteDeleteCategoryConfirmContent": {
+    "description": "Confirmation text for deleting a remote-backed category."
   },
   "deleteTagConfirmTitle": "Delete tag?",
   "@deleteTagConfirmTitle": {

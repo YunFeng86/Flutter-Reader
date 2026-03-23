@@ -169,6 +169,34 @@ class AppLocalizationsEn extends AppLocalizations {
       'Fever accounts don\'t support adding subscriptions. Please manage subscriptions on the server.';
 
   @override
+  String get remoteCommandRequiresConnectivity =>
+      'This action requires connectivity to the remote service.';
+
+  @override
+  String get remoteCommandRequiresAuthentication =>
+      'The remote service rejected the current account credentials. Check the account settings and try again.';
+
+  @override
+  String get remoteCommandNeedsRefresh =>
+      'The remote service could not match the current feed or category. Sync and try again.';
+
+  @override
+  String get remoteCommandRejected =>
+      'The remote service rejected this action. Review the request and try again.';
+
+  @override
+  String get remoteCommandUnavailable =>
+      'The remote service could not complete this action right now. Try again later.';
+
+  @override
+  String get remoteCommandNotSupported =>
+      'This remote account does not support this action.';
+
+  @override
+  String get remoteCommandRequiresCategory =>
+      'This remote account requires a server-side category for the subscription.';
+
+  @override
   String get newCategory => 'New category';
 
   @override
@@ -289,6 +317,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteCategoryConfirmContent =>
       'Feeds in this category will be moved to Uncategorized.';
+
+  @override
+  String get remoteDeleteCategoryConfirmContent =>
+      'Delete this category on the remote service and then reconcile the local mirror.';
 
   @override
   String get deleteTagConfirmTitle => 'Delete tag?';

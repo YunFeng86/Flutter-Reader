@@ -1,18 +1,4 @@
-# subscription-navigation-actions Specification
-
-## Purpose
-Define the shared subscription navigation and action boundaries that separate sidebar rendering from selection and management workflows so desktop and touch presenters invoke the same feed and category operations consistently.
-## Requirements
-### Requirement: Sidebar navigation rendering MUST be separated from selection and management workflows
-The application MUST keep sidebar tree rendering distinct from navigation selection commands and subscription-management workflows so contributors can change the tree UI without re-embedding repo/service mutations into rendering code.
-
-#### Scenario: A sidebar selection changes
-- **WHEN** the user selects all articles, a feed, a category, or a tag from the sidebar
-- **THEN** the sidebar SHALL route that interaction through explicit selection commands that update the shared selection state without requiring the tree-rendering widgets to inline the full mutation workflow
-
-#### Scenario: Sidebar presentation is reorganized
-- **WHEN** a contributor restructures sidebar sections, search filtering, or item presenters
-- **THEN** the change SHALL be able to reuse the existing selection and management workflows rather than duplicating feed/category/tag mutation logic inside the new rendering structure
+## MODIFIED Requirements
 
 ### Requirement: Subscription management actions MUST share one action layer across desktop and touch presenters
 The application MUST let desktop menus, mobile bottom sheets, and dialog presenters trigger the same underlying feed/category management actions for rename, refresh, offline caching, move, delete, import, and export workflows, and those shared actions MUST apply the same remote/offline policy for remote-backed accounts across all presenters.
@@ -25,6 +11,8 @@ The application MUST let desktop menus, mobile bottom sheets, and dialog present
 - **WHEN** a contributor adds a new management action to the sidebar
 - **THEN** the implementation SHALL add that behavior to the shared sidebar action layer, classify it according to the remote-sync capability policy, and let platform-specific presenters call it instead of duplicating separate behavior branches
 
+## ADDED Requirements
+
 ### Requirement: Remote-backed subscription structure commands MUST not create false-success offline state
 The application MUST treat remote-backed subscription/category structure commands as online-required whenever they cannot provide a truthful deferred-sync workflow.
 
@@ -35,4 +23,3 @@ The application MUST treat remote-backed subscription/category structure command
 #### Scenario: A remote-backed structure command succeeds online
 - **WHEN** the shared action layer successfully completes a remote-backed structure mutation or remote refresh command
 - **THEN** the workflow SHALL reconcile the local mirror from the accepted remote result instead of leaving desktop and touch presenters to infer structural state independently
-
