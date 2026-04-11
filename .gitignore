@@ -28,8 +28,6 @@ migrate_working_dir/
 .vscode/*.code-snippets
 .vscode/settings.json
 .vscode/tasks.json
-.codex/
-.claude/
 docs/
 
 # Flutter/Dart/Pub related
